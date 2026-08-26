@@ -1,0 +1,88 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# INTERNAL — never published
+# ─────────────────────────────────────────────────────────────────────────────
+# The working documents for this project are proprietary. Design notes, the
+# decision record, the build plan, the current status, the per-vendor research and
+# the submission analysis all stay on the machines they were written on.
+#
+# A separate, written-for-the-purpose public set will be produced when there is
+# something for it to describe. Internal notes are not that, and a repository that
+# will one day be public must never have carried them, not even in an old commit.
+docs/
+private/
+CLAUDE.md
+CHANGELOG.md
+
+# The credential template lists every outside service this project uses, its real
+# limits, and why each was chosen over the alternatives. That is stack research,
+# not setup instructions. A clean public version gets written when there is code
+# that needs one.
+.env.example
+keys/
+fixtures/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SECRETS — nothing here is ever committed
+# ─────────────────────────────────────────────────────────────────────────────
+# The pattern is deliberately wide. A narrower one missed a file called .env.backup
+# that contained real values. Wide is the only version that cannot be defeated by a
+# filename nobody predicted.
+.env*
+
+# Private keys, certificates, and anything holding one.
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BUILD OUTPUT AND DEPENDENCIES
+# ─────────────────────────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TEST AND TOOL OUTPUT
+# ─────────────────────────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.cache/
+.charter-cache/
+
+# Generated PDFs, packs and downloads from real runs. These can contain data from
+# whatever was fed into a run, so they are never committed.
+tmp/
+scratch/
+*.local.pdf
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LOCAL TOOLING AND EDITOR STATE
+# ─────────────────────────────────────────────────────────────────────────────
+.veris/
+.vercel/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OPERATING SYSTEM CLUTTER
+# ─────────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini

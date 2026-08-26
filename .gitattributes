@@ -1,0 +1,27 @@
+# Line endings.
+#
+# This project is written on Windows and its automated checks run on Linux. Without
+# a rule here, the same file has different bytes on the two machines, every file
+# looks changed the moment it is checked out, and — the part that actually matters
+# for Charter — a file whose fingerprint is recorded in the tamper-evident log would
+# fingerprint differently depending on which machine read it.
+#
+# So: one line ending in the repository, always.
+* text=auto eol=lf
+
+# Files that must never be touched, because changing a single byte changes meaning.
+*.pdf     binary
+*.docx    binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.p12     binary
+*.pfx     binary
+
+# Recorded vendor responses are compared byte for byte against what a live call
+# returns. Rewriting their line endings would break that comparison silently.
+fixtures/**  -text
+
+# Shell scripts must keep Unix line endings even when edited on Windows, or they
+# fail on Linux with an error that names the wrong thing.
+*.sh      text eol=lf
