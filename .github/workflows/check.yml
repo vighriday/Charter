@@ -1,0 +1,36 @@
+# Every push and every pull request runs the same checks a person runs locally.
+#
+# Nothing here needs a paid runner, a secret, or an account. Standard runners are
+# free and unlimited on public repositories, and no step touches an outside
+# service — the whole suite runs against saved responses, which is the same
+# property that lets a stranger clone this and run it with no keys at all.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # Would anything secret go public? This runs first, because it is the only
+      # failure on this list that cannot be undone.
+      - name: nothing secret is publishable
+        run: npm run git:check
+
+      - name: types
+        run: npm run typecheck
+
+      - name: tests
+        run: npm test

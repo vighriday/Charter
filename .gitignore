@@ -18,8 +18,25 @@ CHANGELOG.md
 # not setup instructions. A clean public version gets written when there is code
 # that needs one.
 .env.example
-keys/
-fixtures/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TWO THINGS THAT MUST BE PUBLIC, AND ONE THAT MUST NEVER BE
+# ─────────────────────────────────────────────────────────────────────────────
+# The attestation keypair signs the head of our record. The PUBLIC half is
+# committed on purpose: it is what lets anyone check our record without asking us
+# for anything. A verifier that loaded its key from the file it was checking would
+# prove nothing at all. The PRIVATE half never leaves one machine — the *.pem and
+# *.key rules below cover it, and scripts/git-check.mjs proves it every run.
+keys/*
+!keys/*.pub
+
+# Recorded real vendor responses. Committed on purpose: they are what lets a
+# stranger clone this and run the whole thing end to end with no accounts and no
+# keys. Three of the challenges we enter require exactly that.
+#
+# The recorder redacts credentials before writing, and scripts/git-check.mjs
+# independently searches every one of these files for every real value in .env
+# before any commit. Two mechanisms, because one would be a hope.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SECRETS — nothing here is ever committed
@@ -68,6 +85,16 @@ yarn-error.log*
 tmp/
 scratch/
 *.local.pdf
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RESEARCH AND TOOL OUTPUT — other people's pages, not ours to republish
+# ─────────────────────────────────────────────────────────────────────────────
+# Automated browsing leaves copies of the pages it read on disk. Those are other
+# companies' content. Publishing them would be both useless and not ours to do.
+.playwright-mcp/
+*-vars.txt
+*.har
+snapshots/
 
 # ─────────────────────────────────────────────────────────────────────────────
 # LOCAL TOOLING AND EDITOR STATE
