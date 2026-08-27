@@ -1,0 +1,34 @@
+{
+  "name": "charter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Prepares everything around a business formation, and keeps a record of it that anyone can check.",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "git:check": "node scripts/git-check.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "keys:generate": "tsx src/record/generate-keys.ts",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "record:demo": "tsx src/record/demo.ts",
+    "verify": "tsx src/verify/cli.ts",
+    "check": "npm run git:check && npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.2.17",
+    "canonicalize": "^2.0.0",
+    "pg": "^8.13.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
