@@ -138,7 +138,7 @@ const EXPECTED = [
   /^package(-lock)?\.json$/, /^tsconfig(\.[a-z]+)?\.json$/,
   /^vitest\.config\.ts$/, /^next\.config\.[cm]?[jt]s$/,
   /^src\//, /^tests?\//, /^scripts\//, /^public\//, /^migrations\//,
-  /^\.github\//, /^keys\/[^/]+\.pub$/, /^keys\/README\.md$/,
+  /^\.github\//, /^keys\/[^/]+\.pub$/, /^keys\/README\.md$/, /^\.env\.example$/,
   /^fixtures\//, /^templates\//,
 ]
 const unexpected = wouldPublish.filter(f => !EXPECTED.some(re => re.test(f)))
@@ -167,7 +167,7 @@ if (large.length) {
 
 // ── 5. Prove the ignore rules work on the files that matter most ─────────────
 const MUST_BE_IGNORED = [
-  '.env', '.env.backup', '.env.local', '.env.example',
+  '.env', '.env.backup', '.env.local', '.env.prod', '.env.production',
   'private/anything.md', 'docs/decisions.md', 'CLAUDE.md', 'CHANGELOG.md',
   'node_modules/x', '.veris/state.db', 'linear-vars.txt',
   '.playwright-mcp/page.yml', 'tmp/scratch.pdf', 'keys/attestation.pem',

@@ -13,11 +13,14 @@ private/
 CLAUDE.md
 CHANGELOG.md
 
-# The credential template lists every outside service this project uses, its real
-# limits, and why each was chosen over the alternatives. That is stack research,
-# not setup instructions. A clean public version gets written when there is code
-# that needs one.
-.env.example
+# The credential research — real measured limits, which vendors were rejected and
+# why, which demand a payment card — lives in docs/research/ and is covered by the
+# docs/ rule above. That is stack research and it stays ours.
+#
+# .env.example is the other half of that split and it IS published: the same 40
+# credential names, one plain line each saying what it is for and where to get it.
+# Three challenges require that a stranger can clone this and know what to obtain,
+# and that requirement asks only "which credentials do I need" — nothing more.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TWO THINGS THAT MUST BE PUBLIC, AND ONE THAT MUST NEVER BE
@@ -49,6 +52,12 @@ keys/*
 # that contained real values. Wide is the only version that cannot be defeated by a
 # filename nobody predicted.
 .env*
+
+# The one exception, and it holds no values — only the names of the credentials a
+# stranger needs to obtain. Every real value lives in .env, which the rule above
+# still catches. scripts/git-check.mjs searches this file for every real value in
+# .env on every run, so the exception cannot quietly become a leak.
+!.env.example
 
 # Private keys, certificates, and anything holding one.
 *.pem
