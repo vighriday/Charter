@@ -22,7 +22,8 @@ No account. No key. No database to install. No network.
 
 ```bash
 npm install
-npm run record:demo
+npm run record:demo     # the record, and what it can and cannot prove
+npm run agent:demo      # a business going through the first three stages
 ```
 
 That runs a real PostgreSQL engine inside the Node process and shows five things:
@@ -171,10 +172,51 @@ Honest, because the demonstration above is checkable and this table should be to
 | Record-and-replay, so the whole thing runs with no credentials | **built, 19 tests** |
 | Model adapter — two verbs, never combined; replies kept exactly as they arrived | **built, 88 tests** |
 | The rule that a person's details may only reach a service that keeps nothing | **built, with a test proving the ineligible service is never called** |
-| The consent boundary as a code boundary — nothing the model can trigger can reach the signing module or the attestation key | **built, 49 tests**, armed before the module it guards exists |
-| The eight stages, and the agent that moves through them | not yet |
+| The consent boundary as a code boundary — nothing the model can trigger can reach the signing module, the attestation key, or the code that records a person's consent | **built, 54 tests**, armed before the module it guards exists |
+| The eight stages, which tools exist in each, and the order they run in | **built, 37 tests** |
+| The tool registry, and the catalogue generated from the code that runs | **built** |
+| The agent loop — one request, one turn, nothing carried between them | **built, 36 tests** |
+| Checking the model's arguments, and telling it exactly what to send instead | **built, 27 tests** |
+| Stages 1 to 3 — understand, research the name, secure the address | **built, 35 tests** |
+| The rule that nothing costs money without a person's permission covering it | **built**, proved by nothing being charged rather than by an error |
+| Whether two business names collide, decided in plain code | **built, 24 tests** |
+| Stages 4 to 8 | not yet — and they refuse to complete rather than passing quietly |
 | The verifier a stranger runs against a finished pack | not yet |
 | The outside services — documents, identity, registrar, search, signing | not yet |
+
+### The second demonstration
+
+`npm run agent:demo` takes one business — two sisters, a bakery, one putting in
+cash and one putting in an oven — through the first three of the eight stages,
+against the same real database and the same append-only record.
+
+Six things in it are worth watching for:
+
+1. **The tools change when the stage changes.** Each stage sends the model its own
+   list and nothing else, so a tool absent from a stage is not forbidden there —
+   it does not exist there.
+2. **The model sends a wrong argument** and is told which field, what type was
+   expected and which values are allowed. It gets it right on the next attempt.
+   That feedback is what makes a free model behave like a much better one.
+3. **It reaches for a tool from a later stage.** Refused: it was never offered one.
+4. **It asks for permission to spend, and cannot grant one.** A person grants it,
+   and the record shows that entry caused by a human rather than by the model. It
+   is the only reason anything was allowed to be bought.
+5. **It tries to register an address costing more than the permission covers.**
+   Refused, and the registrar is not contacted at all.
+6. **Whether two business names collide is decided in plain code**, not by the
+   model, and the working is shown.
+
+At the end it prints the record — sixty-odd entries, who caused each one, and
+whether the chain holds — and then the complete list of everything the agent can
+do, generated from the code that runs rather than written alongside it.
+
+**What is real and what is stood in for, plainly.** Real: the database, the
+record and its chain, the rules the database enforces, the stage machine, every
+tool, the checking of the model's arguments, the correction sent back, the
+spending rule, and the name comparison. Stood in for: the model's replies and the
+two outside services, which are written out rather than asked for. Every one of
+those still goes through exactly the code a real answer would.
 
 The demonstration only shows what exists. Nothing in it is staged.
 
