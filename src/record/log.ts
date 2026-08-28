@@ -208,6 +208,20 @@ export async function verifyRun(db: Database, runId: string): Promise<ChainCheck
   return checkChain(await readEvents(db, runId), runId)
 }
 
+/** Asked to forget something that is not there. */
+export class NothingToRedactError extends Error {
+  constructor(
+    readonly runId: string,
+    readonly seq: string,
+  ) {
+    super(
+      `run "${runId}" has no entry ${seq}, so there is nothing to forget. ` +
+        `No entry was written: the record must never say a thing was done that was not done.`,
+    )
+    this.name = 'NothingToRedactError'
+  }
+}
+
 /**
  * Forget the detail of one entry, without breaking the record.
  *
@@ -218,6 +232,21 @@ export async function verifyRun(db: Database, runId: string): Promise<ChainCheck
  * The clearing is itself recorded as a new entry, because a record that could be
  * quietly emptied would not be a record. So the honest summary is: Charter can
  * forget what a document said, and cannot forget that it read one.
+ *
+ * WHY THE CLEARING IS PROVED BEFORE IT IS RECORDED
+ *
+ * The clearing is confirmed by asking the database which row it actually changed,
+ * and nothing is written to the record unless a row really was cleared. Without
+ * that check, asking to forget an entry that does not exist wrote a permanent
+ * entry saying a thing had been forgotten when nothing had — a false statement,
+ * in the one place in this system that can never be corrected afterwards.
+ *
+ * The order matters too, and it is deliberate. The payload is cleared first and
+ * recorded second, so the worse of the two possible failures cannot happen. If
+ * the recording fails, something has been forgotten without a note of it: the
+ * record is incomplete. The reverse order would leave the record claiming a
+ * deletion that never took place. An incomplete record is a much smaller wrong
+ * than a false one.
  */
 export async function redact(
   db: Database,
@@ -226,10 +255,17 @@ export async function redact(
   reason: string,
   clock: Clock = systemClock,
 ): Promise<ChainedEvent> {
-  await db.query(
-    'UPDATE event_payloads SET payload = NULL WHERE run_id = $1 AND seq = $2',
+  // No `payload IS NOT NULL` condition here on purpose. A payload that has already
+  // been cleared should reach the database rule, which says so in its own words,
+  // rather than being reported here as if the entry did not exist.
+  const cleared = await db.query<{ seq: string }>(
+    'UPDATE event_payloads SET payload = NULL WHERE run_id = $1 AND seq = $2 RETURNING seq',
     [runId, seq],
   )
+  if (cleared.rows.length === 0) {
+    throw new NothingToRedactError(runId, seq)
+  }
+
   return append(
     db,
     {

@@ -10,6 +10,7 @@ import {
   redact,
   exportRecord,
   fixedClock,
+  NothingToRedactError,
   lastEvent,
 } from '../src/record/log.js'
 import { genesisHash, hashEvent } from '../src/record/chain.js'
@@ -274,6 +275,44 @@ describe('forgetting a person\'s details without breaking the record', () => {
       redactedSeq: '1',
       reason: 'requested',
     })
+  })
+
+  it('will not record a forgetting that did not happen', async () => {
+    // The defect this prevents: asking to forget an entry that does not exist
+    // cleared nothing, and then wrote a permanent entry saying something had been
+    // forgotten. A false statement, in the one place in this system that can never
+    // be corrected afterwards.
+    RUN = newRun()
+    const at = clock()
+    await append(db, { runId: RUN, kind: 'run.started', actor: 'system', stage: null, payload: { x: 1 } }, at)
+
+    await expect(redact(db, RUN, '999', 'no such entry', at)).rejects.toBeInstanceOf(
+      NothingToRedactError,
+    )
+
+    // And nothing was written. One entry in, one entry still there.
+    const events = await readEvents(db, RUN)
+    expect(events).toHaveLength(1)
+    expect(events.some((e) => e.kind === 'payload.redacted')).toBe(false)
+  })
+
+  it('says plainly why it refused, rather than failing quietly', async () => {
+    RUN = newRun()
+    await expect(redact(db, RUN, '4', 'reason')).rejects.toThrow(/nothing to forget/)
+  })
+
+  it('lets the database answer when a detail was already forgotten', async () => {
+    // A second request to forget the same thing is a different situation from a
+    // request to forget something that never existed, and the two should not be
+    // reported with the same words.
+    RUN = newRun()
+    const at = clock()
+    const first = await append(db, { runId: RUN, kind: 'document.read', actor: 'vendor', stage: 'verify', payload: { secret: 'x' } }, at)
+    await redact(db, RUN, first.seq, 'first time', at)
+
+    await expect(redact(db, RUN, first.seq, 'second time', at)).rejects.toThrow(
+      /already been cleared/,
+    )
   })
 
   it('refuses to replace a detail with something else', async () => {
