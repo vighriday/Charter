@@ -47,6 +47,7 @@ import {
   type TurnResult,
 } from './types.js'
 import type { JsonValue } from '../record/canonical.js'
+import { DailyAllowance } from './allowance.js'
 
 /** Which models a stage may use, in the order they should be tried. */
 export type Routes = Readonly<Record<string, readonly string[]>>
@@ -60,11 +61,26 @@ export interface RouterOptions {
   readonly now?: () => number
   /** Told about every attempt, so the record and the activity feed stay honest. */
   readonly onAttempt?: (attempt: Attempt) => void
+  /**
+   * Counts requests per model per day and refuses before sending once a model's
+   * free allowance is spent.
+   *
+   * Optional, and when it is absent nothing counts and nothing is refused early.
+   * That is the right default for tests, which must not depend on what time of day
+   * it is. Everything that makes real calls passes one in.
+   */
+  readonly allowance?: DailyAllowance
 }
 
 export interface Attempt {
   readonly providerId: string
-  readonly outcome: 'answered' | 'rate-limited' | 'unavailable' | 'skipped-sensitivity' | 'skipped-cooling'
+  readonly outcome:
+    | 'answered'
+    | 'rate-limited'
+    | 'unavailable'
+    | 'skipped-sensitivity'
+    | 'skipped-cooling'
+    | 'skipped-daily-allowance'
   readonly detail?: string
 }
 
@@ -159,6 +175,15 @@ export class Router {
         continue
       }
 
+      // Before sending, not after being refused. A free daily allowance does not
+      // come back until midnight in the vendor's own time zone, so learning it is
+      // spent by getting an error costs the rest of the day.
+      const allowed = this.options.allowance?.check(id)
+      if (allowed !== undefined && !allowed.allowed) {
+        record({ providerId: id, outcome: 'skipped-daily-allowance', detail: allowed.reason })
+        continue
+      }
+
       // Checked per provider, because their own limits differ and the smaller of
       // the two is what actually binds.
       const limit = Math.min(ceiling, provider.capabilities.maxRequestTokens)
@@ -167,11 +192,21 @@ export class Router {
       }
 
       try {
+        // Counted at the moment of sending rather than on success. A request the
+        // provider rejects on its own terms has usually still been counted by
+        // them, and counting fewer than they do is the mistake to avoid.
+        this.options.allowance?.spend(id)
         const result = await provider.turn(request)
         record({ providerId: id, outcome: 'answered' })
         return { ...result, providerId: id }
       } catch (error) {
         if (error instanceof RateLimited) {
+          // The provider knows better than our count does. It can see requests
+          // sent from other machines, and one provider counts per organisation
+          // rather than per key, so those really do share a pool.
+          if (error.scope === 'requests-per-day' || error.scope === 'tokens-per-day') {
+            this.options.allowance?.markSpentByProvider(id)
+          }
           this.coolingUntil.set(id, this.now() + (error.retryAfterMs ?? 60_000))
           record({ providerId: id, outcome: 'rate-limited', detail: error.scope })
           continue
@@ -215,15 +250,31 @@ export class Router {
         continue
       }
 
+      // Before sending, not after being refused. A free daily allowance does not
+      // come back until midnight in the vendor's own time zone, so learning it is
+      // spent by getting an error costs the rest of the day.
+      const allowed = this.options.allowance?.check(id)
+      if (allowed !== undefined && !allowed.allowed) {
+        record({ providerId: id, outcome: 'skipped-daily-allowance', detail: allowed.reason })
+        continue
+      }
+
       const limit = Math.min(ceiling, provider.capabilities.maxRequestTokens)
       if (size > limit) throw new ContextTooLarge(id, size, limit)
 
       try {
+        this.options.allowance?.spend(id)
         const value = await provider.extract(request)
         record({ providerId: id, outcome: 'answered' })
         return value
       } catch (error) {
         if (error instanceof RateLimited) {
+          // The provider knows better than our count does. It can see requests
+          // sent from other machines, and one provider counts per organisation
+          // rather than per key, so those really do share a pool.
+          if (error.scope === 'requests-per-day' || error.scope === 'tokens-per-day') {
+            this.options.allowance?.markSpentByProvider(id)
+          }
           this.coolingUntil.set(id, this.now() + (error.retryAfterMs ?? 60_000))
           record({ providerId: id, outcome: 'rate-limited', detail: error.scope })
           continue

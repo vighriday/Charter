@@ -114,6 +114,56 @@ export function generateKeyPair(): { publicKeyPem: string; privateKeyPem: string
   }
 }
 
+/**
+ * Read the private half out of the environment, in whichever form it was stored.
+ *
+ * A key is several lines of text, and an environment file holds one value per
+ * line. So the key is stored with its line breaks spelled out as the two
+ * characters `\` and `n`, usually inside quotes. Both are undone here.
+ *
+ * Doing this in one named place matters more than it looks. The same key stored
+ * two slightly different ways — quoted here, unquoted there — produces two
+ * different failures, at different times, on different machines, and the error
+ * a person actually sees says only "could not be read".
+ *
+ * Returns `undefined` when the value is absent or blank, so the caller can say
+ * what is missing and why it matters. It never guesses, never falls back to a key
+ * of its own, and never makes one: a system that quietly invents a key when the
+ * real one is missing would still produce attestations, and every one of them
+ * would be worthless.
+ */
+export function privateKeyFromEnv(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  const raw = env['ATTESTATION_PRIVATE_KEY']
+  if (raw === undefined) return undefined
+
+  let value = raw.trim()
+  if (value === '') return undefined
+
+  // Strip one matching pair of surrounding quotes, if present.
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    value = value.slice(1, -1)
+  }
+  // Turn the spelled-out line breaks back into real ones.
+  value = value.replace(/\\n/g, '\n')
+
+  return value.endsWith('\n') ? value : `${value}\n`
+}
+
+/**
+ * The message to show when the private half is missing.
+ *
+ * Written out rather than left to each caller, because this is the moment where a
+ * system quietly stops proving anything, and the person reading needs to know that
+ * rather than see a blank.
+ */
+export const NO_PRIVATE_KEY =
+  'ATTESTATION_PRIVATE_KEY is not set, so the record cannot be vouched for. ' +
+  'Run `npm run keys:generate` — it writes the private half into .env and the ' +
+  'public half into keys/attestation.pub, which is meant to be published. ' +
+  'Without it the chain still detects any entry that was changed, removed from ' +
+  'the middle, or reordered; what it cannot detect on its own is entries removed ' +
+  'from the end, and closing that is exactly what the attestation is for.'
+
 function loadPrivate(pem: string): KeyObject {
   let key: KeyObject
   try {

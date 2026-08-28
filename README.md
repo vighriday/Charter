@@ -108,6 +108,40 @@ both commands a person types into a terminal.
 
 ---
 
+## Checking our record without trusting us
+
+Charter keeps a record of everything it does. Each entry carries the fingerprint of
+the entry before it, so altering anything in the middle breaks every link after it
+and the checker names the exact entry that changed.
+
+One thing that chain cannot catch on its own: entries removed from the **end**,
+because a shortened chain is still a valid chain. So the end of each record is
+vouched for separately, with a key. That statement is an **attestation** — the
+machine vouching for its own conduct. It is not a signature, and in Charter that
+word is only ever used for something a person does.
+
+An attestation is worth exactly as much as the key behind it is trusted, so the
+public half of that key is published here, in the open:
+
+    keys/attestation.pub
+
+    key name   e9882545fba024e54fdbb93088300da8ff3d2e6455089726b05b48f82559249b
+
+The public half only *checks* statements; it cannot make them, so publishing it
+gives nothing away. The private half never leaves one machine.
+
+**Why the key is published rather than shipped inside the thing it checks.** A
+checker that read its key out of the same file it was checking would prove nothing
+at all — anyone could sign anything with a key they invented and ship both
+together. The key has to come from outside. That is what this file is for, and why
+the key name above is worth comparing against the one in any packet you are handed.
+
+If you are making your own copy, `npm run keys:generate` writes a fresh pair: the
+public half here, the private half straight into `.env`, which is never committed.
+It is never printed, so it does not end up in terminal scrollback.
+
+---
+
 ## Three words, and their meanings never move
 
 | Word | What it means here |
