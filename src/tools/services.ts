@@ -1,0 +1,183 @@
+/**
+ * The outside world, described as narrowly as Charter actually needs it.
+ *
+ * WHAT THIS FILE IS
+ *
+ * Every service Charter talks to, written as the smallest possible description of
+ * what we want from it. Not what the vendor offers — what we use.
+ *
+ * WHY THAT NARROWNESS IS DELIBERATE
+ *
+ * Three reasons, and the third is the one that matters most here.
+ *
+ * **A vendor can be replaced without touching anything else.** The search
+ * description below says "run a query, get back titles and addresses." Two
+ * different companies sit behind it, and nothing above this file knows which one
+ * answered — including the model.
+ *
+ * **Tests need no accounts.** Every test in this project passes a stand-in, so the
+ * whole suite runs with no keys, no network and no cost. Three of the challenges
+ * this project enters require that a stranger can clone it and run it.
+ *
+ * **The record stays honest about which service was used.** Because the swap
+ * happens here rather than inside a tool, the fact that the second service
+ * answered is a real fact this file returns, and it goes into the record. Hiding a
+ * fallback from the model is sensible; hiding it from the record would not be.
+ *
+ * WHY THE MODEL IS NEVER TOLD WHICH SERVICE ANSWERED
+ *
+ * If the model can see that one search service was used and not the other, it can
+ * start reasoning about the services instead of about the business — asking to
+ * retry with "the other one", or treating results as more or less trustworthy
+ * based on where they came from. It has no basis for either judgement. So the
+ * result handed back names no vendor, and the vendor's name goes only into the
+ * record, where a person can see it.
+ */
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Searching the live web
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SearchHit {
+  readonly title: string
+  readonly url: string
+  /** The short piece of text the search service shows under the title. */
+  readonly snippet: string
+}
+
+export interface SearchAnswer {
+  readonly hits: readonly SearchHit[]
+  /**
+   * Which service answered.
+   *
+   * Recorded, never returned to the model. See the note at the top of this file.
+   */
+  readonly answeredBy: string
+}
+
+export interface SearchService {
+  /**
+   * Run one query and return what came back.
+   *
+   * Charter's primary search service allows 250 searches a **month**, and one run
+   * uses three to six. Forty runs while developing would exhaust a month's
+   * allowance before a single repeated test, so results are cached by the exact
+   * query text from the very first commit rather than added later.
+   */
+  search(query: string): Promise<SearchAnswer>
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The web address registrar
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AddressQuote {
+  readonly domain: string
+  readonly available: boolean
+  /** The first year's price in whole cents, as text. Absent when it is taken. */
+  readonly priceCents?: string
+}
+
+export interface AddressRegistration {
+  readonly domain: string
+  /** What was actually charged, in whole cents, as text. */
+  readonly chargedCents: string
+  /** True when this went to the registrar's free sandbox and nothing real happened. */
+  readonly sandbox: boolean
+}
+
+export interface RegistrarService {
+  /** Is this address free, and what would it cost? Costs nothing to ask. */
+  quote(domain: string): Promise<AddressQuote>
+  /**
+   * Register the address. Spends money and cannot be undone.
+   *
+   * Nothing in this project calls this without a recorded human permission
+   * covering the price — that check is in `guard.ts` and runs before the tool
+   * does. The check is not in here on purpose: a rule enforced inside the thing it
+   * governs is a rule that moves when the thing is replaced.
+   */
+  register(domain: string, priceCents: string): Promise<AddressRegistration>
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Everything together
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface Services {
+  readonly search: SearchService
+  readonly registrar: RegistrarService
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stand-ins
+// ─────────────────────────────────────────────────────────────────────────────
+
+export class NoRecordedAnswer extends Error {
+  constructor(what: string) {
+    super(
+      `${what}\n\n` +
+        `Nothing was called. This stand-in has no path to the network at all, which ` +
+        `is deliberate: a missing recorded answer must be an error, never a quiet ` +
+        `real call. A test that silently reaches a live service is a test that ` +
+        `spends a limited allowance and passes for the wrong reason.`,
+    )
+    this.name = 'NoRecordedAnswer'
+  }
+}
+
+/**
+ * A search service that answers only from what it was given.
+ *
+ * There is no network path in here. A query with no prepared answer is an error,
+ * not a fall back to a real call — the same rule the recorded-response cache
+ * follows, and for the same reason.
+ */
+export function preparedSearch(
+  answers: Readonly<Record<string, SearchAnswer>>,
+): SearchService {
+  return {
+    async search(query: string): Promise<SearchAnswer> {
+      const answer = answers[query]
+      if (answer === undefined) {
+        throw new NoRecordedAnswer(
+          `no recorded answer for the search "${query}". Prepared: ` +
+            `${Object.keys(answers).map((q) => `"${q}"`).join(', ') || 'nothing'}.`,
+        )
+      }
+      return answer
+    },
+  }
+}
+
+/**
+ * A registrar that answers only from what it was given, and counts what it did.
+ *
+ * `registered` is what the tests read to prove that a registration did *not*
+ * happen when permission was missing. Proving the refusal by checking that nothing
+ * was charged is stronger than checking that an error was thrown, because an
+ * error thrown after the charge would still be an error.
+ */
+export function preparedRegistrar(
+  quotes: Readonly<Record<string, AddressQuote>>,
+): RegistrarService & { readonly registered: readonly AddressRegistration[] } {
+  const registered: AddressRegistration[] = []
+  return {
+    registered,
+    async quote(domain: string): Promise<AddressQuote> {
+      const quote = quotes[domain]
+      if (quote === undefined) {
+        throw new NoRecordedAnswer(
+          `no recorded answer for the address "${domain}". Prepared: ` +
+            `${Object.keys(quotes).map((d) => `"${d}"`).join(', ') || 'nothing'}.`,
+        )
+      }
+      return quote
+    },
+    async register(domain: string, priceCents: string): Promise<AddressRegistration> {
+      const registration: AddressRegistration = { domain, chargedCents: priceCents, sandbox: true }
+      registered.push(registration)
+      return registration
+    },
+  }
+}

@@ -15,7 +15,8 @@
     "keys:generate": "tsx src/record/generate-keys.ts",
     "db:migrate": "tsx src/db/migrate.ts",
     "record:demo": "tsx src/record/demo.ts",
-    "check": "npm run git:check && npm run typecheck && npm run test"
+    "check": "npm run git:check && npm run typecheck && npm run test",
+    "agent:demo": "tsx src/case/demo.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",

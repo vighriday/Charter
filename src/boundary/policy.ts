@@ -66,10 +66,14 @@ export interface Boundary {
  * Where the agent's own code lives: the tool handlers, meaning the code that runs
  * when the model chooses to do something.
  *
- * Nothing here exists yet. The tool registry is the first thing built on day two,
- * and it goes in `src/tools/`. Naming the folder before it exists is deliberate —
- * the check is already written and already running, so the boundary is enforced
- * from the very first handler rather than from whenever somebody remembers.
+ * `src/tools/` holds the tools themselves and the code that checks and runs them.
+ * `src/agent/` holds the loop that asks the model for one choice and carries it
+ * out. Between them, that is everything a decision by the model can set in motion.
+ *
+ * These folders were named here before either existed, so the rules below were
+ * enforced from the very first handler rather than from whenever somebody
+ * remembered. A test now fails the build if they ever go empty again, because an
+ * empty set would make the reach check pass for the wrong reason.
  */
 export const AGENT_REACHABLE: readonly PathPattern[] = ['src/tools/', 'src/agent/']
 
@@ -90,6 +94,22 @@ export const BOUNDARIES: readonly Boundary[] = [
     notBuiltYet:
       'The signature request is built on day five. The rule is written now so it ' +
       'is enforced from the first line of that module rather than added afterwards.',
+  },
+  {
+    name: 'the human consent path',
+    why:
+      'The only code that writes a granted permission to spend, and a recorded ' +
+      'answer from a person. The agent has a tool for ASKING for permission and no ' +
+      'tool for granting one, and this is what makes that structural rather than a ' +
+      'rule somebody has to keep. If anything the model can trigger could reach ' +
+      'this, a model could be talked into granting itself permission and then ' +
+      'spending under it, and every check downstream would be arguing with a ' +
+      'permission that looked completely genuine. The one file listed below is the ' +
+      "demonstration, which stands in for a person's browser. It does not live in " +
+      "the agent's folder, and it was moved out of it because this check refused " +
+      'the build while it was there.',
+    guards: ['src/case/human.ts'],
+    mayReach: ['src/case/demo.ts'],
   },
   {
     name: 'the attestation key',

@@ -489,5 +489,27 @@ describe('this project', () => {
     })
   }
 
-  it.todo('the tool registry exists in src/tools/, so the reach check walks something — day two')
+  it('has agent-reachable code for the reach check to walk', () => {
+    // Until the tool registry existed, the reach check above walked an empty set
+    // and passed for the wrong reason. It no longer can: this fails the moment
+    // `src/tools/` and `src/agent/` stop holding anything, which is the only way
+    // that check could quietly go back to proving nothing.
+    const handlers = filesMatching(project.files, AGENT_REACHABLE)
+    expect(
+      handlers.length,
+      `Nothing matches ${AGENT_REACHABLE.join(' or ')}, so the check that nothing the ` +
+        `model can trigger reaches a guarded module is walking an empty set and ` +
+        `passing for the wrong reason.`,
+    ).toBeGreaterThan(0)
+  })
+
+  it('names every file the model can trigger, so the list can be read and argued with', () => {
+    // Printed rather than counted. Somebody deciding whether to trust the boundary
+    // should be able to see exactly which files it considers agent-reachable, and
+    // say so if the list looks wrong to them.
+    const handlers = filesMatching(project.files, AGENT_REACHABLE)
+    expect(handlers).toContain('src/tools/registry.ts')
+    expect(handlers).toContain('src/agent/loop.ts')
+    for (const file of handlers) expect(file.startsWith('src/')).toBe(true)
+  })
 })
