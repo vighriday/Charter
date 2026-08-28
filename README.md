@@ -16,6 +16,44 @@ people who trust each other completely today and might not in three years.
 
 ---
 
+## Try it in thirty seconds
+
+No account. No key. No database to install. No network.
+
+```bash
+npm install
+npm run record:demo
+```
+
+That runs a real PostgreSQL engine inside the Node process and shows five things:
+
+1. A record being written — five entries, each carrying the fingerprint of the one
+   before it.
+2. Somebody altering entry three. The checker names exactly which entry changed,
+   and shows the fingerprint it expected against the one it found.
+3. The database refusing the alteration outright. Not our code being careful — a
+   rule inside PostgreSQL, which returns `restrict_violation` and has no setting to
+   turn it off.
+4. **The one thing the chain cannot catch on its own.** Drop the last two entries
+   and the chain still verifies perfectly, because a shortened chain is a valid
+   chain. The attestation catches it. We show this rather than hiding it.
+5. The same question asked twice, reaching the network once.
+
+Everything else:
+
+```bash
+npm test          # 201 tests
+npm run typecheck
+npm run git:check # proves nothing secret is publishable, before every commit
+```
+
+`npm install` is the whole setup. There is no container to build, no database to
+start, no port to free and no password to set. The append-only rules are installed
+and enforced identically whether this runs on your laptop or against a hosted
+PostgreSQL.
+
+---
+
 ## The line this software will not cross
 
 **Charter never signs anything on a human's behalf.**
@@ -53,13 +91,24 @@ prevent it. Claiming prevention would be a claim the code cannot back.
 
 ---
 
-## Status
+## What is built, and what is not
 
-**The design is finished. The code starts on 27 August 2026.** This repository does
-not yet hold a running program, and this file will not pretend otherwise.
+Honest, because the demonstration above is checkable and this table should be too.
 
-Setup instructions, and a way to run the whole thing end to end with no accounts and
-no keys, arrive with the code.
+| Part | State |
+| --- | --- |
+| Canonical text form, so a fingerprint reproduces on any machine (RFC 8785) | **built, 26 tests** |
+| The chained record, and the checker that names the first broken link | **built, 25 tests** |
+| Attestation over the head of the record (Ed25519, Node's own cryptography) | **built, 22 tests** |
+| Append-only rules enforced inside PostgreSQL, not by our code | **built, 21 tests** |
+| Record-and-replay, so the whole thing runs with no credentials | **built, 19 tests** |
+| Model adapter — two verbs, never combined; replies kept exactly as they arrived | **built, 88 tests** |
+| The rule that a person's details may only reach a service that keeps nothing | **built, with a test proving the ineligible service is never called** |
+| The eight stages, and the agent that moves through them | not yet |
+| The verifier a stranger runs against a finished pack | not yet |
+| The outside services — documents, identity, registrar, search, signing | not yet |
+
+The demonstration only shows what exists. Nothing in it is staged.
 
 ---
 

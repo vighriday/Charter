@@ -15,7 +15,6 @@
     "keys:generate": "tsx src/record/generate-keys.ts",
     "db:migrate": "tsx src/db/migrate.ts",
     "record:demo": "tsx src/record/demo.ts",
-    "verify": "tsx src/verify/cli.ts",
     "check": "npm run git:check && npm run typecheck && npm run test"
   },
   "dependencies": {

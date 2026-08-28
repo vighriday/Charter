@@ -29,6 +29,10 @@ CHANGELOG.md
 # *.key rules below cover it, and scripts/git-check.mjs proves it every run.
 keys/*
 !keys/*.pub
+# And the file explaining all of the above. A public key with no explanation of
+# why it is public is worse than useless — the person checking our record needs to
+# read why the key lives outside the thing it verifies.
+!keys/README.md
 
 # Recorded real vendor responses. Committed on purpose: they are what lets a
 # stranger clone this and run the whole thing end to end with no accounts and no

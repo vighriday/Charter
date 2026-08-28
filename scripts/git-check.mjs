@@ -138,7 +138,8 @@ const EXPECTED = [
   /^package(-lock)?\.json$/, /^tsconfig(\.[a-z]+)?\.json$/,
   /^vitest\.config\.ts$/, /^next\.config\.[cm]?[jt]s$/,
   /^src\//, /^tests?\//, /^scripts\//, /^public\//, /^migrations\//,
-  /^\.github\//, /^keys\/[^/]+\.pub$/, /^fixtures\//, /^templates\//,
+  /^\.github\//, /^keys\/[^/]+\.pub$/, /^keys\/README\.md$/,
+  /^fixtures\//, /^templates\//,
 ]
 const unexpected = wouldPublish.filter(f => !EXPECTED.some(re => re.test(f)))
 if (unexpected.length) {
