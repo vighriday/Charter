@@ -73,6 +73,39 @@ machine may not act." It is this:
 
 Charter is built along that line, not across it.
 
+**Part of that is already checkable, on your machine, right now.**
+
+The module that carries a document to a person and asks them to sign it must be out
+of the agent's reach — not "we were careful", but genuinely unable to be called by
+anything the model can trigger. In a program that has an exact meaning: there is no
+chain of imports leading from the agent's code to that module. Code that cannot be
+reached cannot be run, whatever the model asks for.
+
+So it is a test rather than a promise. `npm test` reads every file in `src/`,
+follows every import, and fails if anything the model can trigger can arrive at the
+signing module — or at the private key that vouches for Charter's own record, which
+is guarded for the same reason. The rules it enforces sit in one short file,
+[src/boundary/policy.ts](src/boundary/policy.ts), written to be read without reading
+any code.
+
+Half of that test exists to prove the check works. It runs the same rules against
+small invented projects where the guarded module *is* reachable — directly, four
+steps away, and loaded only at the moment it is needed — and requires every one to
+be caught. A check that has only ever seen clean code has never been shown to catch
+anything, and would pass just as happily if it were broken.
+
+One limit, said out loud: nothing that reads code can follow a file loaded by a name
+the program works out while running. Rather than skipping those, the check reports
+every one and fails the build if a single one exists. It refuses to be blind rather
+than assuming the best.
+
+**And the honest state today.** The signing module itself is not written yet — that
+comes later in the build. Its rule is already in place and already armed: the moment
+that folder exists, the build fails until the rule is switched from "not built yet"
+to enforcing, so it cannot be quietly skipped. The same check is doing real work
+right now on the attestation key, where the only two files allowed to reach it are
+both commands a person types into a terminal.
+
 ---
 
 ## Three words, and their meanings never move
@@ -104,6 +137,7 @@ Honest, because the demonstration above is checkable and this table should be to
 | Record-and-replay, so the whole thing runs with no credentials | **built, 19 tests** |
 | Model adapter — two verbs, never combined; replies kept exactly as they arrived | **built, 88 tests** |
 | The rule that a person's details may only reach a service that keeps nothing | **built, with a test proving the ineligible service is never called** |
+| The consent boundary as a code boundary — nothing the model can trigger can reach the signing module or the attestation key | **built, 49 tests**, armed before the module it guards exists |
 | The eight stages, and the agent that moves through them | not yet |
 | The verifier a stranger runs against a finished pack | not yet |
 | The outside services — documents, identity, registrar, search, signing | not yet |
