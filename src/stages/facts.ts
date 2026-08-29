@@ -175,6 +175,25 @@ export interface AnsweredQuestion {
   readonly answer: string
 }
 
+/**
+ * What came of reading one owner's identity document.
+ *
+ * The list of fields waiting for a person is kept, not just a count. A count tells
+ * somebody there is work; the list tells them what the work is, and a person who
+ * has to open a second screen to find out is a person who checks less carefully.
+ */
+export interface IdentityCheck {
+  readonly owner: string
+  /** How many values were read off the document. */
+  readonly fieldsRead: string
+  /** The fields a person must look at, by name. */
+  readonly toReview: readonly string[]
+  /** Required fields the document did not produce at all. */
+  readonly missing: readonly string[]
+  /** How hard the reading service was asked to work, recorded with the result. */
+  readonly depth: string
+}
+
 /** What came out of preparing the ownership agreement. */
 export interface DraftedAgreement {
   /** How many articles the finished document has. */
@@ -211,6 +230,8 @@ export interface CaseFacts {
   readonly agreementChoices?: AgreementChoices
   /** The agreement, once it has been prepared. */
   readonly agreement?: DraftedAgreement
+  /** What came of reading each owner's identity document. */
+  readonly identityChecks: readonly IdentityCheck[]
   /**
    * Every question a person has actually answered, kept with its answer.
    *
@@ -230,5 +251,5 @@ export interface CaseFacts {
 
 /** A case that has just begun: an identifier and nothing else. */
 export function emptyCase(caseId: string): CaseFacts {
-  return { caseId, owners: [], openQuestions: [], answers: [] }
+  return { caseId, owners: [], openQuestions: [], answers: [], identityChecks: [] }
 }

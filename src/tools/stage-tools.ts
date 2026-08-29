@@ -32,6 +32,7 @@ import type { JsonObject, JsonValue } from '../record/canonical.js'
 import { compareNames, verdictFrom, type Comparison } from '../names/compare.js'
 import { maySpend, afterSpending, cents, asMoney } from './guard.js'
 import { prepareAgreement } from '../agreement/prepare.js'
+import { reviewDocument, explain, DEFAULT_SCORE_FLOOR } from '../identity/review.js'
 import type { Tool, ToolContext, ToolOutcome, ToolEvent } from './registry.js'
 
 /** Read a required text argument. The shape was already checked before this ran. */
@@ -659,6 +660,115 @@ export const draftAgreement: Tool = {
   },
 }
 
+export const readIdentityDocument: Tool = {
+  name: 'read_identity_document',
+  summary:
+    "Read one owner's identity document and check every value it produced. Says " +
+    'which values a person has to look at.',
+  why:
+    'The document is read by a document service. It is never shown to a model, at ' +
+    'any stage, and no model takes any part in deciding which values need a ' +
+    'person. That decision is a fixed comparison in code: first whether each value ' +
+    'can actually be found in the document, then whether the required fields are ' +
+    'there, then format and consistency, and only last the service\u2019s own ' +
+    'confidence score \u2014 which the service itself says is uncalibrated and not a ' +
+    'probability. The rule may always send MORE to a person. It can never send ' +
+    'fewer, and this tool cannot clear anything.',
+  schema: {
+    type: 'object',
+    properties: {
+      owner: {
+        type: 'string',
+        description: 'Whose document this is, spelled exactly as the owner was written down.',
+        minLength: 1,
+        maxLength: 200,
+      },
+      document: {
+        type: 'string',
+        description: 'Which uploaded document to read.',
+        minLength: 1,
+        maxLength: 200,
+      },
+    },
+    required: ['owner', 'document'],
+    additionalProperties: false,
+  },
+  reversible: true,
+  costsMoney: false,
+  async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
+    const owner = text(args, 'owner')
+    const documentRef = text(args, 'document')
+
+    const known = context.facts.owners.some((one) => one.name === owner)
+    if (!known) {
+      // A document belonging to somebody nobody wrote down is a document nobody
+      // can check. It is not read at all.
+      const why =
+        `"${owner}" is not one of the owners on this case. A document belonging to ` +
+        'somebody who was never written down is a document nobody can check against ' +
+        'anything, so it is not read'
+      return {
+        result: { refused: why },
+        events: [{ kind: 'identity.read.refused', payload: { owner, why } }],
+      }
+    }
+
+    // How hard the service is asked to work. Set deliberately and recorded with
+    // the result, because the cheapest and dearest settings differ by
+    // twenty-four times per page and a run must not be quietly cheaper in
+    // development than in a demonstration.
+    const depth = 'understand'
+
+    const document = await context.services.identity.read(owner, documentRef, depth)
+    const today = context.now().toISOString().slice(0, 10)
+
+    const review = reviewDocument(document, { givenName: owner, today })
+
+    // What goes back to the model is the shape of the outcome and nothing read off
+    // the document. Not a name, not a number, not a date. Everything in the next
+    // request is in this reply, and an identity detail put here would travel to a
+    // provider on every following turn of the stage.
+    const events: ToolEvent[] = [
+      {
+        kind: 'identity.read',
+        payload: {
+          owner,
+          depth,
+          fieldsRead: String(document.fields.length),
+          toReview: review.toReview as unknown as JsonValue,
+          missing: review.missing as unknown as JsonValue,
+        },
+      },
+    ]
+
+    for (const field of review.fields) {
+      if (!field.needsAPerson) continue
+      events.push({
+        kind: 'identity.field.sent.for.review',
+        payload: {
+          owner,
+          field: field.field,
+          label: field.label,
+          // Why, in the words a reviewer reads. Handing somebody "0.62" and
+          // handing them "this could not be found anywhere in the document" are
+          // not the same act, and only one of them tells them what to check.
+          reasons: field.reasons.map(explain) as unknown as JsonValue,
+        },
+      })
+    }
+
+    return {
+      result: {
+        owner,
+        fieldsRead: String(document.fields.length),
+        waitingOnAPerson: String(review.toReview.length),
+        floorUsed: String(DEFAULT_SCORE_FLOOR),
+      },
+      events,
+    }
+  },
+}
+
 /**
  * Every tool that exists today.
  *
@@ -675,6 +785,7 @@ export const ALL_TOOLS: readonly Tool[] = [
   registerAddress,
   recordAgreementChoice,
   draftAgreement,
+  readIdentityDocument,
 ]
 
 // Used by the guard's tests and by the spend report. Re-exported here so callers

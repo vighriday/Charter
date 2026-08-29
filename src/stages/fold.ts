@@ -47,6 +47,7 @@ import type { JsonObject, JsonValue } from '../record/canonical.js'
 import {
   emptyCase,
   type CaseFacts,
+  type IdentityCheck,
   type Owner,
   type PossibleCollision,
   type SearchPerformed,
@@ -100,6 +101,7 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
   const owners: Owner[] = []
   const openQuestions: string[] = []
   const answers: { question: string; answer: string }[] = []
+  const identityChecks: IdentityCheck[] = []
 
   for (const entry of entries) {
     // A forgotten payload is a real state: personal details can be cleared from
@@ -167,6 +169,27 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         } else if (which === 'exit_process') {
           facts = { ...facts, agreementChoices: { ...choices, hasExitProcess: value === 'yes' } }
         }
+        break
+      }
+
+      case 'identity.read': {
+        const owner = asText(payload, 'owner')
+        const fieldsRead = asText(payload, 'fieldsRead')
+        const depth = asText(payload, 'depth')
+        if (owner === undefined || fieldsRead === undefined || depth === undefined) break
+        // A later reading of the same owner replaces the earlier one. Somebody
+        // uploading a clearer photograph of the same passport is the ordinary
+        // case, and two entries for one person would double the review queue.
+        const already = identityChecks.findIndex((one) => one.owner === owner)
+        const check: IdentityCheck = {
+          owner,
+          fieldsRead,
+          depth,
+          toReview: asTextList(payload, 'toReview'),
+          missing: asTextList(payload, 'missing'),
+        }
+        if (already === -1) identityChecks.push(check)
+        else identityChecks[already] = check
         break
       }
 
@@ -309,7 +332,7 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
     }
   }
 
-  return { ...facts, owners, openQuestions, answers }
+  return { ...facts, owners, openQuestions, answers, identityChecks }
 }
 
 /**

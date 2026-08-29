@@ -55,7 +55,7 @@ import { fixedClock, readEvents, verifyRun } from '../record/log.js'
 import { describeCheck } from '../record/chain.js'
 import { buildRegistry, catalogue, type Tool } from '../tools/registry.js'
 import { ALL_TOOLS } from '../tools/stage-tools.js'
-import { preparedSearch, preparedRegistrar, type Services } from '../tools/services.js'
+import { preparedSearch, preparedRegistrar, preparedIdentity, type Services } from '../tools/services.js'
 import { grantSpendPermission, answerQuestion } from './human.js'
 import { STAGES, type StageName } from '../stages/stages.js'
 import { readFacts, runStage, advance } from '../agent/run.js'
@@ -132,6 +132,9 @@ async function main(): Promise<void> {
   const registry: ReadonlyMap<string, Tool> = buildRegistry(ALL_TOOLS)
 
   const services: Services = {
+    // No identity document is read in this demonstration, and none is prepared.
+    // A request for one is an error rather than a quiet real call.
+    identity: preparedIdentity({}),
     search: preparedSearch({
       'Rivera Sisters Bakery Texas': {
         answeredBy: 'the-first-search-service',

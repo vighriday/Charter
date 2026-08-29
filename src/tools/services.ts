@@ -38,6 +38,8 @@
 // Searching the live web
 // ─────────────────────────────────────────────────────────────────────────────
 
+import type { ReadDocument } from '../identity/fields.js'
+
 export interface SearchHit {
   readonly title: string
   readonly url: string
@@ -104,9 +106,29 @@ export interface RegistrarService {
 // Everything together
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Reads the fields off an identity document.
+ *
+ * It reads. It does not decide anything. Whether a value needs a person is worked
+ * out afterwards in plain code, from what came back here and from what the owners
+ * already told us, and no model takes part in it.
+ */
+export interface IdentityReader {
+  /**
+   * Read one document.
+   *
+   * `depth` is how hard the service is asked to work, in its own words. It is
+   * passed in rather than defaulted, because the cheapest and dearest settings
+   * differ by twenty-four times per page and a run must not be quietly cheaper in
+   * development than in a demonstration.
+   */
+  read(owner: string, documentRef: string, depth: string): Promise<ReadDocument>
+}
+
 export interface Services {
   readonly search: SearchService
   readonly registrar: RegistrarService
+  readonly identity: IdentityReader
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -158,6 +180,33 @@ export function preparedSearch(
  * was charged is stronger than checking that an error was thrown, because an
  * error thrown after the charge would still be an error.
  */
+/**
+ * An identity reader that answers only from documents recorded in advance.
+ *
+ * Nothing is uploaded and no real person's document is involved. A request for
+ * something nobody prepared is an error rather than a quiet real call, which is
+ * the same rule the rest of this project runs on.
+ */
+export function preparedIdentity(
+  documents: Readonly<Record<string, ReadDocument>>,
+): IdentityReader & { readonly readCalls: readonly { readonly owner: string; readonly depth: string }[] } {
+  const readCalls: { owner: string; depth: string }[] = []
+  return {
+    readCalls,
+    async read(owner: string, documentRef: string, depth: string): Promise<ReadDocument> {
+      const prepared = documents[documentRef]
+      if (prepared === undefined) {
+        throw new NoRecordedAnswer(
+          `no recorded reading for the document "${documentRef}". Prepared: ` +
+            `${Object.keys(documents).map((one) => `"${one}"`).join(', ') || 'nothing'}.`,
+        )
+      }
+      readCalls.push({ owner, depth })
+      return { ...prepared, owner, depth }
+    },
+  }
+}
+
 export function preparedRegistrar(
   quotes: Readonly<Record<string, AddressQuote>>,
 ): RegistrarService & { readonly registered: readonly AddressRegistration[] } {

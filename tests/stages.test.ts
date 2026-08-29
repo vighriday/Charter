@@ -326,7 +326,7 @@ describe('the stages that are not built yet', () => {
   it('says so rather than letting a case through', () => {
     // Not a placeholder that quietly passes. A case genuinely cannot pass a stage
     // whose work does not exist, and the refusal says which work.
-    for (const name of ['verify', 'assemble', 'boundary', 'publish'] as StageName[]) {
+    for (const name of ['assemble', 'boundary', 'publish'] as StageName[]) {
       const result = couldMoveOn(name, understood)
       expect(result.ready, `stage "${name}" claimed to be finished`).toBe(false)
       if (!result.ready) expect(result.because).toContain('not built yet')
@@ -434,5 +434,70 @@ describe('the tool catalogue', () => {
     for (const tool of registry.values()) {
       expect(tool.why.length, `"${tool.name}" has no explanation`).toBeGreaterThan(60)
     }
+  })
+})
+
+describe('reading identity documents, and who decides what a person sees', () => {
+  const owners = understood.owners
+  const because = (facts: CaseFacts): string => {
+    const result = couldMoveOn('verify', facts)
+    if (result.ready) throw new Error('expected the stage to refuse')
+    return result.because
+  }
+
+  it('waits until every owner has had a document read', () => {
+    expect(because(understood)).toContain('no identity document has been read')
+  })
+
+  it('waits while any value is still with a person, and names the values', () => {
+    const half = {
+      ...understood,
+      identityChecks: owners.map((owner, index) => ({
+        owner: owner.name,
+        fieldsRead: '4',
+        depth: 'understand',
+        toReview: index === 0 ? ['expiry_date'] : [],
+        missing: [],
+      })),
+    }
+    expect(because(half)).toContain('expiry_date')
+  })
+
+  it('says plainly that nothing in the agent can clear a review', () => {
+    const half = {
+      ...understood,
+      identityChecks: owners.map((owner) => ({
+        owner: owner.name,
+        fieldsRead: '4',
+        depth: 'understand',
+        toReview: ['full_name'],
+        missing: [],
+      })),
+    }
+    expect(because(half)).toContain('No model takes any part in that decision')
+  })
+
+  it('lets the case through when every document is read and nothing is waiting', () => {
+    const done = {
+      ...understood,
+      identityChecks: owners.map((owner) => ({
+        owner: owner.name,
+        fieldsRead: '4',
+        depth: 'understand',
+        toReview: [],
+        missing: [],
+      })),
+    }
+    expect(couldMoveOn('verify', done).ready).toBe(true)
+  })
+
+  it('offers the model no tool that could clear a review', () => {
+    // It may read a document. Whether a value needs a person is decided in code
+    // afterwards, and there is nothing here that could reverse that.
+    expect(STAGES.verify.tools).toEqual(['read_identity_document', 'record_fact'])
+  })
+
+  it('carries nobody personal details to a model in this stage', () => {
+    expect(STAGES.verify.sensitivity).toBe('public')
   })
 })

@@ -3,7 +3,7 @@ import { foldFacts, describeSituation, type RecordedEntry } from '../src/stages/
 import { takeTurn, MAX_REPAIR_ATTEMPTS, type TurnTaker } from '../src/agent/loop.js'
 import { buildRegistry } from '../src/tools/registry.js'
 import { ALL_TOOLS } from '../src/tools/stage-tools.js'
-import { preparedSearch, preparedRegistrar, type Services } from '../src/tools/services.js'
+import { preparedSearch, preparedRegistrar, preparedIdentity, type Services } from '../src/tools/services.js'
 import { emptyCase } from '../src/stages/facts.js'
 import { STAGES } from '../src/stages/stages.js'
 import { MalformedReply, type TurnRequest, type TurnResult } from '../src/model/types.js'
@@ -28,6 +28,7 @@ const registry = buildRegistry(ALL_TOOLS)
 const services = (over: Partial<Services> = {}): Services => ({
   search: preparedSearch({}),
   registrar: preparedRegistrar({}),
+  identity: preparedIdentity({}),
   ...over,
 })
 
@@ -85,7 +86,13 @@ describe('folding the record into what is known', () => {
   const fold = (entries: RecordedEntry[]) => foldFacts('case-1', entries)
 
   it('starts from nothing', () => {
-    expect(fold([])).toEqual({ caseId: 'case-1', owners: [], openQuestions: [], answers: [] })
+    expect(fold([])).toEqual({
+      caseId: 'case-1',
+      owners: [],
+      openQuestions: [],
+      answers: [],
+      identityChecks: [],
+    })
   })
 
   it('collects the plain facts', () => {

@@ -304,14 +304,40 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
     whatHappens:
       "Read each owner's identity document, score every field, and send the " +
       'doubtful ones to a person. No model takes part in that decision.',
-    tools: [],
+    tools: ['read_identity_document', 'record_fact'],
     toolChoice: 'required',
-    // Deliberately public. The reading of an identity document is done by a
-    // document service, and the decision to escalate is a fixed comparison
-    // against a score. No model turn in this stage carries anybody's details.
+    // Deliberately public, and it is worth being precise about why. The identity
+    // document is read by a document service, never by a model. Whether a value
+    // needs a person is a fixed comparison in code. So no model turn in this
+    // stage carries anybody's identity details, and none ever will.
     sensitivity: 'public',
     maxTurns: 12,
-    readyToLeave: notBuiltYet('reading identity documents'),
+    readyToLeave: (facts) => {
+      if (facts.owners.length === 0) return notYet('no owners are recorded')
+
+      const unread = facts.owners.filter(
+        (owner) => !facts.identityChecks.some((check) => check.owner === owner.name),
+      )
+      if (unread.length > 0) {
+        return notYet(
+          `no identity document has been read for ${unread.map((one) => one.name).join(' and ')}`,
+        )
+      }
+
+      const waiting = facts.identityChecks.filter((check) => check.toReview.length > 0)
+      if (waiting.length > 0) {
+        return notYet(
+          `${waiting.length} document(s) have values a person still has to check: ` +
+            waiting
+              .map((one) => `${one.owner} (${one.toReview.join(', ')})`)
+              .join('; ') +
+            '. No model takes any part in that decision, and nothing here can clear ' +
+            'it — a person looks, or the case waits',
+        )
+      }
+
+      return ready
+    },
   },
 
   assemble: {
