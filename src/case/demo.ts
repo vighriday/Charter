@@ -1,13 +1,14 @@
 /**
- * Stages one to three, end to end.
+ * All eight stages, end to end.
  *
  *     npm run agent:demo
  *
  * WHAT THIS SHOWS
  *
- * A whole case moving through the first three stages against a real database, a
- * real append-only record, the real stage machine and the real tools. It runs with
- * no account, no key, no network and no cost.
+ * A whole case moving from a plain-English description through to a published
+ * website, against a real database, a real append-only record, the real stage
+ * machine and the real tools. It runs with no account, no key, no network and no
+ * cost.
  *
  * WHAT IS REAL HERE AND WHAT IS STOOD IN FOR — SAID PLAINLY
  *
@@ -56,8 +57,13 @@ import { describeCheck } from '../record/chain.js'
 import { buildRegistry, catalogue, type Tool } from '../tools/registry.js'
 import { ALL_TOOLS } from '../tools/stage-tools.js'
 import { preparedSearch, preparedRegistrar, preparedIdentity, preparedPublishing, type Services } from '../tools/services.js'
-import { grantSpendPermission, answerQuestion } from './human.js'
-import { STAGES, type StageName } from '../stages/stages.js'
+import {
+  grantSpendPermission,
+  answerQuestion,
+  approveSendingForSignature,
+  checkIdentityField,
+} from './human.js'
+import { STAGES, couldMoveOn, type StageName } from '../stages/stages.js'
 import { readFacts, runStage, advance } from '../agent/run.js'
 import type { TurnTaker } from '../agent/loop.js'
 import type { JsonObject } from '../record/canonical.js'
@@ -132,9 +138,36 @@ async function main(): Promise<void> {
   const registry: ReadonlyMap<string, Tool> = buildRegistry(ALL_TOOLS)
 
   const services: Services = {
-    // No identity document is read in this demonstration, and none is prepared.
-    // A request for one is an error rather than a quiet real call.
-    identity: preparedIdentity({}),
+    // Two invented documents. No real person's identity document is used here,
+    // and none ever will be: that is a rule of this project, not a limit of a
+    // free tier. Lucia's expiry date is deliberately one the reader could only
+    // match approximately, so the review rule can be seen firing.
+    identity: preparedIdentity({
+      'ana-passport': {
+        owner: 'Ana Rivera',
+        kind: 'passport',
+        depth: 'understand',
+        fields: [
+          { name: 'full_name', value: 'ANA MARIA RIVERA', label: 'id_match', confidence: 0.98 },
+          { name: 'date_of_birth', value: '1988-04-12', label: 'id_match', confidence: 0.97 },
+          { name: 'document_number', value: 'X1234567', label: 'id_match', confidence: 0.99 },
+          { name: 'expiry_date', value: '2031-04-11', label: 'id_match', confidence: 0.96 },
+        ],
+      },
+      'lucia-passport': {
+        owner: 'Lucia Rivera',
+        kind: 'passport',
+        depth: 'understand',
+        fields: [
+          { name: 'full_name', value: 'LUCIA RIVERA', label: 'id_match', confidence: 0.98 },
+          { name: 'date_of_birth', value: '1991-11-02', label: 'id_match', confidence: 0.96 },
+          { name: 'document_number', value: 'X7654321', label: 'id_match', confidence: 0.98 },
+          // Approximately matched. The reader was confident; it still goes to a
+          // person, because the label is tested before the number.
+          { name: 'expiry_date', value: '2030-08-19', label: 'fuzzy_match', confidence: 0.94 },
+        ],
+      },
+    }),
     publishing: preparedPublishing(),
     search: preparedSearch({
       'Rivera Sisters Bakery Texas': {
@@ -318,6 +351,182 @@ async function main(): Promise<void> {
       `${address.because}`,
   )
 
+  // ── Stage four ─────────────────────────────────────────────────────────────
+  const four = await advance(
+    { db, caseId: CASE, registry, router: scripted([]), services, clock },
+    'address',
+  )
+  heading(`Stage 4 of 8 — ${four === undefined ? '?' : STAGES[four].title}`)
+  console.log(
+    `  ${DIM}Every number, every article number and every cross-reference is worked\n` +
+      `  out in plain code. The model chooses when, and nothing about what.${OFF}\n`,
+  )
+
+  // Charter refuses to draft before the owners have answered the two questions
+  // that have no safe default, so it asks them first.
+  const stageFourAsking = scripted([
+    choosing('ask_question', {
+      question: 'Who will run the company day to day — the two of you, or someone you appoint?',
+      why: 'There is no safe default. One answer lets either owner bind the company; the other takes that away from both.',
+    }),
+  ])
+  const asking = await runStage(
+    { db, caseId: CASE, registry, router: stageFourAsking, services, clock, onEvent: watching() },
+    'draft',
+  )
+  console.log(`\n  ${YELLOW}Stopped:${OFF} ${asking.because}\n`)
+
+  await answerQuestion(
+    { db, caseId: CASE, token: TOKEN, expectedToken: TOKEN, clock },
+    'Who will run the company day to day — the two of you, or someone you appoint?',
+    'The two of us.',
+  )
+  await answerQuestion(
+    { db, caseId: CASE, token: TOKEN, expectedToken: TOKEN, clock },
+    'Do you want a written way for an owner to leave and be bought out?',
+    'No. We have not agreed one.',
+  )
+  console.log(`  ${GREEN}·${OFF} Two people answered. The run carries on.\n`)
+
+  const stageFourAgain = scripted([
+    choosing('record_fact', { about: 'owner_share', value: '50', owner: 'Ana Rivera' }),
+    choosing('record_fact', { about: 'owner_share', value: '50', owner: 'Lucia Rivera' }),
+    choosing('record_fact', {
+      about: 'owner_contribution_value',
+      value: '2000000',
+      owner: 'Ana Rivera',
+    }),
+    choosing('record_fact', {
+      about: 'owner_contribution_value',
+      value: '2000000',
+      owner: 'Lucia Rivera',
+    }),
+    choosing('record_agreement_choice', { which: 'managed_by', value: 'the owners themselves' }),
+    choosing('record_agreement_choice', { which: 'exit_process', value: 'no' }),
+    choosing('draft_agreement', {}),
+  ])
+  const draft = await runStage(
+    { db, caseId: CASE, registry, router: stageFourAgain, services, clock, onEvent: watching() },
+    'draft',
+  )
+  console.log(
+    `\n  ${draft.finished ? GREEN : YELLOW}Stage 4 ${draft.finished ? 'finished' : 'stopped'}:${OFF} ` +
+      `${draft.because}`,
+  )
+
+  const drafted = await readFacts(db, CASE)
+  if (drafted.agreement !== undefined) {
+    console.log('')
+    for (const line of drafted.agreement.explanation) console.log(`    ${DIM}${line}${OFF}`)
+  }
+
+  // ── Stage five ─────────────────────────────────────────────────────────────
+  const five = await advance(
+    { db, caseId: CASE, registry, router: scripted([]), services, clock },
+    'draft',
+  )
+  heading(`Stage 5 of 8 — ${five === undefined ? '?' : STAGES[five].title}`)
+  console.log(
+    `  ${DIM}Whether a value needs a person is decided by a fixed comparison in code.\n` +
+      `  No model takes any part in it, and nothing here can clear a review.${OFF}\n`,
+  )
+
+  const stageFive = scripted([
+    choosing('read_identity_document', { owner: 'Ana Rivera', document: 'ana-passport' }),
+    choosing('read_identity_document', { owner: 'Lucia Rivera', document: 'lucia-passport' }),
+  ])
+  const identity = await runStage(
+    { db, caseId: CASE, registry, router: stageFive, services, clock, onEvent: watching() },
+    'verify',
+  )
+  console.log(
+    `\n  ${identity.finished ? GREEN : YELLOW}Stage 5 ${identity.finished ? 'finished' : 'stopped'}:${OFF} ` +
+      `${identity.because}`,
+  )
+  console.log(
+    `\n  ${DIM}The reader was 94% confident of that value. It went to a person anyway,\n` +
+      `  because it could only be matched approximately — and the label is tested\n` +
+      `  before the number. Nothing in the agent can clear it.${OFF}\n`,
+  )
+
+  // A person looks, in their own browser, along a path nothing in the agent can
+  // reach. Both answers are recorded; this one confirms the value.
+  await checkIdentityField(
+    { db, caseId: CASE, token: TOKEN, expectedToken: TOKEN, clock },
+    'Lucia Rivera',
+    'expiry_date',
+    'the value is correct',
+  )
+  console.log(`  ${GREEN}·${OFF} A person checked it against the document and confirmed it.`)
+
+  // ── Stage six ──────────────────────────────────────────────────────────────
+  const six = await advance(
+    { db, caseId: CASE, registry, router: scripted([]), services, clock },
+    'verify',
+  )
+  heading(`Stage 6 of 8 — ${six === undefined ? '?' : STAGES[six].title}`)
+  console.log(
+    `  ${DIM}Merge, then seal, then fingerprint the sealed bytes. Nothing that would\n` +
+      `  rewrite the file may run afterwards.${OFF}\n`,
+  )
+
+  const assembled = await runStage(
+    { db, caseId: CASE, registry, router: scripted([choosing('assemble_pack', {})]), services, clock, onEvent: watching() },
+    'assemble',
+  )
+  console.log(
+    `\n  ${assembled.finished ? GREEN : YELLOW}Stage 6 ${assembled.finished ? 'finished' : 'stopped'}:${OFF} ` +
+      `${assembled.because}`,
+  )
+
+  const sealedFacts = await readFacts(db, CASE)
+  const sealedPack = sealedFacts.pack
+  if (sealedPack !== undefined) {
+    console.log(`\n    sealed ${sealedPack.sizeBytes} bytes`)
+    console.log(`    fingerprint ${sealedPack.fingerprint}`)
+  }
+
+  // ── Stage seven ────────────────────────────────────────────────────────────
+  const seven = await advance(
+    { db, caseId: CASE, registry, router: scripted([]), services, clock },
+    'assemble',
+  )
+  heading(`Stage 7 of 8 — ${seven === undefined ? '?' : STAGES[seven].title}`)
+  console.log(
+    `  ${DIM}This stage has no tools. That is the design, not an omission.${OFF}\n`,
+  )
+
+  const held = couldMoveOn('boundary', sealedFacts)
+  console.log(`  ${YELLOW}Held:${OFF} ${held.ready ? '(it did not hold)' : held.because}\n`)
+
+  // A person approves, in their own browser, along a path nothing in the agent
+  // can reach. This is not a signature and never becomes one.
+  await approveSendingForSignature(
+    { db, caseId: CASE, token: TOKEN, expectedToken: TOKEN, clock },
+    'Ana Rivera',
+    sealedPack?.fingerprint ?? '',
+  )
+  console.log(
+    `  ${GREEN}·${OFF} A person approved sending this exact pack — named by its fingerprint.\n` +
+      `    ${DIM}The owners sign it themselves. Charter signs nothing for anybody.${OFF}\n`,
+  )
+
+  // ── Stage eight ────────────────────────────────────────────────────────────
+  const eight = await advance(
+    { db, caseId: CASE, registry, router: scripted([]), services, clock },
+    'boundary',
+  )
+  heading(`Stage 8 of 8 — ${eight === undefined ? '?' : STAGES[eight].title}`)
+
+  const published = await runStage(
+    { db, caseId: CASE, registry, router: scripted([choosing('publish_site', {})]), services, clock, onEvent: watching() },
+    'publish',
+  )
+  console.log(
+    `\n  ${published.finished ? GREEN : YELLOW}Stage 8 ${published.finished ? 'finished' : 'stopped'}:${OFF} ` +
+      `${published.because}`,
+  )
+
   // ── What the record now holds ──────────────────────────────────────────────
   heading('The record')
   const events = await readEvents(db, CASE)
@@ -329,8 +538,10 @@ async function main(): Promise<void> {
     console.log(`    ${String(count).padStart(3)} caused by ${actor}`)
   }
   console.log(
-    `\n  ${DIM}The entry granting permission to spend is the only one caused by a human,\n` +
-      `  and it is the only reason anything was allowed to be bought.${OFF}\n`,
+    `\n  ${DIM}Every entry caused by a human is one the software could not produce for\n` +
+      `  itself: answering a question, granting permission to spend, checking a value\n` +
+      `  against a document, and approving that the pack be sent. None of the four has\n` +
+      `  a tool, and none of them is reachable from anything the model can trigger.${OFF}\n`,
   )
 
   const check = await verifyRun(db, CASE)
@@ -347,6 +558,27 @@ async function main(): Promise<void> {
   console.log(
     `    address    ${facts.address?.candidate ?? '(none)'} ` +
       `${facts.address?.registered === true ? '(registered)' : ''}`,
+  )
+  console.log(
+    `    agreement  ${facts.agreement === undefined ? '(not drafted)' : `${facts.agreement.articleCount} articles, dated ${facts.agreement.dated}`}`,
+  )
+  console.log(
+    `    identity   ${facts.identityChecks.length} document(s) read, ` +
+      `${facts.identityChecks.reduce((count, one) => count + one.toReview.length, 0)} value(s) sent to a person`,
+  )
+  console.log(
+    `    pack       ${facts.pack === undefined ? '(not sealed)' : `sealed, ${facts.pack.sizeBytes} bytes`}`,
+  )
+  console.log(
+    `    approval   ${facts.approvalToSend === undefined ? '(none)' : `${facts.approvalToSend.approvedBy}, for this exact pack`}`,
+  )
+  console.log(`    site       ${facts.site?.liveAt ?? '(not published)'}`)
+
+  console.log(
+    `\n  ${DIM}Eight stages, start to finish, with no account, no key and no network.\n` +
+      `  Four things a person did and the software could not: answering a question,\n` +
+      `  granting permission to spend, checking a value against the document it was\n` +
+      `  read from, and approving that the pack be sent. None of the four has a tool.${OFF}`,
   )
 
   // ── The catalogue ──────────────────────────────────────────────────────────

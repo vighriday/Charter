@@ -233,6 +233,21 @@ function waitingOnAPerson(facts: CaseFacts): string | undefined {
       `sends close ones to a person rather than guessing. Waiting for that answer.`
     )
   }
+  const waitingOnAReview = facts.identityChecks.filter((check) => check.toReview.length > 0)
+  if (waitingOnAReview.length > 0) {
+    // Nothing the model can do moves this forward. There is no tool that clears a
+    // review, and the code that records one having been done is not reachable from
+    // anything the model can trigger. Taking another turn here would spend a
+    // request from a daily allowance to be told the same thing again.
+    return (
+      `values read from an identity document are with a person: ` +
+      `${waitingOnAReview
+        .map((check) => `${check.owner} (${check.toReview.join(', ')})`)
+        .join('; ')}. ` +
+      `No tool clears a review, so no number of further turns will clear one — ` +
+      `only a person who has looked at the document can.`
+    )
+  }
   return undefined
 }
 
@@ -309,6 +324,33 @@ function describe(kind: string, payload: Record<string, unknown>): string {
       return `a person answered: ${String(payload['answer'])}`
     case 'stage.entered':
       return `stage ${String(payload['position'])}`
+    case 'agreement.choice.recorded':
+      return `${String(payload['which'])} = ${String(payload['value'])}`
+    case 'agreement.choice.refused':
+    case 'agreement.draft.refused':
+    case 'pack.refused':
+    case 'site.publish.refused':
+    case 'identity.read.refused':
+      return String(payload['why'])
+    case 'agreement.drafted':
+      return `${String(payload['articleCount'])} articles, dated ${String(payload['dated'])}`
+    case 'identity.read': {
+      const waiting = Array.isArray(payload['toReview']) ? payload['toReview'].length : 0
+      return (
+        `${String(payload['owner'])}: ${String(payload['fieldsRead'])} value(s) read, ` +
+        `${waiting} to a person`
+      )
+    }
+    case 'identity.field.sent.for.review':
+      return `${String(payload['owner'])} ${String(payload['field'])} — ${String(payload['label'])}`
+    case 'identity.field.checked':
+      return `a person checked ${String(payload['owner'])} ${String(payload['field'])}: ${String(payload['found'])}`
+    case 'pack.sealed':
+      return `sealed ${String(payload['sizeBytes'])} bytes, fingerprint ${String(payload['fingerprint']).slice(0, 12)}`
+    case 'signature.approved':
+      return `${String(payload['approvedBy'])} approved sending this exact pack`
+    case 'site.published':
+      return `live at ${String(payload['liveAt'])}`
     default:
       return kind
   }

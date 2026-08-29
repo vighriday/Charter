@@ -234,3 +234,47 @@ export async function approveSendingForSignature(
     act.clock,
   )
 }
+
+/**
+ * A person having looked at one doubtful value from an identity document, and
+ * saying what they found.
+ *
+ * WHY ONLY A PERSON CAN DO THIS
+ *
+ * Stage five decides, in plain code, which values read off an identity document
+ * have to be checked. Nothing in the agent can reverse that decision — there is no
+ * tool for it, and this function is not reachable from anything a model can
+ * trigger. If clearing a review were something the software could do, the review
+ * would be a formality with extra steps.
+ *
+ * So the case waits here until a person actually looks. That is slower, and it is
+ * the only version of this that means anything.
+ *
+ * BOTH ANSWERS ARE RECORDED
+ *
+ * "I looked and the value is right" and "I looked and the value is wrong" are both
+ * written down, with who looked. A review that only records the outcome somebody
+ * wanted is not a review.
+ */
+export async function checkIdentityField(
+  act: HumanAct,
+  owner: string,
+  field: string,
+  found: 'the value is correct' | 'the value is wrong',
+): Promise<void> {
+  if (!sameToken(act.token, act.expectedToken)) {
+    await refuse(act, 'checking a value read from an identity document', { owner, field })
+  }
+
+  await append(
+    act.db,
+    {
+      runId: act.caseId,
+      kind: 'identity.field.checked',
+      actor: 'human',
+      stage: null,
+      payload: { owner, field, found, checkedAt: act.clock().toISOString() },
+    },
+    act.clock,
+  )
+}

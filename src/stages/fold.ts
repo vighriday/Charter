@@ -193,6 +193,26 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         break
       }
 
+      case 'identity.field.checked': {
+        // Only a person writes this. A value confirmed correct leaves the review
+        // queue; a value confirmed WRONG stays in it, because the case must not
+        // move on from a document somebody has just said is wrong.
+        const owner = asText(payload, 'owner')
+        const field = asText(payload, 'field')
+        const found = asText(payload, 'found')
+        if (owner === undefined || field === undefined) break
+        const at = identityChecks.findIndex((one) => one.owner === owner)
+        if (at === -1) break
+        const check = identityChecks[at] as IdentityCheck
+        if (found === 'the value is correct') {
+          identityChecks[at] = {
+            ...check,
+            toReview: check.toReview.filter((one) => one !== field),
+          }
+        }
+        break
+      }
+
       case 'pack.sealed': {
         const fingerprintValue = asText(payload, 'fingerprint')
         const sizeBytes = asText(payload, 'sizeBytes')
