@@ -513,3 +513,46 @@ describe('this project', () => {
     for (const file of handlers) expect(file.startsWith('src/')).toBe(true)
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Vendor versions that must not be built against
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('the registrar version', () => {
+  /**
+   * name.com has two versions of their service, and the one every search engine
+   * points at is the old one.
+   *
+   * `www.name.com/api-docs` is now titled "[Deprecated] name.com v4 API
+   * Documentation", and their own overview says it "will sunset at a
+   * predetermined time in 2026" — the same year this is being built. The current
+   * service is CORE v1, at `docs.name.com`, path `/core/v1/`.
+   *
+   * This is enforced rather than remembered because of who reads it. The person
+   * judging this integration is name.com's Head of Product Engineering, whose
+   * team built CORE v1. Code posting to `/v4/` would say, in the first file she
+   * opened, that we never read past a search result — and nothing written
+   * afterwards recovers that.
+   *
+   * It costs nothing today and arms itself the moment the registrar client is
+   * written, which is the same shape as the boundary rules above.
+   */
+  it('is never the deprecated one', () => {
+    const offences: string[] = []
+    for (const [file, source] of readSourceTree(ROOT, ['src'])) {
+      source.split('\n').forEach((line, index) => {
+        // The path form and the host form of the old service. Written so that
+        // this file's own explanation does not match itself.
+        if (/\/v4\/|name\.com\/api-docs/.test(line)) {
+          offences.push(`${file}:${index + 1}  ${line.trim()}`)
+        }
+      })
+    }
+    expect(
+      offences.join('\n'),
+      'This looks like the deprecated name.com v4 service. Use CORE v1 — base ' +
+        'https://api.dev.name.com for the test environment, path /core/v1/. See ' +
+        'docs/integrations/name-com.md.',
+    ).toBe('')
+  })
+})
