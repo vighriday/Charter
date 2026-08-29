@@ -68,6 +68,12 @@ const asFlag = (payload: JsonObject, field: string): boolean | undefined => {
   return typeof value === 'boolean' ? value : undefined
 }
 
+/** A list of plain text lines, skipping anything that is not text. */
+const asTextList = (payload: JsonObject, field: string): readonly string[] => {
+  const value = payload[field]
+  return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
+}
+
 const asRows = (payload: JsonObject, field: string): JsonObject[] => {
   const value = payload[field]
   if (!Array.isArray(value)) return []
@@ -93,6 +99,7 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
   let verdict: 'clear' | 'collides' | 'needs-a-person' | undefined
   const owners: Owner[] = []
   const openQuestions: string[] = []
+  const answers: { question: string; answer: string }[] = []
 
   for (const entry of entries) {
     // A forgotten payload is a real state: personal details can be cleared from
@@ -115,6 +122,19 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
           const owner: Owner = { name: value, contribution }
           if (already === -1) owners.push(owner)
           else owners[already] = owner
+        } else if (about === 'owner_share' || about === 'owner_contribution_value') {
+          // These two attach to an owner already written down. An owner nobody
+          // has recorded yet is not created here: a share belonging to a person
+          // whose name was never given is a share nobody can check.
+          const whose = asText(payload, 'owner')
+          if (whose === undefined) break
+          const at = owners.findIndex((owner) => owner.name === whose)
+          if (at === -1) break
+          const owner = owners[at] as Owner
+          owners[at] =
+            about === 'owner_share'
+              ? { ...owner, sharePercent: value }
+              : { ...owner, contributionCents: value }
         }
         break
       }
@@ -130,6 +150,39 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         if (question === undefined) break
         const at = openQuestions.indexOf(question)
         if (at !== -1) openQuestions.splice(at, 1)
+        // Kept with its answer, because two terms of the ownership agreement may
+        // only be written down when a person was asked and replied, and that
+        // cannot be checked against a list of questions still outstanding.
+        answers.push({ question, answer: asText(payload, 'answer') ?? '' })
+        break
+      }
+
+      case 'agreement.choice.recorded': {
+        const which = asText(payload, 'which')
+        const value = asText(payload, 'value')
+        if (which === undefined || value === undefined) break
+        const choices = facts.agreementChoices ?? {}
+        if (which === 'managed_by' && (value === 'the owners themselves' || value === 'an appointed manager')) {
+          facts = { ...facts, agreementChoices: { ...choices, managedBy: value } }
+        } else if (which === 'exit_process') {
+          facts = { ...facts, agreementChoices: { ...choices, hasExitProcess: value === 'yes' } }
+        }
+        break
+      }
+
+      case 'agreement.drafted': {
+        const articleCount = asText(payload, 'articleCount')
+        const dated = asText(payload, 'dated')
+        if (articleCount === undefined || dated === undefined) break
+        facts = {
+          ...facts,
+          agreement: {
+            articleCount,
+            dated,
+            blocks: asTextList(payload, 'blocks'),
+            explanation: asTextList(payload, 'explanation'),
+          },
+        }
         break
       }
 
@@ -256,7 +309,7 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
     }
   }
 
-  return { ...facts, owners, openQuestions }
+  return { ...facts, owners, openQuestions, answers }
 }
 
 /**

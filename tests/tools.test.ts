@@ -10,6 +10,8 @@ import {
   compareNamesTool,
   checkAddress,
   registerAddress,
+  recordAgreementChoice,
+  draftAgreement,
 } from '../src/tools/stage-tools.js'
 import type { ToolContext } from '../src/tools/registry.js'
 
@@ -416,5 +418,151 @@ describe('registering a web address', () => {
       }),
     )
     expect(outcome.result['sandbox']).toBe(true)
+  })
+})
+
+/**
+ * The two tools that touch the ownership agreement, and the one rule that makes
+ * the first of them safe.
+ *
+ * An ownership agreement has two terms with no sensible default. Who runs the
+ * company decides whether every owner can bind it or none of them can. Whether
+ * there is a written way out decides whether an owner can ever leave at all —
+ * Texas states that a member of a limited liability company may not withdraw or
+ * be expelled, so an agreement that adds nothing leaves no exit, and that is a
+ * term of the deal whether or not anybody meant to agree to it.
+ *
+ * So Charter never chooses either one. It asks, and it writes down what it is
+ * told. The tests below are what make "writes down what it is told" checkable
+ * rather than merely intended.
+ */
+describe('writing down a term of the deal', () => {
+  const asked = (question: string, answer: string): CaseFacts => ({
+    ...emptyCase('case-1'),
+    answers: [{ question, answer }],
+  })
+
+  it('refuses when nobody has been asked, and records the refusal', () => {
+    // The refusal goes into the record, not just back to the model. A term
+    // arriving without anybody being asked is exactly what somebody reading this
+    // run afterwards would want to see Charter refuse.
+    return recordAgreementChoice
+      .run({ which: 'exit_process', value: 'yes' }, context())
+      .then((outcome) => {
+        expect(String(outcome.result['refused'])).toContain('nobody has been asked')
+        expect(outcome.events[0]?.kind).toBe('agreement.choice.refused')
+      })
+  })
+
+  it('writes it down once the question has actually been put and answered', async () => {
+    const facts = asked(
+      'Do you want a written way for an owner to leave and be bought out?',
+      'No, we trust each other.',
+    )
+    const outcome = await recordAgreementChoice.run(
+      { which: 'exit_process', value: 'no' },
+      context({ facts }),
+    )
+
+    expect(outcome.events[0]?.kind).toBe('agreement.choice.recorded')
+    expect(outcome.events[0]?.payload).toEqual({ which: 'exit_process', value: 'no' })
+  })
+
+  it('does not accept an answer to a different question', async () => {
+    // Somebody answering a question about the company name has not said anything
+    // about whether an owner may leave.
+    const facts = asked('What would you like the company to be called?', 'Rivera Sisters.')
+    const outcome = await recordAgreementChoice.run(
+      { which: 'exit_process', value: 'yes' },
+      context({ facts }),
+    )
+    expect(String(outcome.result['refused'])).toContain('nobody has been asked')
+  })
+
+  it('refuses a value that is not one of the two possible answers', async () => {
+    const facts = asked('Who will run the company day to day?', 'Both of us.')
+    const outcome = await recordAgreementChoice.run(
+      { which: 'managed_by', value: 'a committee' },
+      context({ facts }),
+    )
+    expect(String(outcome.result['refused'])).toContain('not an answer to that question')
+  })
+
+  it('offers no way to record anything except those two terms', () => {
+    const allowed = recordAgreementChoice.schema.properties['which']
+    expect(allowed?.enum).toEqual(['managed_by', 'exit_process'])
+  })
+})
+
+describe('preparing the agreement', () => {
+  const ready = (): CaseFacts => ({
+    ...emptyCase('case-1'),
+    proposedName: 'Rivera Sisters Baking Co LLC',
+    state: 'TX',
+    owners: [
+      {
+        name: 'Ana Rivera',
+        contribution: 'the delivery van and the ovens',
+        contributionCents: '2500000',
+        sharePercent: '50',
+      },
+      {
+        name: 'Lucia Rivera',
+        contribution: 'the lease deposit',
+        contributionCents: '2500000',
+        sharePercent: '50',
+      },
+    ],
+    agreementChoices: { managedBy: 'the owners themselves', hasExitProcess: false },
+  })
+
+  it('prepares the document and records what it decided', async () => {
+    const outcome = await draftAgreement.run({}, context({ facts: ready() }))
+
+    expect(outcome.events[0]?.kind).toBe('agreement.drafted')
+    expect(Number(outcome.result['articles'])).toBeGreaterThan(10)
+    expect(outcome.result['dated']).toBe('28 August 2026')
+  })
+
+  it('records which side of every either/or term the document ended up with', async () => {
+    const outcome = await draftAgreement.run({}, context({ facts: ready() }))
+    const blocks = (outcome.events[0]?.payload as { blocks: string[] }).blocks
+
+    expect(blocks).toContain('managed-by-members')
+    expect(blocks).toContain('no-exit-exists')
+    expect(blocks).not.toContain('managed-by-manager')
+    expect(blocks).not.toContain('exit-process-exists')
+  })
+
+  it('refuses with the reason rather than crashing, when something is missing', async () => {
+    const missing = { ...ready() }
+    delete (missing as { agreementChoices?: unknown }).agreementChoices
+
+    const outcome = await draftAgreement.run({}, context({ facts: missing }))
+    expect(String(outcome.result['refused'])).toContain('no safe default')
+    expect(outcome.events[0]?.kind).toBe('agreement.draft.refused')
+  })
+
+  it('will not divide a share the owners never agreed', async () => {
+    const facts = ready()
+    const noShare = { ...(facts.owners[1] as (typeof facts.owners)[number]) }
+    delete (noShare as { sharePercent?: string }).sharePercent
+
+    const outcome = await draftAgreement.run(
+      {},
+      context({ facts: { ...facts, owners: [facts.owners[0] as (typeof facts.owners)[number], noShare] } }),
+    )
+    expect(String(outcome.result['refused'])).toContain('will not divide the remainder')
+  })
+
+  it('takes no arguments at all, so the model cannot influence what it says', () => {
+    // The model chooses WHEN the document is prepared. It contributes nothing to
+    // WHAT the document says.
+    expect(Object.keys(draftAgreement.schema.properties)).toHaveLength(0)
+  })
+
+  it('spends nothing and can be undone', () => {
+    expect(draftAgreement.costsMoney).toBe(false)
+    expect(draftAgreement.reversible).toBe(true)
   })
 })

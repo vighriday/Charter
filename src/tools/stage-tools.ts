@@ -31,6 +31,7 @@
 import type { JsonObject, JsonValue } from '../record/canonical.js'
 import { compareNames, verdictFrom, type Comparison } from '../names/compare.js'
 import { maySpend, afterSpending, cents, asMoney } from './guard.js'
+import { prepareAgreement } from '../agreement/prepare.js'
 import type { Tool, ToolContext, ToolOutcome, ToolEvent } from './registry.js'
 
 /** Read a required text argument. The shape was already checked before this ran. */
@@ -104,7 +105,14 @@ export const recordFact: Tool = {
       about: {
         type: 'string',
         description: 'Which thing is being written down.',
-        enum: ['description', 'state', 'proposed_name', 'owner'],
+        enum: [
+          'description',
+          'state',
+          'proposed_name',
+          'owner',
+          'owner_share',
+          'owner_contribution_value',
+        ],
       },
       value: {
         type: 'string',
@@ -121,6 +129,13 @@ export const recordFact: Tool = {
           "owners' own words.",
         maxLength: 500,
       },
+      owner: {
+        type: 'string',
+        description:
+          'Only for owner_share and owner_contribution_value: whose it is, spelled ' +
+          'exactly as the owner was already written down.',
+        maxLength: 200,
+      },
     },
     required: ['about', 'value'],
     additionalProperties: false,
@@ -132,6 +147,9 @@ export const recordFact: Tool = {
     const value = text(args, 'value')
     const payload: JsonObject = { about, value }
     if (about === 'owner') payload['contribution'] = text(args, 'contribution')
+    if (about === 'owner_share' || about === 'owner_contribution_value') {
+      payload['owner'] = text(args, 'owner')
+    }
     return { result: { written: about, value }, events: [{ kind: 'fact.recorded', payload }] }
   },
 }
@@ -479,6 +497,169 @@ export const registerAddress: Tool = {
 }
 
 /**
+ * The two either/or terms of the agreement that a person has to answer, and the
+ * words that have to appear in the question before an answer counts.
+ *
+ * Charter asks the question, a person answers it, and the model writes down what
+ * they said. That last step is a transcription, and this table is what makes it a
+ * checkable one. Without it a model could write "there is a way out" into a
+ * document nobody was ever asked about, and the record would show a term of the
+ * deal arriving from nowhere.
+ */
+const CHOICE_QUESTIONS: Readonly<
+  Record<string, { readonly mustMention: readonly string[]; readonly values: readonly string[] }>
+> = {
+  managed_by: {
+    mustMention: ['manage', 'run', 'day to day'],
+    values: ['the owners themselves', 'an appointed manager'],
+  },
+  exit_process: {
+    mustMention: ['leave', 'withdraw', 'exit', 'bought out', 'buy out'],
+    values: ['yes', 'no'],
+  },
+}
+
+export const recordAgreementChoice: Tool = {
+  name: 'record_agreement_choice',
+  summary:
+    'Write down one of the two either/or terms of the ownership agreement, after ' +
+    'a person has answered a question about it.',
+  why:
+    'These two terms have no safe default. Who runs the company decides whether ' +
+    'every owner can bind it or none of them can. Whether there is a way out ' +
+    'decides whether an owner can ever leave at all, because Texas states that a ' +
+    'member may not withdraw or be expelled, and an agreement that adds nothing ' +
+    'leaves that as the deal. So Charter never chooses either one. This tool only ' +
+    'writes down what a person already said, and it refuses unless the record ' +
+    'shows the question was actually asked and answered.',
+  schema: {
+    type: 'object',
+    properties: {
+      which: {
+        type: 'string',
+        description: 'Which of the two terms is being written down.',
+        enum: ['managed_by', 'exit_process'],
+      },
+      value: {
+        type: 'string',
+        description:
+          'What the person said. For managed_by: "the owners themselves" or "an ' +
+          'appointed manager". For exit_process: "yes" or "no".',
+        maxLength: 60,
+      },
+    },
+    required: ['which', 'value'],
+    additionalProperties: false,
+  },
+  reversible: true,
+  costsMoney: false,
+  async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
+    const which = text(args, 'which')
+    const value = text(args, 'value')
+    const rule = CHOICE_QUESTIONS[which]
+
+    if (rule === undefined) {
+      const why = `"${which}" is not one of the agreement terms this writes down`
+      return {
+        result: { refused: why },
+        events: [{ kind: 'agreement.choice.refused', payload: { which, why } }],
+      }
+    }
+    if (!rule.values.includes(value)) {
+      const why =
+        `"${value}" is not an answer to that question. The answers are: ` +
+        `${rule.values.join(', ')}`
+      return {
+        result: { refused: why },
+        events: [{ kind: 'agreement.choice.refused', payload: { which, why } }],
+      }
+    }
+
+    const asked = context.facts.answers.some((one) => {
+      const question = one.question.toLowerCase()
+      return rule.mustMention.some((word) => question.includes(word))
+    })
+
+    if (!asked) {
+      // The refusal is recorded, not merely returned. A term of the deal arriving
+      // without anybody being asked is exactly the thing somebody reading this
+      // record afterwards would want to see Charter refuse.
+      const why =
+        'nobody has been asked about this yet, so there is nothing to write down. ' +
+        'This is a term of the deal, not something Charter decides. Ask the ' +
+        'question first, wait for an answer, then record what was said'
+      return {
+        result: { refused: why },
+        events: [{ kind: 'agreement.choice.refused', payload: { which, why } }],
+      }
+    }
+
+    return {
+      result: { recorded: which, value },
+      events: [{ kind: 'agreement.choice.recorded', payload: { which, value } }],
+    }
+  },
+}
+
+export const draftAgreement: Tool = {
+  name: 'draft_agreement',
+  summary:
+    'Prepare the ownership agreement from everything recorded so far. Says exactly ' +
+    'what is missing if it cannot.',
+  why:
+    'Builds every number, every article number and every cross-reference in plain ' +
+    'code, then hands a finished set of values to the document template. The model ' +
+    'chooses WHEN this happens and contributes nothing to WHAT the document says: ' +
+    'the words come from a template a person wrote and can read, and the numbers ' +
+    'come from arithmetic anybody can check. It refuses rather than filling a gap, ' +
+    'because a term a program chose is a term nobody agreed to.',
+  schema: { type: 'object', properties: {}, required: [], additionalProperties: false },
+  reversible: true,
+  costsMoney: false,
+  async run(_args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
+    // The date is taken once, here, and written into the record. Everything
+    // afterwards reads it from there, so the same case produces the same document
+    // however many times it is replayed.
+    const today = context.now().toISOString().slice(0, 10)
+
+    let prepared
+    try {
+      prepared = prepareAgreement(context.facts, today)
+    } catch (error) {
+      // A refusal, not a crash. The message names what is missing, and the model
+      // can go and ask for it. It is written into the record too, so a person
+      // reading the run afterwards sees what the document was waiting on.
+      const why = error instanceof Error ? error.message : String(error)
+      return {
+        result: { refused: why },
+        events: [{ kind: 'agreement.draft.refused', payload: { why } }],
+      }
+    }
+
+    const blocks = prepared.data.blocks.filter((one) => !one.hidden).map((one) => one.block)
+
+    return {
+      result: {
+        articles: String(prepared.data.articles.length),
+        dated: prepared.data.agreementDate,
+        explanation: prepared.explanation as unknown as JsonValue,
+      },
+      events: [
+        {
+          kind: 'agreement.drafted',
+          payload: {
+            articleCount: String(prepared.data.articles.length),
+            dated: today,
+            blocks: blocks as unknown as JsonValue,
+            explanation: prepared.explanation as unknown as JsonValue,
+          },
+        },
+      ],
+    }
+  },
+}
+
+/**
  * Every tool that exists today.
  *
  * Stages four to eight have empty tool lists, and will grow their own. Nothing
@@ -492,6 +673,8 @@ export const ALL_TOOLS: readonly Tool[] = [
   compareNamesTool,
   checkAddress,
   registerAddress,
+  recordAgreementChoice,
+  draftAgreement,
 ]
 
 // Used by the guard's tests and by the spend report. Re-exported here so callers

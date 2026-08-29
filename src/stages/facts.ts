@@ -44,6 +44,20 @@ export interface Owner {
   readonly contribution: string
   /** Their share as a percentage, written as text: `'60'`, not 60. */
   readonly sharePercent?: string
+  /**
+   * What their contribution is WORTH, in whole cents, written as text.
+   *
+   * Separate from the words above on purpose. "The delivery van and the ovens" is
+   * what a person says; the agreement also needs a figure, because Texas allocates
+   * profit and loss by the value of each owner's contribution as stated in the
+   * company's records unless the agreement says otherwise. Without a figure there
+   * is no record for the statute to read, and the agreement cannot say whether the
+   * agreed shares match the contributions or deliberately differ from them.
+   *
+   * Absent when nobody has valued it yet. The drafting code says so plainly rather
+   * than assuming a value.
+   */
+  readonly contributionCents?: string
 }
 
 /**
@@ -122,6 +136,57 @@ export interface AddressWork {
  * stage adds what it learns. Whether enough is known to move on is decided by each
  * stage's own rule in `stages.ts`, in code, and never by the model.
  */
+/**
+ * The two either/or terms of the ownership agreement that no default can supply.
+ *
+ * Everything else in an agreement has a sensible standard form. These two do not,
+ * because each one is a choice about how these particular people want to live with
+ * each other, and getting either one wrong by default is worse than not drafting.
+ *
+ * They are separate from the rest of the facts because they are the only questions
+ * whose answer a person must give directly. Charter asks. It does not guess.
+ */
+export interface AgreementChoices {
+  /**
+   * Who runs the company day to day.
+   *
+   * Absent until somebody says. There is no safe default: assuming the owners run
+   * it themselves gives every owner authority to bind the company, and assuming a
+   * manager takes that authority away from all of them.
+   */
+  readonly managedBy?: 'the owners themselves' | 'an appointed manager'
+  /**
+   * Whether the owners wrote a way for one of them to leave and be paid out.
+   *
+   * Absent until somebody says, and this is the most consequential blank in the
+   * whole document. Texas states that a member of a limited liability company may
+   * not withdraw or be expelled. If the agreement creates no exit, there is no
+   * exit — not a hard one, none — and that is a term of the deal whether or not
+   * anybody meant to agree to it.
+   *
+   * So Charter never fills this in. It asks, and it says what each answer means.
+   */
+  readonly hasExitProcess?: boolean
+}
+
+/** A question that was put to a person, and what they said back. */
+export interface AnsweredQuestion {
+  readonly question: string
+  readonly answer: string
+}
+
+/** What came out of preparing the ownership agreement. */
+export interface DraftedAgreement {
+  /** How many articles the finished document has. */
+  readonly articleCount: string
+  /** The blocks that survived, so the version of each either/or term is on the record. */
+  readonly blocks: readonly string[]
+  /** One line per decision the drafting made, in plain words. */
+  readonly explanation: readonly string[]
+  /** The day the document is dated, as year-month-day. */
+  readonly dated: string
+}
+
 export interface CaseFacts {
   readonly caseId: string
   /** What the person typed, in their own words, unedited. */
@@ -142,6 +207,18 @@ export interface CaseFacts {
   readonly spendAuthorisation?: SpendAuthorisation
   readonly nameResearch?: NameResearch
   readonly address?: AddressWork
+  /** The two either/or terms of the agreement that a person has to answer. */
+  readonly agreementChoices?: AgreementChoices
+  /** The agreement, once it has been prepared. */
+  readonly agreement?: DraftedAgreement
+  /**
+   * Every question a person has actually answered, kept with its answer.
+   *
+   * Open questions alone are not enough. Two terms of the ownership agreement may
+   * only be written down if a person was asked about them and replied, and that
+   * rule cannot be checked against a list of questions still outstanding.
+   */
+  readonly answers: readonly AnsweredQuestion[]
   /**
    * Questions the agent asked that have not been answered yet.
    *
@@ -153,5 +230,5 @@ export interface CaseFacts {
 
 /** A case that has just begun: an identifier and nothing else. */
 export function emptyCase(caseId: string): CaseFacts {
-  return { caseId, owners: [], openQuestions: [] }
+  return { caseId, owners: [], openQuestions: [], answers: [] }
 }

@@ -326,11 +326,83 @@ describe('the stages that are not built yet', () => {
   it('says so rather than letting a case through', () => {
     // Not a placeholder that quietly passes. A case genuinely cannot pass a stage
     // whose work does not exist, and the refusal says which work.
-    for (const name of ['draft', 'verify', 'assemble', 'boundary', 'publish'] as StageName[]) {
+    for (const name of ['verify', 'assemble', 'boundary', 'publish'] as StageName[]) {
       const result = couldMoveOn(name, understood)
       expect(result.ready, `stage "${name}" claimed to be finished`).toBe(false)
       if (!result.ready) expect(result.because).toContain('not built yet')
     }
+  })
+})
+
+describe('drafting the agreement, and what it will not decide by itself', () => {
+  const withShares = (extra: Partial<CaseFacts> = {}): CaseFacts => ({
+    ...understood,
+    owners: understood.owners.map((owner) => ({
+      ...owner,
+      sharePercent: '50',
+      contributionCents: '2500000',
+    })),
+    ...extra,
+  })
+
+  const because = (facts: CaseFacts): string => {
+    const result = couldMoveOn('draft', facts)
+    if (result.ready) throw new Error('expected the stage to refuse')
+    return result.because
+  }
+
+  it('will not divide the remaining share for an owner who has not stated one', () => {
+    // The split is the one thing the owners have to decide themselves. A number
+    // chosen by a program is a term nobody agreed to, in the article people open
+    // the document to read.
+    expect(because(understood)).toContain('will not divide the remainder')
+  })
+
+  it('waits for a value on every contribution, and says which statute needs it', () => {
+    const unvalued = withShares({
+      owners: understood.owners.map((owner) => ({ ...owner, sharePercent: '50' })),
+    })
+    expect(because(unvalued)).toContain('no record for the statute to read')
+  })
+
+  it('will not assume who runs the company, because neither answer is safe', () => {
+    expect(because(withShares())).toContain('no safe default')
+  })
+
+  it('will not assume whether there is a way out, and says what silence means', () => {
+    // Texas states that a member may not withdraw or be expelled. An agreement
+    // that adds nothing leaves no way out at all, and that is a term whether or
+    // not anybody meant to agree to it.
+    const chosen = withShares({ agreementChoices: { managedBy: 'the owners themselves' } })
+    expect(because(chosen)).toContain('may not withdraw or be expelled')
+  })
+
+  it('waits for the agreement to actually be prepared', () => {
+    const answered = withShares({
+      agreementChoices: { managedBy: 'the owners themselves', hasExitProcess: false },
+    })
+    expect(because(answered)).toContain('has not been prepared yet')
+  })
+
+  it('lets the case through once everything is answered and the document exists', () => {
+    const done = withShares({
+      agreementChoices: { managedBy: 'the owners themselves', hasExitProcess: false },
+      agreement: {
+        articleCount: '15',
+        dated: '2026-09-03',
+        blocks: ['managed-by-members', 'no-exit-exists'],
+        explanation: ['Shares total exactly 100%.'],
+      },
+    })
+    expect(couldMoveOn('draft', done).ready).toBe(true)
+  })
+
+  it('offers no tool that could write a term nobody was asked about', () => {
+    // The model may ask, and may write down an answer. Whether there is a way out
+    // of the company is checked against the record before it can be written.
+    expect(STAGES.draft.tools).toContain('record_agreement_choice')
+    expect(STAGES.draft.tools).toContain('draft_agreement')
+    expect(STAGES.draft.tools).not.toContain('register_address')
   })
 })
 

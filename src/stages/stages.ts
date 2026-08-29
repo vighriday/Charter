@@ -241,12 +241,60 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
     name: 'draft',
     position: 4,
     title: 'Draft the agreement',
-    whatHappens: 'Write the ownership agreement from one adaptive template.',
-    tools: [],
+    whatHappens:
+      'Ask the owners the few things the agreement cannot be written without, then ' +
+      'prepare it. Every number, every article number and every cross-reference is ' +
+      'worked out in plain code. The model chooses when, never what.',
+    tools: ['ask_question', 'record_fact', 'record_agreement_choice', 'draft_agreement'],
     toolChoice: 'required',
+    // No owner's identity details are in this stage. Names and shares are terms of
+    // a business agreement, not personal identifiers, and the identity documents
+    // themselves never reach a model at any stage.
     sensitivity: 'public',
     maxTurns: 12,
-    readyToLeave: notBuiltYet('drafting the agreement'),
+    readyToLeave: (facts) => {
+      const missingShares = facts.owners.filter((owner) => owner.sharePercent === undefined)
+      if (missingShares.length > 0) {
+        return notYet(
+          `no share has been recorded for ${missingShares.map((one) => one.name).join(' and ')}, ` +
+            `and Charter will not divide the remainder for them: the split is the one ` +
+            `thing the owners have to decide themselves`,
+        )
+      }
+
+      const unvalued = facts.owners.filter((owner) => owner.contributionCents === undefined)
+      if (unvalued.length > 0) {
+        return notYet(
+          `what ${unvalued.map((one) => one.name).join(' and ')} contributed has not been ` +
+            `given a value, and Texas divides profit by contribution value as stated in ` +
+            `the company's records unless the agreement says otherwise, so without a ` +
+            `figure there is no record for the statute to read`,
+        )
+      }
+
+      const choices = facts.agreementChoices
+      if (choices?.managedBy === undefined) {
+        return notYet(
+          'nobody has said who runs the company day to day, and there is no safe ' +
+            'default: one answer lets every owner bind the company, the other takes ' +
+            'that away from all of them',
+        )
+      }
+      if (choices.hasExitProcess === undefined) {
+        return notYet(
+          'nobody has said whether there is a written way for an owner to leave. ' +
+            'Texas states that a member may not withdraw or be expelled, so an ' +
+            'agreement that adds nothing leaves no way out at all — that is a term ' +
+            'whether or not anybody meant to agree to it, and Charter will not choose it',
+        )
+      }
+
+      if (facts.agreement === undefined) {
+        return notYet('the agreement has not been prepared yet')
+      }
+
+      return ready
+    },
   },
 
   verify: {

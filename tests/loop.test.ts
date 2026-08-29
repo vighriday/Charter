@@ -85,7 +85,7 @@ describe('folding the record into what is known', () => {
   const fold = (entries: RecordedEntry[]) => foldFacts('case-1', entries)
 
   it('starts from nothing', () => {
-    expect(fold([])).toEqual({ caseId: 'case-1', owners: [], openQuestions: [] })
+    expect(fold([])).toEqual({ caseId: 'case-1', owners: [], openQuestions: [], answers: [] })
   })
 
   it('collects the plain facts', () => {
