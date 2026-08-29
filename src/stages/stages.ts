@@ -122,16 +122,18 @@ export interface StageDefinition {
 }
 
 /**
- * The stage that is not built yet, said honestly.
+ * ALL EIGHT STAGES ARE NOW BUILT.
  *
- * Stages four to eight arrive later in the build. Their completion rule refuses,
- * with the reason, which is the correct behaviour and not a placeholder: a case
- * genuinely cannot pass a stage whose work does not exist. Nothing here pretends
- * to be finished, and nothing silently lets a case through.
+ * Until 29 August 2026 the later stages shared a helper that refused with "this is
+ * not built yet". That was the honest answer while their work did not exist — a
+ * case genuinely cannot pass a stage that does nothing — and it is gone now
+ * because every stage does its work. The helper is deleted rather than kept
+ * unused, so nothing in this file can quietly go back to claiming a stage is
+ * finished when it is not.
+ *
+ * Every rule below refuses for a reason about this particular case, never for a
+ * reason about the state of the code.
  */
-const notBuiltYet = (what: string): ((facts: CaseFacts) => Completion) =>
-  () => notYet(`${what} is not built yet, so this stage cannot be completed`)
-
 export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
   understand: {
     name: 'understand',
@@ -344,12 +346,23 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
     name: 'assemble',
     position: 6,
     title: 'Assemble the pack',
-    whatHappens: 'Merge, read text from scans, compress, add structure, then seal.',
-    tools: [],
+    whatHappens:
+      'Merge everything into one file, add structure, then seal it and take the ' +
+      'fingerprint of exactly what was sealed. After the seal, anything that would ' +
+      'rewrite the file is refused and the refusal is recorded.',
+    tools: ['assemble_pack'],
     toolChoice: 'required',
     sensitivity: 'public',
     maxTurns: 12,
-    readyToLeave: notBuiltYet('assembling the pack'),
+    readyToLeave: (facts) => {
+      if (facts.agreement === undefined) {
+        return notYet('there is no agreement to put in the pack yet')
+      }
+      if (facts.pack === undefined) {
+        return notYet('the pack has not been assembled and sealed yet')
+      }
+      return ready
+    },
   },
 
   boundary: {
@@ -367,7 +380,37 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
     toolChoice: 'required',
     sensitivity: 'public',
     maxTurns: 0,
-    readyToLeave: notBuiltYet('the signature request'),
+    readyToLeave: (facts) => {
+      const pack = facts.pack
+      if (pack === undefined) {
+        return notYet('there is no sealed pack, so there is nothing to approve')
+      }
+
+      const approval = facts.approvalToSend
+      if (approval === undefined) {
+        return notYet(
+          'no person has approved sending the pack to the owners to sign. This is ' +
+            'the boundary. Nothing in the agent can write that approval, and there ' +
+            'is no tool in this stage at all — a person approves in their own ' +
+            'browser, or the case waits here',
+        )
+      }
+
+      // The approval names the pack it was given for. If the pack has been sealed
+      // again since, this no longer matches, and an approval for one document must
+      // never carry across to a different one. That is how a person ends up having
+      // approved a document they never saw.
+      if (approval.packFingerprint !== pack.fingerprint) {
+        return notYet(
+          `the approval was given for a pack whose fingerprint began ` +
+            `${approval.packFingerprint.slice(0, 12)}, and the sealed pack now begins ` +
+            `${pack.fingerprint.slice(0, 12)}. An approval belongs to the exact ` +
+            `document a person was looking at and does not carry across to another`,
+        )
+      }
+
+      return ready
+    },
   },
 
   publish: {
@@ -377,11 +420,19 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
     whatHappens:
       "Build the website, draw its first picture from the owner's own words, put " +
       'it online, and point the web address at it.',
-    tools: [],
+    tools: ['publish_site'],
     toolChoice: 'required',
     sensitivity: 'public',
     maxTurns: 12,
-    readyToLeave: notBuiltYet('publishing the site'),
+    readyToLeave: (facts) => {
+      if (facts.address?.registered !== true) {
+        return notYet('there is no registered web address to point at a site')
+      }
+      if (facts.site === undefined) {
+        return notYet('the site has not been published yet')
+      }
+      return ready
+    },
   },
 }
 

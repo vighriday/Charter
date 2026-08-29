@@ -51,6 +51,7 @@
  * the attempt, not the token — because a refusal is worth knowing about.
  */
 
+import { isFingerprint } from '../record/canonical.js'
 import type { Database } from '../db/driver.js'
 import { append, type Clock } from '../record/log.js'
 import { cents } from '../tools/guard.js'
@@ -164,6 +165,71 @@ export async function grantSpendPermission(
       actor: 'human',
       stage: null,
       payload: { limitCents, forWhat, grantedAt: act.clock().toISOString() },
+    },
+    act.clock,
+  )
+}
+
+/**
+ * A person approving that the sealed pack may be carried to the owners to sign.
+ *
+ * THIS IS THE BOUNDARY, AND IT IS WORTH BEING EXACT ABOUT WHAT IT IS NOT.
+ *
+ * This is not a signature and never becomes one. It is one person saying "yes,
+ * send this out." The owners then sign it themselves, in their own browsers, with
+ * their own hands. Nothing in Charter signs for anybody, at any point, and the
+ * stage where this happens has no tools at all — there is nothing there for a
+ * model to choose.
+ *
+ * WHY THE FINGERPRINT IS PART OF THE APPROVAL
+ *
+ * The approval names the exact document the person was looking at. If the pack is
+ * sealed again afterwards, the fingerprint no longer matches and the approval
+ * stops counting. It does not carry across.
+ *
+ * That is not a technicality. An approval that survives the document changing
+ * underneath it is how a person ends up having approved something they never saw,
+ * and it is the shape of the whole problem this project exists to talk about.
+ *
+ * WHY IT LIVES HERE
+ *
+ * This file is reachable from a person's browser and from nothing the model can
+ * trigger. That is checked by following every import in the project, not by
+ * anybody remembering, and a build fails the day anything in the agent's reach can
+ * get to this function.
+ */
+export async function approveSendingForSignature(
+  act: HumanAct,
+  approvedBy: string,
+  packFingerprint: string,
+): Promise<void> {
+  if (!sameToken(act.token, act.expectedToken)) {
+    await refuse(act, 'approving that the pack be sent for signature', { approvedBy })
+  }
+
+  if (!isFingerprint(packFingerprint)) {
+    // An approval that names nothing in particular approves everything, which is
+    // the one thing this must never do.
+    throw new NotThePerson(
+      'An approval has to name the exact pack it was given for, by its fingerprint. ' +
+        `"${packFingerprint}" is not one. Without it the approval would not be ` +
+        'attached to any particular document, and an approval attached to no ' +
+        'document approves whatever turns up.',
+    )
+  }
+
+  await append(
+    act.db,
+    {
+      runId: act.caseId,
+      kind: 'signature.approved',
+      actor: 'human',
+      stage: null,
+      payload: {
+        approvedBy,
+        packFingerprint,
+        approvedAt: act.clock().toISOString(),
+      },
     },
     act.clock,
   )

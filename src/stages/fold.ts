@@ -193,6 +193,53 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         break
       }
 
+      case 'pack.sealed': {
+        const fingerprintValue = asText(payload, 'fingerprint')
+        const sizeBytes = asText(payload, 'sizeBytes')
+        if (fingerprintValue === undefined || sizeBytes === undefined) break
+        facts = {
+          ...facts,
+          pack: {
+            fingerprint: fingerprintValue,
+            sizeBytes,
+            refusedAfterSealing: asTextList(payload, 'refusedAfterSealing'),
+          },
+        }
+        break
+      }
+
+      case 'pack.operation.refused': {
+        // Kept with the pack it belongs to, so the finished document can print
+        // what Charter was asked to do after sealing and would not.
+        const why = asText(payload, 'why')
+        const current = facts.pack
+        if (why === undefined || current === undefined) break
+        facts = {
+          ...facts,
+          pack: { ...current, refusedAfterSealing: [...current.refusedAfterSealing, why] },
+        }
+        break
+      }
+
+      case 'signature.approved': {
+        const approvedBy = asText(payload, 'approvedBy')
+        const packFingerprint = asText(payload, 'packFingerprint')
+        const approvedAt = asText(payload, 'approvedAt')
+        if (approvedBy === undefined || packFingerprint === undefined || approvedAt === undefined) {
+          break
+        }
+        facts = { ...facts, approvalToSend: { approvedBy, packFingerprint, approvedAt } }
+        break
+      }
+
+      case 'site.published': {
+        const address = asText(payload, 'address')
+        const liveAt = asText(payload, 'liveAt')
+        if (address === undefined || liveAt === undefined) break
+        facts = { ...facts, site: { address, liveAt } }
+        break
+      }
+
       case 'agreement.drafted': {
         const articleCount = asText(payload, 'articleCount')
         const dated = asText(payload, 'dated')

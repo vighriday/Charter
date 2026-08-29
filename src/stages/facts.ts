@@ -194,6 +194,42 @@ export interface IdentityCheck {
   readonly depth: string
 }
 
+/**
+ * The finished pack, as the record holds it.
+ *
+ * The fingerprint is of the bytes at the moment of sealing. Nothing that rewrites
+ * the file runs afterwards, which is what makes the fingerprint mean something: a
+ * fingerprint of a file that can still be rewritten proves only what the file used
+ * to be.
+ */
+export interface SealedPackRecord {
+  readonly fingerprint: string
+  readonly sizeBytes: string
+  /** What Charter was asked to do after sealing and would not, with the reason. */
+  readonly refusedAfterSealing: readonly string[]
+}
+
+/**
+ * A person's approval to carry the finished pack to the owners to sign.
+ *
+ * This is not a signature and never becomes one. It is one person saying "yes,
+ * send this out." The owners then sign it themselves, in their own browsers, and
+ * nothing in Charter does that for them.
+ */
+export interface ApprovalToSend {
+  /** Who approved, in their own words. */
+  readonly approvedBy: string
+  /** The fingerprint of the pack they were looking at when they approved. */
+  readonly packFingerprint: string
+  readonly approvedAt: string
+}
+
+/** The website, once it is up. */
+export interface PublishedSite {
+  readonly address: string
+  readonly liveAt: string
+}
+
 /** What came out of preparing the ownership agreement. */
 export interface DraftedAgreement {
   /** How many articles the finished document has. */
@@ -232,6 +268,18 @@ export interface CaseFacts {
   readonly agreement?: DraftedAgreement
   /** What came of reading each owner's identity document. */
   readonly identityChecks: readonly IdentityCheck[]
+  /** The finished pack, once it has been sealed. */
+  readonly pack?: SealedPackRecord
+  /**
+   * A person's approval to carry the pack to the owners to sign.
+   *
+   * Written only by the code a person's browser reaches, which nothing the model
+   * can trigger is able to call. That is checked by following every import in the
+   * project, not by anybody remembering.
+   */
+  readonly approvalToSend?: ApprovalToSend
+  /** The published website, once it is up. */
+  readonly site?: PublishedSite
   /**
    * Every question a person has actually answered, kept with its answer.
    *

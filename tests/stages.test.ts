@@ -8,7 +8,6 @@ import {
   couldMoveOn,
   isStageName,
   StageOrderViolation,
-  type StageName,
 } from '../src/stages/stages.js'
 import { emptyCase, type CaseFacts } from '../src/stages/facts.js'
 import { buildRegistry, specsFor, toolFor, catalogue } from '../src/tools/registry.js'
@@ -322,15 +321,140 @@ describe('what stage one waits for', () => {
   })
 })
 
-describe('the stages that are not built yet', () => {
-  it('says so rather than letting a case through', () => {
-    // Not a placeholder that quietly passes. A case genuinely cannot pass a stage
-    // whose work does not exist, and the refusal says which work.
-    for (const name of ['assemble', 'boundary', 'publish'] as StageName[]) {
-      const result = couldMoveOn(name, understood)
-      expect(result.ready, `stage "${name}" claimed to be finished`).toBe(false)
-      if (!result.ready) expect(result.because).toContain('not built yet')
+describe('every stage refuses for a reason about the case, never about the code', () => {
+  it('never says a stage is unfinished because it has not been written', () => {
+    // Until 29 August 2026 the later stages shared a helper that refused with
+    // "this is not built yet". That was honest while their work did not exist.
+    // All eight now do their work, and this test is what stops that answer coming
+    // back: a refusal must always be about this particular case.
+    for (const name of STAGE_ORDER) {
+      const result = couldMoveOn(name, emptyCase('case-1'))
+      if (!result.ready) {
+        expect(result.because, `stage "${name}"`).not.toContain('not built yet')
+      }
     }
+  })
+})
+
+const sealedFingerprint = 'a'.repeat(64)
+
+/** A case that has got as far as a sealed pack. */
+const assembled: CaseFacts = {
+  ...understood,
+  agreement: {
+    articleCount: '15',
+    dated: '2026-09-03',
+    blocks: ['managed-by-members', 'no-exit-exists'],
+    explanation: ['Shares total exactly 100%.'],
+  },
+  pack: { fingerprint: sealedFingerprint, sizeBytes: '2048', refusedAfterSealing: [] },
+}
+
+describe('assembling the pack', () => {
+  it('waits for an agreement to put in it', () => {
+    const result = couldMoveOn('assemble', understood)
+    expect(result.ready).toBe(false)
+    if (!result.ready) expect(result.because).toContain('no agreement to put in the pack')
+  })
+
+  it('waits for the pack to be sealed', () => {
+    const drafted = { ...assembled }
+    delete (drafted as { pack?: unknown }).pack
+
+    const result = couldMoveOn('assemble', drafted)
+    expect(result.ready).toBe(false)
+    if (!result.ready) expect(result.because).toContain('has not been assembled and sealed')
+  })
+
+  it('lets the case through once the pack is sealed', () => {
+    expect(couldMoveOn('assemble', assembled).ready).toBe(true)
+  })
+})
+
+describe('the boundary, which is where the agent stops', () => {
+  const because = (facts: CaseFacts): string => {
+    const result = couldMoveOn('boundary', facts)
+    if (result.ready) throw new Error('expected the boundary to hold')
+    return result.because
+  }
+
+  it('has no tools at all, and no turns to take', () => {
+    // Not an omission. There is nothing here for a model to do, so it is given
+    // nothing to do it with.
+    expect(STAGES.boundary.tools).toEqual([])
+    expect(STAGES.boundary.maxTurns).toBe(0)
+  })
+
+  it('holds until a person approves, and says nothing in the agent can write it', () => {
+    expect(because(assembled)).toContain('no person has approved')
+    expect(because(assembled)).toContain('Nothing in the agent can write that approval')
+  })
+
+  it('lets the case through on an approval for this exact pack', () => {
+    const approved: CaseFacts = {
+      ...assembled,
+      approvalToSend: {
+        approvedBy: 'Ana Rivera',
+        packFingerprint: sealedFingerprint,
+        approvedAt: '2026-09-03T10:00:00.000Z',
+      },
+    }
+    expect(couldMoveOn('boundary', approved).ready).toBe(true)
+  })
+
+  it('refuses an approval given for a different pack', () => {
+    // An approval that survives the document changing underneath it is how a
+    // person ends up having approved something they never saw.
+    const stale: CaseFacts = {
+      ...assembled,
+      approvalToSend: {
+        approvedBy: 'Ana Rivera',
+        packFingerprint: 'b'.repeat(64),
+        approvedAt: '2026-09-03T10:00:00.000Z',
+      },
+    }
+    expect(because(stale)).toContain('does not carry across to another')
+  })
+
+  it('has nothing to approve when no pack was ever sealed', () => {
+    expect(because(understood)).toContain('nothing to approve')
+  })
+})
+
+describe('publishing the site', () => {
+  const approved: CaseFacts = {
+    ...assembled,
+    approvalToSend: {
+      approvedBy: 'Ana Rivera',
+      packFingerprint: sealedFingerprint,
+      approvedAt: '2026-09-03T10:00:00.000Z',
+    },
+  }
+
+  it('will not publish without a registered address', () => {
+    // A site at an address we do not hold is a site that belongs to somebody else.
+    const result = couldMoveOn('publish', approved)
+    expect(result.ready).toBe(false)
+    if (!result.ready) expect(result.because).toContain('no registered web address')
+  })
+
+  it('waits until the site is actually live', () => {
+    const registered: CaseFacts = {
+      ...approved,
+      address: { candidate: 'riverasisters.com', available: true, registered: true },
+    }
+    const result = couldMoveOn('publish', registered)
+    expect(result.ready).toBe(false)
+    if (!result.ready) expect(result.because).toContain('has not been published yet')
+  })
+
+  it('finishes once the site is live', () => {
+    const live: CaseFacts = {
+      ...approved,
+      address: { candidate: 'riverasisters.com', available: true, registered: true },
+      site: { address: 'riverasisters.com', liveAt: 'https://riverasisters.com' },
+    }
+    expect(couldMoveOn('publish', live).ready).toBe(true)
   })
 })
 

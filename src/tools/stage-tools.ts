@@ -33,6 +33,7 @@ import { compareNames, verdictFrom, type Comparison } from '../names/compare.js'
 import { maySpend, afterSpending, cents, asMoney } from './guard.js'
 import { prepareAgreement } from '../agreement/prepare.js'
 import { reviewDocument, explain, DEFAULT_SCORE_FLOOR } from '../identity/review.js'
+import { Pack } from '../pack/assemble.js'
 import type { Tool, ToolContext, ToolOutcome, ToolEvent } from './registry.js'
 
 /** Read a required text argument. The shape was already checked before this ran. */
@@ -769,6 +770,108 @@ export const readIdentityDocument: Tool = {
   },
 }
 
+export const assemblePack: Tool = {
+  name: 'assemble_pack',
+  summary:
+    'Merge everything into one file, add structure, seal it, and take the ' +
+    'fingerprint of exactly what was sealed.',
+  why:
+    'The order is the point. Merge, then seal, then fingerprint the sealed bytes, ' +
+    'and nothing that rewrites the file may run afterwards. A document service ' +
+    'with no signing operation can still take a signed contract and make its ' +
+    'signature unverifiable \u2014 flattening destroys the signature field, a ' +
+    'watermark rewrites the page, deleting pages can remove the signed page ' +
+    'outright. Stopping an agent making a promise is not the same as stopping it ' +
+    'unmaking one. After the seal every rewriting operation is refused and the ' +
+    'refusal is recorded, so the finished pack can print what Charter was asked ' +
+    'to do and would not.',
+  schema: { type: 'object', properties: {}, required: [], additionalProperties: false },
+  reversible: true,
+  costsMoney: false,
+  async run(_args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
+    if (context.facts.agreement === undefined) {
+      const why = 'there is no agreement to put in the pack yet'
+      return {
+        result: { refused: why },
+        events: [{ kind: 'pack.refused', payload: { why } }],
+      }
+    }
+
+    // What goes in the pack, in the order it appears. Written here rather than
+    // chosen by the model: what a legal pack contains is not a judgement call.
+    const parts = [
+      'the ownership agreement',
+      'the record of everything Charter did',
+      'what Charter was asked to do and would not',
+      "each owner's identity document",
+    ]
+
+    const pack = new Pack()
+    pack.run('pdf_merge')
+    pack.run('pdf_tag')
+
+    const bytes = await context.services.publishing.buildPack(context.caseId, parts)
+    const sealed = pack.seal(bytes)
+
+    return {
+      result: {
+        sealed: 'yes',
+        fingerprint: sealed.fingerprint,
+        sizeBytes: sealed.sizeBytes,
+      },
+      events: [
+        {
+          kind: 'pack.sealed',
+          payload: {
+            fingerprint: sealed.fingerprint,
+            sizeBytes: sealed.sizeBytes,
+            parts: parts as unknown as JsonValue,
+            refusedAfterSealing: [] as unknown as JsonValue,
+          },
+        },
+      ],
+    }
+  },
+}
+
+export const publishSite: Tool = {
+  name: 'publish_site',
+  summary: 'Put the new business\u2019s website online at the address already registered.',
+  why:
+    'The last thing a newly formed business needs is somewhere to be found. The ' +
+    'address was registered in stage three under a permission a person gave, and ' +
+    'this points a site at it. It will not publish to an address that was never ' +
+    'registered, because a site at an address we do not hold is a site that ' +
+    'belongs to somebody else.',
+  schema: { type: 'object', properties: {}, required: [], additionalProperties: false },
+  reversible: true,
+  costsMoney: false,
+  async run(_args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
+    const address = context.facts.address
+    if (address?.registered !== true) {
+      const why =
+        'no web address has been registered for this business, and a site published ' +
+        'at an address we do not hold is a site that belongs to somebody else'
+      return {
+        result: { refused: why },
+        events: [{ kind: 'site.publish.refused', payload: { why } }],
+      }
+    }
+
+    const site = await context.services.publishing.publish(context.caseId, address.candidate)
+
+    return {
+      result: { published: 'yes', address: address.candidate, liveAt: site.liveAt },
+      events: [
+        {
+          kind: 'site.published',
+          payload: { address: address.candidate, liveAt: site.liveAt },
+        },
+      ],
+    }
+  },
+}
+
 /**
  * Every tool that exists today.
  *
@@ -786,6 +889,8 @@ export const ALL_TOOLS: readonly Tool[] = [
   recordAgreementChoice,
   draftAgreement,
   readIdentityDocument,
+  assemblePack,
+  publishSite,
 ]
 
 // Used by the guard's tests and by the spend report. Re-exported here so callers

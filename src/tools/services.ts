@@ -125,10 +125,25 @@ export interface IdentityReader {
   read(owner: string, documentRef: string, depth: string): Promise<ReadDocument>
 }
 
+/** Turns the finished documents into one file, and puts the website online. */
+export interface PublishingService {
+  /**
+   * Merge everything into one file and hand back its bytes.
+   *
+   * The bytes come back rather than a reference, because the fingerprint has to be
+   * taken of exactly what was sealed. A reference to a file somebody else holds
+   * could point at different bytes a moment later.
+   */
+  buildPack(caseId: string, parts: readonly string[]): Promise<Uint8Array>
+  /** Put the site online at an address that is already registered. */
+  publish(caseId: string, address: string): Promise<{ readonly liveAt: string }>
+}
+
 export interface Services {
   readonly search: SearchService
   readonly registrar: RegistrarService
   readonly identity: IdentityReader
+  readonly publishing: PublishingService
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -203,6 +218,29 @@ export function preparedIdentity(
       }
       readCalls.push({ owner, depth })
       return { ...prepared, owner, depth }
+    },
+  }
+}
+
+/**
+ * A publisher that invents nothing and reaches nothing.
+ *
+ * The pack it builds is made from the names of its parts, so the same parts always
+ * produce the same bytes and therefore the same fingerprint. That is what lets a
+ * test assert a fingerprint at all.
+ */
+export function preparedPublishing(): PublishingService & {
+  readonly published: readonly { readonly caseId: string; readonly address: string }[]
+} {
+  const published: { caseId: string; address: string }[] = []
+  return {
+    published,
+    async buildPack(caseId: string, parts: readonly string[]): Promise<Uint8Array> {
+      return new TextEncoder().encode(`pack for ${caseId} containing ${parts.join(', ')}`)
+    },
+    async publish(caseId: string, address: string): Promise<{ readonly liveAt: string }> {
+      published.push({ caseId, address })
+      return { liveAt: `https://${address}` }
     },
   }
 }
