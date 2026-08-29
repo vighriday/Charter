@@ -124,6 +124,21 @@ export const BOUNDARIES: readonly Boundary[] = [
     guards: ['src/record/attestation.ts'],
     mayReach: ['src/record/generate-keys.ts', 'src/record/demo.ts'],
   },
+  {
+    name: 'the credential check',
+    why:
+      'This is the command a person runs to find out which outside company each ' +
+      'of our credentials belongs to. A credential is a long string of characters ' +
+      'that proves to a company we are allowed to use their service. To do its ' +
+      'job this code reads EVERY credential in the settings file and sends some ' +
+      'of them to the companies that issued them. That is exactly right for a ' +
+      'command a person types, and exactly wrong for anything a model can set in ' +
+      'motion: a model that could reach it could read every key we hold. Nothing ' +
+      'in the running product needs it, so nothing but itself may reach it, and ' +
+      'this rule fails the build the day something does.',
+    guards: ['src/checks/'],
+    mayReach: [],
+  },
 ]
 
 /**
