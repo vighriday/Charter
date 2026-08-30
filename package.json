@@ -15,10 +15,11 @@
     "keys:generate": "tsx src/record/generate-keys.ts",
     "db:migrate": "tsx src/db/migrate.ts",
     "record:demo": "tsx src/record/demo.ts",
-    "check": "npm run git:check && npm run typecheck && npm run test && npm run readme:check",
+    "check": "npm run git:check && npm run words:check && npm run typecheck && npm run test && npm run readme:check",
     "agent:demo": "tsx src/case/demo.ts",
     "keys:classify": "tsx src/checks/classify.ts",
-    "readme:check": "node scripts/check-readme-counts.mjs"
+    "readme:check": "node scripts/check-readme-counts.mjs",
+    "words:check": "node scripts/check-words.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",
