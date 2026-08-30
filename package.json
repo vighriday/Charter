@@ -21,7 +21,8 @@
     "readme:check": "node scripts/check-readme-counts.mjs",
     "words:check": "node scripts/check-words.mjs",
     "catalogue": "node scripts/catalogue.mjs",
-    "catalogue:check": "node scripts/catalogue.mjs --check"
+    "catalogue:check": "node scripts/catalogue.mjs --check",
+    "verify": "tsx src/verify/cli.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",

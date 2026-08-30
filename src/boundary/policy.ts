@@ -130,7 +130,17 @@ export const BOUNDARIES: readonly Boundary[] = [
       'the key pair, the other is the demonstration that shows the record being ' +
       'checked.',
     guards: ['src/record/attestation.ts'],
-    mayReach: ['src/record/generate-keys.ts', 'src/record/demo.ts'],
+    mayReach: [
+      'src/record/generate-keys.ts',
+      'src/record/demo.ts',
+      // The check a stranger runs against a finished pack. It reaches this module
+      // to VERIFY an attestation, using the public half of the key read from this
+      // repository — which is the whole point of publishing that half. It is a
+      // command a person types, not anything the model can set in motion, and the
+      // rule above still proves that separately.
+      'src/verify/check.ts',
+      'src/verify/cli.ts',
+    ],
   },
   {
     name: 'the credential check',

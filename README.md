@@ -46,7 +46,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 735 tests
+npm test          # 751 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 ```
@@ -187,8 +187,9 @@ Honest, because the demonstration above is checkable and this table should be to
 | Reading identity documents, and routing a value to a person on whether it can be found in the document rather than on a confidence score | **built, 27 tests** |
 | Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 35 tests** |
 | Classifying which vendor product each credential opens, by asking the vendor | **built, 29 tests** |
-| The verifier a stranger runs against a finished pack | not yet |
-| The seal that sets the pack's permission level | not yet |
+| The verifier a stranger runs against a finished pack | **built, 16 tests.** `npm run verify` |
+| The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document |
+| Attacks on our own boundary, run on every build | **built, 19 tests** — all eight from the plan |
 | The outside services — documents, identity, registrar, search, signing | **not yet.** Every one is a written-down answer today |
 
 ### The second demonstration

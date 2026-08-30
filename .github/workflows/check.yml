@@ -29,8 +29,25 @@ jobs:
       - name: nothing secret is publishable
         run: npm run git:check
 
+      # The words this project has said it will never use. A rule the build
+      # enforces is followed on the day somebody is in a hurry; a rule written in
+      # a document is not.
+      - name: the words we never use
+        run: npm run words:check
+
       - name: types
         run: npm run typecheck
 
       - name: tests
         run: npm test
+
+      # The list of everything the agent can do is generated from the code that
+      # runs. This fails if the committed file and the code disagree, so a tool
+      # cannot be added without that file changing in the same commit.
+      - name: the tool catalogue matches the code
+        run: npm run catalogue:check
+
+      # The readme is public and is the only file most people read. It once said
+      # 201 tests when there were 658. This checks its numbers against reality.
+      - name: the readme tells the truth
+        run: npm run readme:check
