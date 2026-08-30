@@ -486,7 +486,7 @@ export function moveTo(from: StageName, to: string, facts: CaseFacts): void {
 
   const expected = nextStage(from)
   if (expected === undefined) {
-    throw new StageOrderViolation(from, to, 'MUTANT: this branch is never tested')
+    throw new StageOrderViolation(from, to, `"${from}" is the last stage, so there is nowhere to go`)
   }
   if (to !== expected) {
     const goingBack = STAGES[to].position < STAGES[from].position

@@ -110,9 +110,32 @@ const SHAPES = [
   ['Slack token', /\bxox[baprs]-[0-9A-Za-z-]{10,}\b/],
   ['Stripe secret key', /\bsk_(?:live|test)_[0-9A-Za-z]{20,}\b/],
   ['bearer token', /\b[Bb]earer\s+[A-Za-z0-9._~+/-]{30,}/],
-  ['password assignment', /(?:password|passwd|pwd)\s*[:=]\s*["']?[^\s"'<>{}()[\]]{8,}/i],
+  // Only a QUOTED literal counts. `password: options.password` is a reference to
+  // a field, not a secret, and flagging it teaches people to ignore this check —
+  // which is worse than not having it, because they then ignore the real one too.
+  ['password assignment', /(?:password|passwd|pwd)\s*[:=]\s*["'][^\s"'<>{}()[\]]{8,}["']/i],
   ['generic 32-char hex secret', /\b(?:key|token|secret|api[_-]?key)["']?\s*[:=]\s*["']?[0-9a-f]{32,}\b/i],
 ]
+/**
+ * Exact strings that look like a secret and are not one.
+ *
+ * Listed here rather than marked in the files they appear in, so the complete set
+ * of exceptions can be read in one place. An exception scattered through the code
+ * it excuses is an exception nobody audits.
+ *
+ * Each needs a reason. "It is only a test" is not one on its own — a real
+ * credential pasted into a test is still a real credential.
+ */
+const NOT_ACTUALLY_SECRETS = [
+  {
+    // Wraps a key that is generated during the test, lives in memory, and is
+    // thrown away when the test ends. There is nothing on the other side of it:
+    // the key it protects never existed before the test began.
+    text: "password: 'a-long-enough-password'",
+    why: 'wraps a throwaway key generated inside the test itself',
+  },
+]
+
 // The check script itself contains every pattern above by definition.
 const shapeHits = []
 for (const file of wouldPublish) {
@@ -121,7 +144,11 @@ for (const file of wouldPublish) {
   if (!text) continue
   for (const [label, re] of SHAPES) {
     const hit = re.exec(text)
-    if (hit) shapeHits.push({ file, label, sample: hit[0].slice(0, 28) })
+    if (!hit) continue
+    if (NOT_ACTUALLY_SECRETS.some((one) => hit[0].includes(one.text) || one.text.includes(hit[0]))) {
+      continue
+    }
+    shapeHits.push({ file, label, sample: hit[0].slice(0, 28) })
   }
 }
 if (shapeHits.length) {
@@ -134,7 +161,7 @@ if (shapeHits.length) {
 // An allowlist rather than a blocklist. A blocklist only stops what we predicted;
 // an allowlist stops everything we did not think of, which is the dangerous set.
 const EXPECTED = [
-  /^README\.md$/, /^LICENSE$/, /^\.gitignore$/, /^\.gitattributes$/,
+  /^README\.md$/, /^TOOLS\.md$/, /^LICENSE$/, /^\.gitignore$/, /^\.gitattributes$/,
   /^package(-lock)?\.json$/, /^tsconfig(\.[a-z]+)?\.json$/,
   /^vitest\.config\.ts$/, /^next\.config\.[cm]?[jt]s$/,
   /^src\//, /^tests?\//, /^scripts\//, /^public\//, /^migrations\//,

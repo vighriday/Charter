@@ -90,10 +90,18 @@ export const BOUNDARIES: readonly Boundary[] = [
       'for. Only ordinary code, running after a recorded human approval, may call ' +
       'it.',
     guards: ['src/sign/'],
-    mayReach: [],
-    notBuiltYet:
-      'The signature request is built on day five. The rule is written now so it ' +
-      'is enforced from the first line of that module rather than added afterwards.',
+    // Written down on 30 August 2026, the day the module arrived. The rule had
+    // been armed since 28 August with a note saying the code did not exist yet,
+    // and a test asserting the folder really was empty. Creating the first file
+    // in it failed the build until this line was filled in, which is exactly what
+    // that note was for: permission granted deliberately and in the open, never
+    // acquired by accident.
+    //
+    // One file, and it is not part of the agent. It runs after a person has
+    // approved, reads that approval out of the append-only record rather than
+    // being handed it, and is itself unreachable from anything the model can
+    // trigger.
+    mayReach: ['src/case/send-for-signature.ts'],
   },
   {
     name: 'the human consent path',

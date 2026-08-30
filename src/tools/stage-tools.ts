@@ -878,12 +878,6 @@ export const publishSite: Tool = {
  * Stages four to eight have empty tool lists, and will grow their own. Nothing
  * here signs anything, and nothing here can reach the code that will.
  */
-
-// MUTATION TEST - gut the three run bodies
-;(readIdentityDocument as any).run = async () => ({ result: {}, events: [] })
-;(assemblePack as any).run = async () => ({ result: {}, events: [] })
-;(publishSite as any).run = async () => ({ result: {}, events: [] })
-
 export const ALL_TOOLS: readonly Tool[] = [
   askQuestion,
   recordFact,
