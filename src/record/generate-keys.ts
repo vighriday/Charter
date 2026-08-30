@@ -86,18 +86,61 @@ function writeIntoEnv(pem: string, force: boolean): SetOutcome {
   return outcome
 }
 
+/**
+ * Do we hold the private half of the key that is published here?
+ *
+ * The distinction this turns on, and why it matters:
+ *
+ * `keys/attestation.pub` is COMMITTED to this repository on purpose, so anybody
+ * can check Charter's record without asking us for anything. That means a fresh
+ * clone always has that file, and always has it WITHOUT the private half, which
+ * lives only in `.env` and is never committed.
+ *
+ * Until 30 August 2026 this command refused whenever that file existed. On a fresh
+ * clone that was every time: `npm run keys:generate` — the command the readme and
+ * the keys folder both tell a stranger to run — failed on the first try, for
+ * everybody, with a message about destroying attestations they had never made.
+ *
+ * A public key with no private half is a key you cannot use. Making your own is
+ * exactly the right thing to do, and it is not a destructive act.
+ */
+function holdTheMatchingPrivateHalf(): boolean {
+  if (!existsSync(ENV_PATH)) return false
+  const value = readEnvValue(readFileSync(ENV_PATH, 'utf8'), ENV_NAME)
+  return value !== undefined && value.trim() !== ''
+}
+
 function main(): void {
   const force = process.argv.includes('--force')
+  const publicHalfExists = existsSync(PUBLIC_PATH)
+  const ours = holdTheMatchingPrivateHalf()
 
-  if (existsSync(PUBLIC_PATH) && !force) {
+  // Refuse ONLY when replacing a key this machine can actually use. That is the
+  // case where something is genuinely lost: every attestation already made with it
+  // stops being checkable by anybody holding only the new public half.
+  if (publicHalfExists && ours && !force) {
     console.error(
-      `\n${PUBLIC_PATH} already exists.\n\n` +
-        `Replacing a key means every attestation made with the old one can no longer\n` +
-        `be checked by anyone holding only the new public half. That is almost never\n` +
-        `what you want.\n\n` +
+      `\n${PUBLIC_PATH} already exists, and ${ENV_PATH} holds the private half that\n` +
+        `matches it. This machine can make attestations with that key today.\n\n` +
+        `Replacing it means every attestation already made with the old one can no\n` +
+        `longer be checked by anyone holding only the new public half. That is almost\n` +
+        `never what you want.\n\n` +
         `If you are certain, run it again with --force.\n`,
     )
     process.exit(1)
+  }
+
+  if (publicHalfExists && !ours) {
+    console.log(
+      `\n${PUBLIC_PATH} exists and is the PUBLISHED public half of Charter's own key.\n` +
+        `It is committed to this repository on purpose, so anybody can check our\n` +
+        `record without asking us for anything.\n\n` +
+        `The private half is not on this machine — it lives only in ${ENV_PATH}, which\n` +
+        `is never committed. A public key with no private half is a key you cannot\n` +
+        `use, so making your own is exactly right.\n\n` +
+        `${PUBLIC_PATH} will be replaced with yours. Nothing you have made stops\n` +
+        `working, because you have not made anything with the old one.\n`,
+    )
   }
 
   const { publicKeyPem, privateKeyPem, keyId } = generateKeyPair()

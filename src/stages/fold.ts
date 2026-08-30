@@ -221,6 +221,13 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         if (at === -1) break
         const check = identityChecks[at] as IdentityCheck
         if (found === 'the value is correct') {
+          // A field the document never produced cannot be confirmed. There is
+          // nothing to confirm. Leaving it in the queue is not stubbornness: the
+          // only thing that fixes a missing value is a document that has it, and
+          // an answer of "correct" about a value nobody has read is either a
+          // mistake or somebody clicking through.
+          if (check.missing.includes(field)) break
+
           identityChecks[at] = {
             ...check,
             toReview: check.toReview.filter((one) => one !== field),

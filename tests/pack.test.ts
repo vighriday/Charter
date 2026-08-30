@@ -27,6 +27,7 @@ import {
   Pack,
   checkOrder,
   operation,
+  refusedAfterSealing,
 } from '../src/pack/assemble.js'
 
 const bytes = (text: string): Uint8Array => new TextEncoder().encode(text)
@@ -184,5 +185,57 @@ describe('checking a plan before running any of it', () => {
     // document operations. Charter seals documents. It never signs one.
     const forbidden = /sign|signature|esign|envelope|execute/i
     expect(OPERATIONS.map((one) => one.name).filter((name) => forbidden.test(name))).toEqual([])
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The section of the pack headed "what Charter was asked to do and would not"
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('what the finished pack says Charter would not do', () => {
+  it('is never empty, even when a run asked for none of it', () => {
+    // The problem this fixes. In an ordinary run nothing asks for any operation
+    // after sealing, so the refusals from that run are an empty list — and the
+    // heading in the finished pack would sit over nothing, which reads as though
+    // the promise were decorative rather than enforced.
+    expect(refusedAfterSealing().length).toBeGreaterThan(0)
+  })
+
+  it('names every operation that rewrites the file, and no others', () => {
+    const listed = new Set(refusedAfterSealing().map((one) => one.operation))
+    for (const operation of OPERATIONS) {
+      expect(listed.has(operation.name), operation.name).toBe(operation.rewritesTheFile)
+    }
+  })
+
+  it('gives a reason for every one, in plain words', () => {
+    for (const one of refusedAfterSealing()) {
+      expect(one.why.length, one.operation).toBeGreaterThan(20)
+      expect(one.why, one.operation).toMatch(/\.$/)
+    }
+  })
+
+  it('comes from the same declarations the rule itself reads', () => {
+    // The list cannot fall out of step with the rule, because it IS the rule. A
+    // hand-written list beside a rule is a second copy able to drift, and the
+    // drifted version still reads as though it were complete.
+    const pack = new Pack()
+    pack.seal(new TextEncoder().encode('something'))
+
+    for (const one of refusedAfterSealing()) {
+      const step = pack.run(one.operation)
+      expect(step.outcome, `${one.operation} is on the list and was allowed`).toBe('refused')
+    }
+  })
+
+  it('leaves out the operations that only read, because those stay allowed', () => {
+    const pack = new Pack()
+    pack.seal(new TextEncoder().encode('something'))
+
+    const listed = new Set(refusedAfterSealing().map((one) => one.operation))
+    for (const operation of OPERATIONS.filter((one) => !one.rewritesTheFile)) {
+      expect(listed.has(operation.name), operation.name).toBe(false)
+      expect(pack.run(operation.name).outcome, operation.name).toBe('ran')
+    }
   })
 })

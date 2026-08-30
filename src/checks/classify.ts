@@ -106,6 +106,25 @@ async function classifyNutrient(found: Found): Promise<void> {
   const opensExtraction = extraction.kind === 'accepted'
 
   console.log('')
+
+  // Nothing was reached, so nothing is known about the key.
+  //
+  // This came before every other verdict on purpose. Until 30 August 2026 a
+  // machine with no network fell through to the last branch and printed "neither
+  // product recognised this key... check it in the dashboard", which is a
+  // confident statement about a credential that was never shown to anybody. A
+  // diagnostic that blames the thing it is diagnosing when it could not run is
+  // worse than one that says nothing, because somebody acts on it — and the action
+  // here is going to a vendor dashboard to replace a key that was fine.
+  if (processor.kind === 'could not ask' && extraction.kind === 'could not ask') {
+    console.log('  VERDICT  Neither request reached Nutrient, so NOTHING was learned about')
+    console.log('           this key. It was never shown to anybody. This says something')
+    console.log('           about the network between here and them, and nothing at all')
+    console.log('           about the credential.')
+    console.log(`           ${say(processor)}`)
+    return
+  }
+
   if (opensProcessor && opensExtraction) {
     console.log('  VERDICT  This one key opens both. Their documentation says that')
     console.log('           happens once an account moves to a single shared key.')
@@ -122,10 +141,16 @@ async function classifyNutrient(found: Found): Promise<void> {
     console.log(`           ${place(found, 'NUTRIENT_EXTRACTION_KEY')}`)
     console.log('           The processor key is only for assembling PDF files, and its')
     console.log('           free output is watermarked, so we may not want it at all.')
+  } else if (processor.kind === 'could not ask' || extraction.kind === 'could not ask') {
+    // One reached and one did not. Half an answer, said as half an answer.
+    console.log('  VERDICT  One of the two requests never arrived, so this is half an')
+    console.log('           answer. What did arrive is above. Run it again before')
+    console.log('           changing anything: a product that was not reached is not a')
+    console.log('           product that refused you.')
   } else {
-    console.log('  VERDICT  Neither product recognised this key. Either it has expired,')
-    console.log('           it was copied incompletely, or it belongs to a third thing.')
-    console.log('           Check it in the dashboard before trusting anything above.')
+    console.log('  VERDICT  Both products were reached and neither recognised this key.')
+    console.log('           Either it has expired, it was copied incompletely, or it')
+    console.log('           belongs to a third thing. Check it in the dashboard.')
   }
 }
 

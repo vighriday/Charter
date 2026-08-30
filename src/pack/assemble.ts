@@ -142,6 +142,30 @@ export function operation(name: string): Operation | undefined {
   return BY_NAME.get(name)
 }
 
+/**
+ * Everything Charter would refuse to do to a pack once it is sealed, and why.
+ *
+ * WHY THIS IS A LIST AND NOT A SENTENCE
+ *
+ * The finished pack carries a section headed *what Charter was asked to do and
+ * would not*. In an ordinary run nothing asks for any of these, so that section
+ * would be empty — a heading over nothing, which reads as though the promise were
+ * decorative.
+ *
+ * The honest content is this: the complete list of what would have been refused,
+ * taken from the same declarations the rule itself reads. A reader can then check
+ * the claim rather than take it, and the list cannot fall out of step with the
+ * rule, because it IS the rule.
+ *
+ * Anything actually refused during a run is added beside it.
+ */
+export function refusedAfterSealing(): readonly { readonly operation: string; readonly why: string }[] {
+  return OPERATIONS.filter((one) => one.rewritesTheFile).map((one) => ({
+    operation: one.name,
+    why: `${one.does}. ${one.afterSealing ?? 'That would change what was sealed'}.`,
+  }))
+}
+
 /** Thrown when the order of work would produce a pack nobody can rely on. */
 export class OutOfOrder extends Error {
   constructor(message: string) {

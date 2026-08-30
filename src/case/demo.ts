@@ -18,12 +18,20 @@
  * model's arguments, the correction sent back when they do not fit, the spending
  * rule, and the name comparison.
  *
- * Stood in for: the model's replies and the two outside services. The model's
- * choices below are written out rather than asked for, and the search and
- * registrar answers are prepared. That is deliberate and it is not a mock-up of
- * the machinery — every one of those answers goes through exactly the code a real
- * one would. It is the same arrangement the recorded-response cache provides, and
- * it is what lets a stranger clone this and see it work.
+ * Also real: the settings, checked before anything runs, and the SEAL — a real
+ * certificate on a real multi-page PDF at permission level 2, which is "filling in
+ * and signing, and nothing else".
+ *
+ * Stood in for: the model's replies, and all FOUR outside services — search, the
+ * registrar, the identity reader, and publishing. The model's choices below are
+ * written out rather than asked for, and each service is a stand-in holding
+ * answers recorded in advance with no path to a network at all, so a missing
+ * answer is an error rather than a quiet real call. That is deliberate and it is
+ * not a mock-up of the machinery — every one of those answers goes through exactly
+ * the code a real one would. It is what lets a stranger clone this and see it work.
+ *
+ * The run prints all of this itself, before it does anything, rather than leaving
+ * it to be found.
  *
  * Nothing here is staged in the sense that matters: no output is printed that the
  * code did not produce, and the refusals are real refusals.
@@ -36,9 +44,10 @@
  * from the agent, and the boundary check refused the build until it moved. The
  * check found that, not a person reading it.
  *
- * THE SIX THINGS WORTH WATCHING FOR
+ * THE NINE THINGS WORTH WATCHING FOR
  *
  *   1. The model is offered only the current stage's tools. Watch the list change.
+ *      A tool absent from a stage is not forbidden there — it does not exist there.
  *   2. It sends a wrong argument, is told exactly which field and which values are
  *      allowed, and gets it right. That feedback is what makes a free model usable.
  *   3. It reaches for a tool from a later stage. Refused — it was never offered.
@@ -48,6 +57,19 @@
  *      Refused, and the registrar is never contacted at all.
  *   6. Whether two business names collide is decided in plain code, and the
  *      working is shown.
+ *   7. The agreement is drafted, and Charter refuses to choose two of its terms —
+ *      who runs the company, and whether there is a written way for an owner to
+ *      leave. Neither has a safe default, so the tool that would write either one
+ *      down refuses until the record shows a person was asked and answered.
+ *   8. Values read from an identity document go to a person. One because it could
+ *      only be matched approximately, though the reader was 94% sure of it — the
+ *      question of whether a value can be FOUND is tested before how sure the
+ *      reader FELT. Others because of the audit sample, which sends a share of the
+ *      readings that passed every test to a person anyway, since nothing else can
+ *      catch a reader that is confidently and quietly wrong.
+ *   9. The run reaches the boundary and stops. Stage seven has no tools at all. A
+ *      person approves sending the pack, naming it by its fingerprint, and only
+ *      then does the last stage run.
  */
 
 import { openBuiltIn } from '../db/driver.js'

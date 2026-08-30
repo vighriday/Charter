@@ -33,7 +33,7 @@ import { compareNames, verdictFrom, type Comparison } from '../names/compare.js'
 import { maySpend, afterSpending, cents, asMoney } from './guard.js'
 import { prepareAgreement } from '../agreement/prepare.js'
 import { reviewDocument, explain } from '../identity/review.js'
-import { Pack } from '../pack/assemble.js'
+import { Pack, refusedAfterSealing } from '../pack/assemble.js'
 import type { Tool, ToolContext, ToolOutcome, ToolEvent } from './registry.js'
 
 /** Read a required text argument. The shape was already checked before this ran. */
@@ -836,11 +836,29 @@ export const assemblePack: Tool = {
     const bytes = await context.services.publishing.buildPack(context.caseId, parts)
     const sealed = pack.seal(bytes)
 
+    // What goes under the pack's own heading, "what Charter was asked to do and
+    // would not".
+    //
+    // In an ordinary run nothing asks for any of these, so the refusals from this
+    // run are an empty list and the heading would sit over nothing — which reads
+    // as though the promise were decorative. So the section carries the complete
+    // list of what WOULD be refused, taken from the same declarations the rule
+    // itself reads, with anything actually refused in this run beside it. A reader
+    // can check the claim rather than take it, and the list cannot fall out of
+    // step with the rule, because it is the rule.
+    const wouldRefuse = refusedAfterSealing()
+    const didRefuse = sealed.refusals.map((step) => ({
+      operation: step.operation,
+      why: step.why ?? '',
+    }))
+
     return {
       result: {
         sealed: 'yes',
         fingerprint: sealed.fingerprint,
         sizeBytes: sealed.sizeBytes,
+        wouldRefuseAfterSealing: String(wouldRefuse.length),
+        refusedInThisRun: String(didRefuse.length),
       },
       events: [
         {
@@ -849,7 +867,8 @@ export const assemblePack: Tool = {
             fingerprint: sealed.fingerprint,
             sizeBytes: sealed.sizeBytes,
             parts: parts as unknown as JsonValue,
-            refusedAfterSealing: [] as unknown as JsonValue,
+            wouldRefuseAfterSealing: wouldRefuse as unknown as JsonValue,
+            refusedAfterSealing: didRefuse as unknown as JsonValue,
           },
         },
       ],

@@ -47,6 +47,7 @@
  */
 
 import { fingerprintBytes } from '../record/canonical.js'
+import { isRealDate } from '../dates.js'
 import {
   type ExtractedField,
   type MatchLabel,
@@ -175,22 +176,6 @@ export function explain(reason: ReviewReason): string {
   }
 }
 
-/** Whether text is a real year-month-day date. Written out, so no locale is involved. */
-function readableDate(value: string): { readonly ok: boolean } {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return { ok: false }
-
-  const [year, month, day] = value.split('-').map(Number) as [number, number, number]
-  if (month < 1 || month > 12 || day < 1) return { ok: false }
-
-  // Days in each month, with February corrected for leap years the full way: a
-  // year divisible by four is a leap year, except centuries, except every fourth
-  // century. The short version of this rule was wrong in 1900 and will be wrong
-  // again in 2100.
-  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
-  const lengths = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-  return { ok: day <= (lengths[month - 1] as number) }
-}
-
 /**
  * Loosen two names enough to compare them fairly, and no further.
  *
@@ -279,7 +264,7 @@ export function reviewField(field: ExtractedField, settings: ReviewSettings): Fi
 
   // ---- format and consistency, which need no service at all ------------------
   if (field.name === 'date_of_birth' || field.name === 'expiry_date') {
-    if (!readableDate(field.value).ok) {
+    if (!isRealDate(field.value)) {
       reasons.push({ kind: 'not-a-date', value: field.value })
     } else if (field.name === 'expiry_date' && field.value < settings.today) {
       // Both are year-month-day, so comparing them as text compares them as dates.

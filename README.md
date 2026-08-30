@@ -46,7 +46,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 813 tests
+npm test          # 851 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 ```
@@ -192,13 +192,14 @@ answer is 658, which is what this one said on 30 August.
 | Attacks on our own boundary, run on every build | **built, 19 tests** — all eight from the plan <!-- tests/attacks.test.ts --> |
 | The agent loop — one request, one turn, nothing carried between them | **built, 41 tests** <!-- tests/loop.test.ts --> |
 | Checking the model's arguments, and telling it exactly what to send instead | **built, 27 tests** <!-- tests/tool-schema.test.ts --> |
-| All eight stages, which tools exist in each, and the rules that decide when each is finished | **built, 61 tests** <!-- tests/stages.test.ts --> |
+| All eight stages, which tools exist in each, and the rules that decide when each is finished | **built, 63 tests** <!-- tests/stages.test.ts --> |
 | Every tool, including the rule that nothing costs money without a person's permission covering it | **built, 46 tests**, the spending rule proved by nothing being charged rather than by an error <!-- tests/tools.test.ts --> |
 | One whole case through all eight stages, as a test rather than only as a demonstration | **built, 12 tests** <!-- tests/whole-run.test.ts --> |
 | Whether two business names collide, decided in plain code | **built, 24 tests** <!-- tests/names.test.ts --> |
-| The ownership agreement — every number, article number and cross-reference worked out in code | **built, 59 tests** <!-- tests/agreement.test.ts --> |
+| The ownership agreement — every number, article number and cross-reference worked out in code, including a check that the voting rule and the deadlock article do not contradict each other | **built, 70 tests** <!-- tests/agreement.test.ts --> |
+| Whether a written date is a day that actually happened, in one place both callers use | **built, 20 tests** <!-- tests/dates.test.ts --> |
 | Reading identity documents, and routing a value to a person on whether it can be found in the document rather than on a confidence score | **built, 27 tests** <!-- tests/identity.test.ts --> |
-| Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 35 tests** <!-- tests/pack.test.ts --> |
+| Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 40 tests** <!-- tests/pack.test.ts --> |
 | The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document <!-- tests/seal.test.ts --> |
 | The checker a stranger runs against a finished pack | **built, 16 tests.** `npm run verify` <!-- tests/verify.test.ts --> |
 | Classifying which vendor product each credential opens, by asking the vendor | **built, 29 tests** <!-- tests/credentials.test.ts --> |

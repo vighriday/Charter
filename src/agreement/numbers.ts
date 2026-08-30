@@ -45,6 +45,8 @@
  * whose whole job is to record what people agreed.
  */
 
+import { isRealDate, daysInMonth } from '../dates.js'
+
 /** A share of a business, held as whole basis points. 10,000 = one hundred percent. */
 export type BasisPoints = bigint
 
@@ -271,6 +273,10 @@ export function asWrittenDate(isoDay: string): string {
     )
   }
 
+  // Checked against the real length of that month in that year, not against 31.
+  // Until 30 August 2026 this accepted "2026-02-31" and printed it into a legal
+  // document as "31 February 2026". The leap-year rule lives in one place now,
+  // because a rule written twice is a rule that drifts.
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
@@ -278,8 +284,19 @@ export function asWrittenDate(isoDay: string): string {
   const [year, month, day] = isoDay.split('-') as [string, string, string]
   const monthName = months[Number(month) - 1]
 
-  if (monthName === undefined || Number(day) < 1 || Number(day) > 31) {
-    throw new UnusableNumber(`"${isoDay}" is not a real date.`)
+  if (monthName === undefined) {
+    throw new UnusableNumber(`"${isoDay}" is not a real date. There is no month ${Number(month)}.`)
+  }
+
+  // Checked against the real length of that month in that year, not against 31.
+  // Until 30 August 2026 this accepted "2026-02-31" and would have printed it into
+  // a legal document as "31 February 2026". The leap-year rule lives in one place
+  // now, in src/dates.ts, because a rule written twice is a rule that drifts.
+  if (!isRealDate(isoDay)) {
+    throw new UnusableNumber(
+      `"${isoDay}" is not a real date. ${monthName} ${year} had ` +
+        `${daysInMonth(Number(year), Number(month))} days.`,
+    )
   }
 
   return `${Number(day)} ${monthName} ${year}`
@@ -315,4 +332,90 @@ export function voteThreshold(numerator: number, denominator: number): BasisPoin
   const divisor = BigInt(denominator)
   const exact = scaled / divisor
   return scaled % divisor === 0n ? exact : exact + 1n
+}
+
+/**
+ * One voting rule, as a number the arithmetic can use and as words the document
+ * prints.
+ *
+ * Both, because they are not the same thing. The smallest holding that carries a
+ * simple majority is 50.01%, and no agreement in the world says "50.01%". It says
+ * "more than fifty percent". Printing the number would be technically right and
+ * would read as though a lawyer had never seen it; printing only the words would
+ * leave nothing to check the shares against.
+ */
+export interface VoteRule {
+  /** The smallest holding, in basis points, that carries the vote. */
+  readonly carriesAt: BasisPoints
+  /** How the fraction is written in the document. */
+  readonly wording: string
+  /** True when exactly the fraction is NOT enough, and it has to be beaten. */
+  readonly mustBeat: boolean
+}
+
+/**
+ * A vote that carries only on MORE than this fraction.
+ *
+ * THE BUG THIS FIXES, BECAUSE IT IS WORTH WRITING DOWN
+ *
+ * Until 30 August 2026 an ordinary decision was set at exactly one half — 5,000
+ * basis points — and the test was "holds at least this much". In the most common
+ * two-owner business, fifty percent each, **either owner alone met it**. The same
+ * document also included a deadlock article, on the ground that these shares allow
+ * an exact tie.
+ *
+ * So the document said two things that cannot both be true: that a tie is possible
+ * and needs resolving, and that either owner can carry any ordinary decision on
+ * their own. Both sentences read perfectly. Only the arithmetic showed it.
+ *
+ * A majority means more than half. It has always meant more than half. The
+ * smallest whole basis-point holding that beats a half is 5,001.
+ */
+export function moreThan(numerator: number, denominator: number): VoteRule {
+  const exactly = fractionOf(numerator, denominator)
+  return {
+    carriesAt: exactly + 1n,
+    wording: `more than ${asPercent(exactly)}`,
+    mustBeat: true,
+  }
+}
+
+/**
+ * A vote that carries on this fraction OR MORE.
+ *
+ * The ordinary form for the decisions an agreement singles out as important —
+ * "two-thirds or more" — where landing exactly on the fraction is meant to carry.
+ * Rounded UP, so a threshold is the smallest holding that genuinely satisfies it:
+ * rounding down would let less than the named fraction carry a decision the
+ * document says needs that fraction.
+ */
+export function atLeast(numerator: number, denominator: number): VoteRule {
+  const smallest = voteThreshold(numerator, denominator)
+  return {
+    carriesAt: smallest,
+    wording: `at least ${asPercent(smallest)}`,
+    mustBeat: false,
+  }
+}
+
+/** The fraction itself in basis points, when it divides exactly; rounded down when not. */
+function fractionOf(numerator: number, denominator: number): BasisPoints {
+  if (
+    !Number.isInteger(numerator) ||
+    !Number.isInteger(denominator) ||
+    denominator <= 0 ||
+    numerator <= 0 ||
+    numerator > denominator
+  ) {
+    throw new UnusableNumber(
+      `A vote fraction is a whole-number fraction, more than none and no more than ` +
+        `all, such as one half written as (1, 2). Got (${numerator}, ${denominator}).`,
+    )
+  }
+  return (BigInt(numerator) * WHOLE) / BigInt(denominator)
+}
+
+/** Whether a holding of this many basis points carries a vote under this rule. */
+export function carries(rule: VoteRule, held: BasisPoints): boolean {
+  return held >= rule.carriesAt
 }

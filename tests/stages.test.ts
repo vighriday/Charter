@@ -615,6 +615,44 @@ describe('reading identity documents, and who decides what a person sees', () =>
     expect(couldMoveOn('verify', done).ready).toBe(true)
   })
 
+  it('will not leave with a required value the document never produced', () => {
+    // A different problem from a doubtful value, and it cannot be cleared the same
+    // way. A person looking at a document can confirm that a value was read
+    // correctly. Nobody can confirm a value that is not there.
+    const short = {
+      ...understood,
+      identityChecks: owners.map((owner) => ({
+        owner: owner.name,
+        fieldsRead: '3',
+        depth: 'understand',
+        // Empty on purpose: this is the shape the record is in AFTER somebody has
+        // answered "the value is correct" to every item in the queue. Until 30
+        // August 2026 that emptied the queue and the case moved on with a date of
+        // birth nobody had.
+        toReview: [],
+        missing: ['date_of_birth'],
+      })),
+    }
+
+    expect(because(short)).toContain('date_of_birth')
+    expect(because(short)).toContain('did not produce a required value')
+  })
+
+  it('says why confirming it is not the fix', () => {
+    const short = {
+      ...understood,
+      identityChecks: owners.map((owner) => ({
+        owner: owner.name,
+        fieldsRead: '3',
+        depth: 'understand',
+        toReview: [],
+        missing: ['document_number'],
+      })),
+    }
+    expect(because(short)).toContain('nothing to confirm')
+    expect(because(short)).toContain('clearer document')
+  })
+
   it('offers the model no tool that could clear a review', () => {
     // It may read a document. Whether a value needs a person is decided in code
     // afterwards, and there is nothing here that could reverse that.

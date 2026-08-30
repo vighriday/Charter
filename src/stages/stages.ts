@@ -326,6 +326,28 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
         )
       }
 
+      // A required field the document never produced is a different problem from a
+      // doubtful value, and it is checked FIRST because it cannot be cleared the
+      // same way.
+      //
+      // A person looking at a document can confirm that a value was read
+      // correctly. Nobody can confirm a value that is not there. Until 30 August
+      // 2026 both went into one queue, so somebody answering "the value is
+      // correct" to a field the reader never produced cleared it, and the case
+      // moved on with a date of birth nobody had. The only thing that fixes a
+      // missing field is a document that has it.
+      const incomplete = facts.identityChecks.filter((check) => check.missing.length > 0)
+      if (incomplete.length > 0) {
+        return notYet(
+          `${incomplete.length} document(s) did not produce a required value at all: ` +
+            incomplete
+              .map((one) => `${one.owner} (${one.missing.join(', ')})`)
+              .join('; ') +
+            '. This cannot be cleared by a person confirming it, because there is ' +
+            'nothing to confirm — a clearer document is needed, or the case waits',
+        )
+      }
+
       const waiting = facts.identityChecks.filter((check) => check.toReview.length > 0)
       if (waiting.length > 0) {
         return notYet(

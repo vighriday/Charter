@@ -54,10 +54,14 @@ import {
   share,
   shareOfContributions,
   voteThreshold,
+  moreThan,
+  atLeast,
+  carries,
 } from '../src/agreement/numbers.js'
 import {
   NotEnoughToDraft,
   assertNoOrphanHeadings,
+  assertVotesAndDeadlockAgree,
   prepareAgreement,
 } from '../src/agreement/prepare.js'
 import type { CaseFacts, Owner } from '../src/stages/facts.js'
@@ -662,5 +666,112 @@ describe('refusing to draft, rather than filling in a term nobody agreed', () =>
     expect(() => prepareAgreement(caseWith([ana, ben], { state: '' }), '2026-09-03')).toThrow(
       /which state's law reads this document/,
     )
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Voting, and the contradiction a document can hold without looking wrong
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('what carries a vote', () => {
+  it('makes an ordinary decision need MORE than half, not half', () => {
+    // The bug. Until 30 August 2026 an ordinary decision carried at exactly one
+    // half, tested as "holds at least this much". In the most common two-owner
+    // business — fifty percent each — either owner alone met it.
+    const ordinary = moreThan(1, 2)
+
+    expect(ordinary.carriesAt).toBe(5_001n)
+    expect(carries(ordinary, 5_000n), 'exactly half carried an ordinary vote').toBe(false)
+    expect(carries(ordinary, 5_001n)).toBe(true)
+  })
+
+  it('writes it the way an agreement writes it, not as 50.01%', () => {
+    // The smallest holding that carries a simple majority is 50.01%, and no
+    // agreement in the world says 50.01%. It says "more than fifty percent".
+    expect(moreThan(1, 2).wording).toBe('more than 50%')
+  })
+
+  it('lets a singled-out threshold be met exactly', () => {
+    // "Two-thirds or more" is the ordinary form for a decision an agreement marks
+    // as important: landing exactly on the fraction is meant to carry.
+    const major = atLeast(2, 3)
+    expect(carries(major, major.carriesAt)).toBe(true)
+    expect(carries(major, major.carriesAt - 1n)).toBe(false)
+  })
+
+  it('rounds a singled-out threshold UP, never down', () => {
+    // Rounded down, a threshold could be met by less than the fraction the
+    // document names, so the document would say one thing and permit another.
+    // Two thirds of 10,000 is 6,666.66…, so the smallest holding that genuinely
+    // satisfies it is 6,667.
+    expect(atLeast(2, 3).carriesAt).toBe(6_667n)
+  })
+
+  it('refuses a fraction that is not one', () => {
+    expect(() => moreThan(0, 2)).toThrow(UnusableNumber)
+    expect(() => moreThan(3, 2)).toThrow(UnusableNumber)
+    expect(() => moreThan(1, 0)).toThrow(UnusableNumber)
+    expect(() => moreThan(1.5, 2)).toThrow(UnusableNumber)
+  })
+})
+
+describe('the voting rule and the deadlock article have to agree', () => {
+  const twoEqual = [5_000n, 5_000n]
+  const threeUneven = [4_000n, 3_500n, 2_500n]
+
+  it('accepts fifty-fifty with a deadlock article and a more-than-half rule', () => {
+    expect(() =>
+      assertVotesAndDeadlockAgree(twoEqual, moreThan(1, 2), true),
+    ).not.toThrow()
+  })
+
+  it('refuses a document that includes a deadlock article and lets half carry', () => {
+    // Both sentences read perfectly: "a tie can happen, and here is what to do",
+    // and "an ordinary decision carries at 50%". They cannot both be true. Only
+    // the arithmetic shows it, which is why this is a check and not proofreading.
+    expect(() => assertVotesAndDeadlockAgree(twoEqual, atLeast(1, 2), true)).toThrow(
+      BrokenAgreement,
+    )
+    expect(() => assertVotesAndDeadlockAgree(twoEqual, atLeast(1, 2), true)).toThrow(
+      /cannot both be true/,
+    )
+  })
+
+  it('refuses a deadlock article when no group can hold exactly half', () => {
+    expect(() =>
+      assertVotesAndDeadlockAgree(threeUneven, moreThan(1, 2), true),
+    ).toThrow(BrokenAgreement)
+  })
+
+  it('refuses leaving the deadlock article out when a tie is possible', () => {
+    expect(() =>
+      assertVotesAndDeadlockAgree(twoEqual, moreThan(1, 2), false),
+    ).toThrow(BrokenAgreement)
+  })
+
+  it('refuses shares where no group can ever reach the threshold', () => {
+    // A company that cannot decide anything, with nothing in the document saying
+    // so. These shares do not add to a whole on purpose: this is the check for a
+    // set of holdings nobody can combine into a majority.
+    expect(() =>
+      assertVotesAndDeadlockAgree([1_000n, 1_000n], moreThan(1, 2), false),
+    ).toThrow(/permanently blocked/)
+  })
+})
+
+describe('a real fifty-fifty agreement', () => {
+  it('says a tie is possible and does not let either owner carry a vote alone', () => {
+    // The whole point, end to end: the two sisters, half each. The document must
+    // include the deadlock article AND must not permit either of them to decide
+    // an ordinary question by themselves.
+    const prepared = prepareAgreement(caseWith([ana, ben]), '2026-09-03')
+
+    expect(prepared.data.deadlockPossible).toBe(true)
+    expect(prepared.data.ordinaryVote).toBe('more than 50%')
+    expect(BigInt(prepared.data.ordinaryVotePoints)).toBe(5_001n)
+    expect(carries(
+      { carriesAt: BigInt(prepared.data.ordinaryVotePoints), wording: '', mustBeat: true },
+      5_000n,
+    )).toBe(false)
   })
 })

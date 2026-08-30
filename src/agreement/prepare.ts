@@ -55,7 +55,10 @@ import {
   mustTotalWhole,
   share,
   shareOfContributions,
-  voteThreshold,
+  moreThan,
+  atLeast,
+  carries,
+  type VoteRule,
   WHOLE,
 } from './numbers.js'
 
@@ -104,10 +107,19 @@ export interface AgreementData {
   readonly references: Readonly<Record<string, string>>
   /** Which template blocks are hidden, and which branch decided each one. */
   readonly blocks: readonly BlockDecision[]
-  /** What fraction of ownership carries an ordinary decision, formatted. */
+  /**
+   * What carries an ordinary decision, as the document writes it: "more than 50%".
+   *
+   * Words rather than a number, because the smallest holding that carries a simple
+   * majority is 50.01% and no agreement in the world says 50.01%.
+   */
   readonly ordinaryVote: string
-  /** What fraction carries a decision that changes the deal itself, formatted. */
+  /** The same threshold in basis points, so the shares can be checked against it. */
+  readonly ordinaryVotePoints: string
+  /** What carries a decision that changes the deal itself, as the document writes it. */
   readonly majorVote: string
+  /** The same threshold in basis points. */
+  readonly majorVotePoints: string
   /** Whether a tie is arithmetically possible with these shares. */
   readonly deadlockPossible: boolean
 }
@@ -319,8 +331,19 @@ export function prepareAgreement(facts: CaseFacts, today: string): PreparedAgree
 
   // ---- votes ----------------------------------------------------------------
 
-  const ordinary = voteThreshold(1, 2)
-  const major = voteThreshold(2, 3)
+  // An ordinary decision carries on MORE than half. Not on half.
+  //
+  // Until 30 August 2026 this was exactly one half, tested as "holds at least this
+  // much". In the most common two-owner business — fifty percent each — either
+  // owner alone met it, while the same document included a deadlock article on the
+  // ground that these shares allow an exact tie. The document said two things that
+  // cannot both be true, and both of them read perfectly.
+  const ordinary = moreThan(1, 2)
+
+  // A decision that changes the deal itself carries at two-thirds OR MORE, which is
+  // the ordinary form for a threshold an agreement singles out: landing exactly on
+  // the fraction is meant to carry.
+  const major = atLeast(2, 3)
   const deadlockPossible = articles.some((article) => article.id === 'deadlock')
 
   if (deadlockPossible) {
@@ -329,6 +352,12 @@ export function prepareAgreement(facts: CaseFacts, today: string): PreparedAgree
         'out when the arithmetic makes a tie impossible.',
     )
   }
+
+  // The contradiction check. A document that includes a deadlock article is saying
+  // a tie can happen; a document whose ordinary threshold can be met by exactly
+  // half is saying it cannot. Both statements can sit in one document and read
+  // perfectly, which is why this is arithmetic and not proofreading.
+  assertVotesAndDeadlockAgree(shares, ordinary, deadlockPossible)
 
   // ---- the finished values ---------------------------------------------------
 
@@ -358,8 +387,10 @@ export function prepareAgreement(facts: CaseFacts, today: string): PreparedAgree
     articles,
     references,
     blocks: decisions,
-    ordinaryVote: asPercent(ordinary),
-    majorVote: asPercent(major),
+    ordinaryVote: ordinary.wording,
+    ordinaryVotePoints: String(ordinary.carriesAt),
+    majorVote: major.wording,
+    majorVotePoints: String(major.carriesAt),
     deadlockPossible,
   }
 
@@ -389,6 +420,76 @@ export function assertNoOrphanHeadings(headingLines: readonly string[], bodyBetw
           `heading inside the block that hides the clause.`,
       )
     }
+  }
+}
+
+/**
+ * Refuse a document whose voting rule and whose deadlock article disagree.
+ *
+ * WHAT GOES WRONG WITHOUT THIS
+ *
+ * A deadlock article is included when the shares allow some group of owners to hold
+ * exactly half. That is a statement: *a tie can happen here, and here is what to do
+ * about it.*
+ *
+ * If the ordinary threshold can be met by exactly half, a tie cannot happen — the
+ * first side to vote carries it. The article then describes a situation the rest of
+ * the document has made impossible, and a reader following the deadlock procedure
+ * is following a procedure for something that never occurs.
+ *
+ * The reverse is worse. If no group can reach the threshold at all, every ordinary
+ * decision is permanently blocked and no deadlock article was included to say so.
+ *
+ * Both documents read perfectly. Only the arithmetic shows it, which is why this is
+ * a check and not proofreading.
+ */
+export function assertVotesAndDeadlockAgree(
+  shares: readonly BasisPoints[],
+  ordinary: VoteRule,
+  deadlockIncluded: boolean,
+): void {
+  // Every total any group of owners could hold. A handful of owners, so working
+  // through every combination is affordable, and done in whole numbers because a
+  // near-tie and a tie are different situations.
+  let reachable = new Set<BasisPoints>([0n])
+  for (const share of shares) {
+    const next = new Set<BasisPoints>(reachable)
+    for (const running of reachable) next.add(running + share)
+    reachable = next
+  }
+
+  const halfExactly = WHOLE / 2n
+  const halfIsReachable = reachable.has(halfExactly)
+  const halfWouldCarry = carries(ordinary, halfExactly)
+
+  if (halfIsReachable && halfWouldCarry) {
+    throw new BrokenAgreement(
+      `These shares let a group hold exactly half, and the ordinary threshold of ` +
+        `"${ordinary.wording}" is met by exactly half. So the document would include ` +
+        `a deadlock article saying a tie can happen, while also letting either side ` +
+        `carry every ordinary decision alone. Both sentences read perfectly and they ` +
+        `cannot both be true.`,
+    )
+  }
+
+  if (deadlockIncluded !== halfIsReachable) {
+    throw new BrokenAgreement(
+      `The deadlock article is ${deadlockIncluded ? 'included' : 'left out'} and these ` +
+        `shares ${halfIsReachable ? 'do' : 'do not'} allow a group to hold exactly ` +
+        `half. Those disagree.`,
+    )
+  }
+
+  // Somebody has to be able to decide something. A set of shares where no group
+  // can reach the threshold is a company that cannot act at all, and no article
+  // in the document would say so.
+  const anyoneCanCarry = [...reachable].some((held) => carries(ordinary, held))
+  if (!anyoneCanCarry) {
+    throw new BrokenAgreement(
+      `No group of owners can reach the ordinary threshold of "${ordinary.wording}" ` +
+        `with these shares, so every ordinary decision would be permanently blocked ` +
+        `and nothing in the document says so.`,
+    )
   }
 }
 
