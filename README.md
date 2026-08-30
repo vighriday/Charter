@@ -32,9 +32,12 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
    before it.
 2. Somebody altering entry three. The checker names exactly which entry changed,
    and shows the fingerprint it expected against the one it found.
-3. The database refusing the alteration outright. Not our code being careful — a
-   rule inside PostgreSQL, which returns `restrict_violation` and has no setting to
-   turn it off.
+3. The database refusing the alteration. Not our code being careful — a rule
+   inside PostgreSQL, which returns `restrict_violation`. Nothing gets around it by
+   accident or through any ordinary code path. Somebody holding the connection
+   string can still switch it off deliberately, and **that is exactly why the
+   fingerprint chain exists**: they cannot then hide what they did. We tested both
+   routes rather than assuming, closed the one that could be closed, and say so.
 4. **The one thing the chain cannot catch on its own.** Drop the last two entries
    and the chain still verifies perfectly, because a shortened chain is a valid
    chain. The attestation catches it. We show this rather than hiding it.
@@ -43,7 +46,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 724 tests
+npm test          # 728 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 ```

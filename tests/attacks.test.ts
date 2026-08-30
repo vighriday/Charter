@@ -32,7 +32,7 @@
 import { describe, expect, it, beforeAll } from 'vitest'
 import { openBuiltIn, type Database } from '../src/db/driver.js'
 import { migrate } from '../src/db/migrate.js'
-import { fixedClock, readEvents } from '../src/record/log.js'
+import { append, fixedClock, readEvents, verifyRun } from '../src/record/log.js'
 import { fingerprintBytes } from '../src/record/canonical.js'
 import { approveSendingForSignature } from '../src/case/human.js'
 import {
@@ -350,5 +350,103 @@ describe('attack: lower the identity review threshold from inside the model’s 
     expect(about).not.toContain('identity')
     expect(about).not.toContain('review')
     expect(about.length).toBeGreaterThan(0)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Attacks on the record itself
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * These exist because a claim in this project's readme turned out to be false.
+ *
+ * It said the append-only rule inside the database "has no setting to turn it
+ * off". Two documented PostgreSQL routes were found and both worked:
+ *
+ *   SET session_replication_role = 'replica'   skips ordinary triggers
+ *   ALTER TABLE events DISABLE TRIGGER ALL     needs only table ownership
+ *
+ * The first is now closed, by creating the triggers with ENABLE ALWAYS. The second
+ * cannot be closed by anybody: the owner of a table may always disable its
+ * triggers, and the role that runs the migration owns the table by definition.
+ *
+ * So the honest claim is not prevention, and these tests fix the honest claim in
+ * place. Charter DETECTS modification. It does not prevent it. The value of
+ * putting the rule in the database is that nobody gets around it by accident or
+ * through any ordinary code path — and somebody who does it deliberately still
+ * cannot hide it.
+ */
+describe('attack: change a past entry in the record', () => {
+  const threeEntries = async (db: Database, runId: string) => {
+    const clock = fixedClock('2026-08-30T09:00:00.000Z', 1000)
+    for (const kind of ['a.one', 'a.two', 'a.three']) {
+      await append(db, { runId, kind, actor: 'system', stage: null, payload: { kind } }, clock)
+    }
+  }
+
+  it('is refused for ordinary code, by the database rather than by us', async () => {
+    const db = await freshCase()
+    await threeEntries(db, 'ordinary')
+
+    await expect(db.query("UPDATE events SET kind = 'changed' WHERE seq = 1")).rejects.toThrow(
+      /append-only/,
+    )
+    await db.close()
+  })
+
+  it('is still refused in replication mode, which used to be a way through', async () => {
+    // `session_replication_role = 'replica'` is a documented, supported setting
+    // that skips ordinary triggers. Before the triggers were created with ENABLE
+    // ALWAYS, an UPDATE in this mode rewrote a past entry silently.
+    const db = await freshCase()
+    await threeEntries(db, 'replica')
+
+    await db.query("SET session_replication_role = 'replica'")
+    await expect(db.query("UPDATE events SET kind = 'quiet' WHERE seq = 1")).rejects.toThrow(
+      /append-only/,
+    )
+    await db.query("SET session_replication_role = 'origin'")
+    await db.close()
+  })
+
+  it('CAN be forced by disabling the triggers, and the chain catches it', async () => {
+    // This route cannot be closed, so it is tested rather than denied. Whoever owns
+    // the table may disable its triggers. What they cannot do is hide the result:
+    // every entry carries the fingerprint of the one before it, so changing one in
+    // the middle breaks every link after it.
+    const db = await freshCase()
+    await threeEntries(db, 'forced')
+
+    await db.query('ALTER TABLE events DISABLE TRIGGER ALL')
+    await db.query("UPDATE events SET kind = 'changed.in.the.middle' WHERE seq = 1")
+    await db.query('ALTER TABLE events ENABLE TRIGGER ALL')
+
+    const check = await verifyRun(db, 'forced')
+    expect(check.ok, 'a changed entry passed the checker').toBe(false)
+    await db.close()
+  })
+
+  it('is not caught by the chain alone when the END is removed, which is why the attestation exists', async () => {
+    // The one thing a chain of fingerprints cannot notice on its own: a shortened
+    // chain is still a valid chain. This project says so in its readme rather than
+    // hiding it, and this test is what keeps that statement true.
+    const db = await freshCase()
+    await threeEntries(db, 'shortened')
+
+    await db.query('ALTER TABLE events DISABLE TRIGGER ALL')
+    await db.query("DELETE FROM events WHERE run_id = 'shortened' AND seq = 3")
+    await db.query('ALTER TABLE events ENABLE TRIGGER ALL')
+
+    const check = await verifyRun(db, 'shortened')
+    expect(
+      check.ok,
+      'if this ever fails, the chain has become able to catch truncation on its ' +
+        'own and the readme should stop saying it cannot',
+    ).toBe(true)
+
+    // Two entries left where there were three. The chain is happy; only something
+    // vouching for the END of it can tell.
+    expect(await readEvents(db, 'shortened')).toHaveLength(2)
+    await db.close()
   })
 })

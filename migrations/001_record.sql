@@ -7,12 +7,36 @@
 -- be less careful, a migration script bypasses it entirely, and anybody with the
 -- connection string ignores it completely.
 --
--- A rule enforced by the database cannot be bypassed by any of those. Not by us,
--- not by a future change, and not by the language model — which never gets near a
--- connection in the first place, but the guarantee should not depend on that.
+-- A rule enforced by the database is not bypassed by any of those. Not by our own
+-- code, not by a future change to it, not by a migration script, and not by the
+-- language model — which never gets near a connection in the first place, but the
+-- guarantee should not depend on that.
 --
--- So: UPDATE and DELETE on the events table are refused outright, by a trigger,
--- for everyone. There is no flag to turn it off and no privileged path around it.
+-- So: UPDATE and DELETE on the events table are refused by a trigger.
+--
+-- WHAT THIS DOES NOT DO, MEASURED RATHER THAN ASSUMED
+--
+-- It does not stop somebody who holds the connection string and decides to switch
+-- the rule off. That was tested rather than reasoned about, and two routes were
+-- found:
+--
+--   SET session_replication_role = 'replica'   -- skips ordinary triggers
+--   ALTER TABLE events DISABLE TRIGGER ALL     -- needs only table ownership
+--
+-- The first is closed below, by creating the triggers with ENABLE ALWAYS so they
+-- run in that mode too. The second cannot be closed: whoever owns a table can
+-- always disable its triggers, and the role that runs this migration owns this
+-- table by definition.
+--
+-- So the honest claim is not prevention. It is this: nobody gets around this by
+-- accident, by carelessness, or through any ordinary code path — and somebody who
+-- does it deliberately still cannot hide it, because every entry carries the
+-- fingerprint of the one before it and the attestation covers the end of the
+-- chain. A test proves that: it disables the triggers, changes a past entry, and
+-- shows the checker naming the exact entry that moved.
+--
+-- Charter detects modification. It does not prevent it. Saying otherwise would be
+-- a claim this code cannot back.
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- events — one row per thing that happened. Only ever added to.
@@ -84,9 +108,9 @@ CREATE TABLE IF NOT EXISTS event_payloads (
 -- The rules
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- Nothing may ever change or remove an entry. No exceptions, no flag, no
--- privileged path. If a value must be forgotten, its payload is cleared in the
--- other table and the clearing is itself recorded as a new entry.
+-- Nothing changes or removes an entry in ordinary use. If a value must be
+-- forgotten, its payload is cleared in the other table and the clearing is itself
+-- recorded as a new entry.
 CREATE OR REPLACE FUNCTION events_are_append_only() RETURNS TRIGGER AS $$
 BEGIN
   RAISE EXCEPTION
@@ -103,6 +127,19 @@ CREATE TRIGGER events_no_update BEFORE UPDATE ON events
 DROP TRIGGER IF EXISTS events_no_delete ON events;
 CREATE TRIGGER events_no_delete BEFORE DELETE ON events
   FOR EACH ROW EXECUTE FUNCTION events_are_append_only();
+
+-- ENABLE ALWAYS, and the reason is a route somebody actually found.
+--
+-- A trigger created the ordinary way is skipped when the session sets
+-- `session_replication_role = 'replica'` — a documented, supported setting meant
+-- for replication tools. In that mode an UPDATE on a past entry succeeded
+-- silently. ALWAYS makes the trigger run in that mode too, which closes it.
+--
+-- It does not close `ALTER TABLE ... DISABLE TRIGGER`, and nothing can: the owner
+-- of a table may always disable its triggers. That is stated in the note at the
+-- top of this file rather than left for somebody to discover.
+ALTER TABLE events ENABLE ALWAYS TRIGGER events_no_update;
+ALTER TABLE events ENABLE ALWAYS TRIGGER events_no_delete;
 
 -- An entry must follow on from the one before it.
 --
