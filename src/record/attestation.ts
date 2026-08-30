@@ -35,7 +35,7 @@
  *
  * WHY ED25519
  *
- * Built into Node, so no dependency. Small keys, short signatures, fast. And it
+ * Built into Node, so no dependency. Small keys, short proofs, fast. And it
  * has no options to get wrong — no key size to choose, no padding mode, no curve
  * to pick badly. For a thing whose whole value is that a stranger can check it,
  * having no wrong way to configure it is the feature.
@@ -69,11 +69,24 @@ export interface Attestation extends RecordHead {
    *
    * Deliberately not the key. Including the key would invite a checker to use it,
    * which would prove nothing. This only lets a checker say "you gave me the wrong
-   * key" instead of "the signature failed", which is a far more useful error.
+   * key" instead of "the attestation failed", which is a far more useful error.
    */
   readonly keyId: string
-  /** The signature over the statement, base64. */
-  readonly signature: string
+  /**
+   * The cryptographic proof over the statement, base64.
+   *
+   * Called a proof rather than a signature on purpose. In this project the word
+   * "signature" means one thing — what a person does, with the intent to be bound
+   * — and it is never used for anything a machine produces. What the machine does
+   * over its own record is an ATTESTATION, and this field is the part of it that
+   * the mathematics checks.
+   *
+   * The underlying operation is a digital signature in the ordinary cryptographic
+   * sense, and pretending otherwise would be silly. The point is narrower: nothing
+   * in this project's code, screens or writing calls a machine act a signature,
+   * because the whole argument rests on that word meaning only one thing.
+   */
+  readonly proof: string
 }
 
 export class AttestationError extends Error {
@@ -237,9 +250,9 @@ export function attest(head: RecordHead, privateKeyPem: string): Attestation {
   const privateKey = loadPrivate(privateKeyPem)
   const keyId = keyIdOf(createPublicKey(privateKey))
   // Ed25519 hashes internally, so the algorithm argument is null by design.
-  const signature = cryptoSign(null, statementBytes(head, keyId), privateKey)
+  const proof = cryptoSign(null, statementBytes(head, keyId), privateKey)
 
-  return { v: '1', ...head, keyId, signature: signature.toString('base64') }
+  return { v: '1', ...head, keyId, proof: proof.toString('base64') }
 }
 
 export type AttestationCheck =
@@ -283,16 +296,19 @@ export function verifyAttestation(
     return { ok: false, reason: `this attestation is version ${attestation.v}, which this checker does not know` }
   }
 
-  let signature: Buffer
+  let proof: Buffer
   try {
-    signature = Buffer.from(attestation.signature, 'base64')
+    proof = Buffer.from(attestation.proof, 'base64')
   } catch {
-    return { ok: false, reason: 'the signature is not valid base64' }
+    return { ok: false, reason: 'the attestation is not valid base64' }
   }
 
   const bytes = statementBytes(attestation, keyId)
-  if (!cryptoVerify(null, bytes, publicKey, signature)) {
-    return { ok: false, reason: 'the signature does not match. This attestation was altered after it was made' }
+  if (!cryptoVerify(null, bytes, publicKey, proof)) {
+    return {
+      ok: false,
+      reason: 'the attestation does not match. It was altered after it was made',
+    }
   }
 
   if (expectedHead) {

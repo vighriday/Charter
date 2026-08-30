@@ -121,9 +121,25 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         else if (about === 'owner') {
           const contribution = asText(payload, 'contribution') ?? ''
           const already = owners.findIndex((owner) => owner.name === value)
-          const owner: Owner = { name: value, contribution }
-          if (already === -1) owners.push(owner)
-          else owners[already] = owner
+
+          if (already === -1) {
+            owners.push({ name: value, contribution })
+          } else {
+            // MERGED, not replaced. Somebody correcting an owner's description must
+            // not silently delete their share and the value of what they put in,
+            // which were written down by separate entries. Replacing the whole
+            // record here made the agreement refuse to draft with "no share has
+            // been recorded", naming a person whose share had been recorded.
+            //
+            // An empty contribution means the argument was absent rather than that
+            // somebody meant to erase what they said, so it is left alone.
+            const previous = owners[already] as Owner
+            owners[already] = {
+              ...previous,
+              name: value,
+              contribution: contribution === '' ? previous.contribution : contribution,
+            }
+          }
         } else if (about === 'owner_share' || about === 'owner_contribution_value') {
           // These two attach to an owner already written down. An owner nobody
           // has recorded yet is not created here: a share belonging to a person
@@ -291,9 +307,24 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         const forWhat = asText(payload, 'forWhat')
         const grantedAt = asText(payload, 'grantedAt')
         if (limitCents === undefined || forWhat === undefined || grantedAt === undefined) break
+        // WHAT IS ALREADY SPENT CARRIES FORWARD. It is not reset.
+        //
+        // A second permission is an ordinary path, not a hypothetical one: when a
+        // price is above what is left, the spending rule refuses with the words "a
+        // person has to raise the limit before this can run", and nothing stops a
+        // person granting again.
+        //
+        // Starting the count at zero each time would let a raised limit be spent in
+        // full a second time, so £25 granted twice would permit £50 of spending
+        // while every screen showed a £25 limit. Money already gone is gone.
         facts = {
           ...facts,
-          spendAuthorisation: { limitCents, forWhat, grantedAt, spentCents: '0' },
+          spendAuthorisation: {
+            limitCents,
+            forWhat,
+            grantedAt,
+            spentCents: facts.spendAuthorisation?.spentCents ?? '0',
+          },
         }
         break
       }
@@ -443,8 +474,15 @@ export function describeSituation(facts: CaseFacts): string {
 
   const research = facts.nameResearch
   if (research !== undefined) {
+    // The verdict is deliberately absent until something has actually been
+    // compared. Putting it straight into the sentence printed the word "undefined"
+    // to the model, which is both meaningless and the kind of thing a model will
+    // try to make sense of.
     lines.push(
-      `${research.searches.length} search(es) run. Name check so far: ${research.verdict}.`,
+      research.verdict === undefined
+        ? `${research.searches.length} search(es) run, and nothing compared against the ` +
+          `proposed name yet.`
+        : `${research.searches.length} search(es) run. Name check so far: ${research.verdict}.`,
     )
   }
 

@@ -105,6 +105,28 @@ const RULES = [
     instead: '"seals" for a document, "attests" for our own record',
   },
   {
+    // The NOUN, used for something a machine produced. This was missing until 30
+    // August, which meant the checker passed clean while the code called the
+    // machine's own attestation "the signature" in five places — including in text
+    // printed to a person.
+    //
+    // Deliberately narrow. It looks for the word attached to a machine subject or
+    // to our own record, not for every use of it: the project talks about human
+    // signatures constantly and has to be able to.
+    pattern:
+      /\b(?:the|its|our|a)\s+signature\s+(?:over|of)\s+(?:our|the|its)\s+(?:own\s+)?(?:record|log|chain|attestation)/gi,
+    deniable: true,
+    why: 'calls a machine act a signature. What the machine puts over its own record is an attestation',
+    instead: '"attestation"',
+  },
+  {
+    // The other shape: a machine subject producing one.
+    pattern: /\b(?:charter|the agent|the system|the software|the machine)\s+(?:makes|creates|produces|applies|adds)\s+(?:a|its|the)\s+signature/gi,
+    deniable: true,
+    why: 'calls a machine act a signature. The machine seals documents and attests over its own record',
+    instead: '"seal" for a document, "attestation" for our own record',
+  },
+  {
     pattern: /\bco-?authored-by\b/gi,
     why: 'nothing here carries a tool’s name. A person is responsible for this work',
     instead: 'nothing',

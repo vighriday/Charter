@@ -49,7 +49,7 @@ describe('attesting', () => {
     const a = attest(head(), keys.privateKeyPem)
     expect(a.v).toBe('1')
     expect(a.keyId).toBe(keys.keyId)
-    expect(a.signature).toMatch(/^[A-Za-z0-9+/]+=*$/)
+    expect(a.proof).toMatch(/^[A-Za-z0-9+/]+=*$/)
     expect(verifyAttestation(a, keys.publicKeyPem).ok).toBe(true)
   })
 

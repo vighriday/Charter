@@ -162,6 +162,67 @@ describe('folding the record into what is known', () => {
     expect(facts.spendAuthorisation?.spentCents).toBe('1299')
   })
 
+  it('carries what is already spent across a second permission', () => {
+    // A second permission is an ordinary path, not a hypothetical one. When a
+    // price is above what is left, the spending rule refuses with the words "a
+    // person has to raise the limit before this can run", and nothing stops a
+    // person granting again.
+    //
+    // Starting the count at zero each time would let a raised limit be spent in
+    // full a second time: 2500 granted twice would permit 5000 of spending while
+    // every screen showed a limit of 2500. Money already gone is gone.
+    const facts = fold([
+      {
+        kind: 'spend.authorised',
+        payload: { limitCents: '5000', forWhat: 'x', grantedAt: '2026-08-30T10:00:00.000Z' },
+      },
+      { kind: 'spend.applied', payload: { spentCentsAfter: '3000' } },
+      {
+        kind: 'spend.authorised',
+        payload: { limitCents: '5000', forWhat: 'x', grantedAt: '2026-08-30T11:00:00.000Z' },
+      },
+    ])
+
+    expect(facts.spendAuthorisation?.spentCents, 'the amount already spent was reset').toBe('3000')
+    expect(facts.spendAuthorisation?.limitCents).toBe('5000')
+  })
+
+  it('keeps an owner’s share when their description is corrected', () => {
+    // Somebody correcting what an owner put in must not silently delete their
+    // share and the value of it, which arrive as separate entries. Replacing the
+    // whole record made the agreement refuse to draft with "no share has been
+    // recorded", naming a person whose share had been recorded.
+    const facts = fold([
+      { kind: 'fact.recorded', payload: { about: 'owner', value: 'Ana', contribution: 'the van' } },
+      { kind: 'fact.recorded', payload: { about: 'owner_share', value: '60', owner: 'Ana' } },
+      {
+        kind: 'fact.recorded',
+        payload: { about: 'owner_contribution_value', value: '3000000', owner: 'Ana' },
+      },
+      {
+        kind: 'fact.recorded',
+        payload: { about: 'owner', value: 'Ana', contribution: 'the van and the ovens' },
+      },
+    ])
+
+    expect(facts.owners[0]).toEqual({
+      name: 'Ana',
+      contribution: 'the van and the ovens',
+      sharePercent: '60',
+      contributionCents: '3000000',
+    })
+  })
+
+  it('leaves a contribution alone when the correction does not mention one', () => {
+    // An absent argument means "not said", not "erase what they told us".
+    const facts = fold([
+      { kind: 'fact.recorded', payload: { about: 'owner', value: 'Ana', contribution: 'the van' } },
+      { kind: 'fact.recorded', payload: { about: 'owner', value: 'Ana' } },
+    ])
+
+    expect(facts.owners[0]?.contribution).toBe('the van')
+  })
+
   it('ignores a spend applied against no permission', () => {
     // Nothing should ever produce this. If something does, it must not create a
     // permission out of nothing.
@@ -459,5 +520,36 @@ describe('the ceiling on turns', () => {
   it('records giving up, so a stalled run explains itself', async () => {
     const report = await turn({ turnsSoFar: STAGES.understand.maxTurns })
     expect(report.events[0]?.kind).toBe('turn.abandoned')
+  })
+})
+
+describe('what the model is told about the situation', () => {
+  it('never says the word "undefined" to the model', () => {
+    // The name verdict is deliberately absent until something has actually been
+    // compared. Putting it straight into the sentence printed "Name check so far:
+    // undefined", which is meaningless and is exactly the sort of thing a model
+    // will try to make sense of.
+    const facts = foldFacts('case-1', [
+      {
+        kind: 'search.performed',
+        payload: { query: 'Rivera Sisters Baking', resultCount: '3', answeredBy: 'a-service' },
+      },
+    ])
+
+    const said = describeSituation(facts)
+    expect(said).not.toContain('undefined')
+    expect(said).toContain('nothing compared against the proposed name yet')
+  })
+
+  it('says the verdict once there is one', () => {
+    const facts = foldFacts('case-1', [
+      {
+        kind: 'search.performed',
+        payload: { query: 'x', resultCount: '1', answeredBy: 'a-service' },
+      },
+      { kind: 'names.compared', payload: { verdict: 'clear', comparisons: [] } },
+    ])
+
+    expect(describeSituation(facts)).toContain('clear')
   })
 })

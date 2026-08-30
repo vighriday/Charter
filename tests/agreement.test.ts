@@ -518,6 +518,48 @@ describe('preparing a whole agreement', () => {
     expect(explanation.join(' ')).toMatch(/matches their share of what they put in/)
   })
 
+  it('does not tell three equal partners they departed from their contributions', () => {
+    // Three partners who each put in the same amount have a true share of
+    // 33.333…%, which truncates to 33.33% each — and three of those total 99.99%,
+    // not 100%. The only split that totals exactly 100% is 33.33 / 33.33 / 33.34,
+    // so the third owner is always one basis point above the truncated figure.
+    //
+    // Demanding exact equality told them they had DELIBERATELY departed from their
+    // contributions, and put that in their agreement. That is not a rounding
+    // curiosity: it is the document stating a choice nobody made, in the article
+    // about how profit is divided.
+    const equal = prepareAgreement(
+      caseWith([
+        { ...ana, sharePercent: '33.33', contributionCents: '1000000' },
+        { ...ben, name: 'Ben Rivera', sharePercent: '33.33', contributionCents: '1000000' },
+        {
+          name: 'Cleo Rivera',
+          contribution: 'the shopfront',
+          sharePercent: '33.34',
+          contributionCents: '1000000',
+        },
+      ]),
+      '2026-09-03',
+    )
+
+    expect(equal.shape.sharesFollowContributions).toBe(true)
+    expect(equal.explanation.join(' ')).toMatch(/matches their share of what they put in/)
+  })
+
+  it('still spots a real departure, which is nowhere near the rounding line', () => {
+    // Fifty-fifty on an eighty-twenty contribution differs by three thousand basis
+    // points. One basis point is arithmetic; two is a decision.
+    const departed = prepareAgreement(
+      caseWith([
+        { ...ana, sharePercent: '50', contributionCents: '4000000' },
+        { ...ben, sharePercent: '50', contributionCents: '1000000' },
+      ]),
+      '2026-09-03',
+    )
+
+    expect(departed.shape.sharesFollowContributions).toBe(false)
+  })
+
   it('notices when they deliberately do not, and says why that has to be written down', () => {
     // Texas divides profit by contribution value as stated in the company's
     // records unless the agreement says otherwise. Silence hands the question back

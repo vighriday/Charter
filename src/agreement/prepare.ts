@@ -219,9 +219,36 @@ export function prepareAgreement(facts: CaseFacts, today: string): PreparedAgree
       : { points: 0n as BasisPoints, exact: false },
   )
 
-  const sharesFollowContributions = shares.every(
-    (agreed, index) => agreed === contributionShares[index]?.points,
-  )
+  // WHY THIS ALLOWS A SINGLE BASIS POINT OF DIFFERENCE.
+  //
+  // A share of the contributions is worked out by whole-number division, which
+  // truncates. Three partners who each put in exactly the same amount have a true
+  // share of 33.333…%, which truncates to 33.33% each — and three of those total
+  // 99.99%, not 100%. The only split that totals exactly 100% is 33.33 / 33.33 /
+  // 33.34, so the third owner is always one basis point above the truncated
+  // figure.
+  //
+  // Demanding exact equality therefore told three equal partners that they had
+  // deliberately departed from their contributions, and put that in their
+  // agreement. That is not a rounding curiosity: it is the document stating a
+  // choice nobody made, in the article about how profit is divided.
+  //
+  // One basis point is the most that truncation can lose for any one owner, so a
+  // difference of one is arithmetic and a difference of two is a decision. A
+  // genuine departure is nowhere near this line — fifty-fifty on an eighty-twenty
+  // contribution differs by three thousand basis points.
+  const sharesFollowContributions = shares.every((agreed, index) => {
+    const fromContribution = contributionShares[index]
+    if (fromContribution === undefined) return false
+
+    const difference =
+      agreed > fromContribution.points
+        ? agreed - fromContribution.points
+        : fromContribution.points - agreed
+
+    // When the division came out exactly, there is nothing to forgive.
+    return fromContribution.exact ? difference === 0n : difference <= 1n
+  })
 
   explanation.push(
     sharesFollowContributions

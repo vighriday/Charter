@@ -28,7 +28,7 @@
  *              tell you that something used to follow it.
  *
  * That last one is why the head of the chain is signed separately, and why a
- * trusted timestamp is taken over it. The signature says "this was the end of the
+ * trusted timestamp is taken over it. The attestation says "this was the end of the
  * record at this moment", which is the part the chain cannot say about itself.
  * `attestation.ts` does that. We state the limitation rather than hiding it,
  * because a verifier that appeared to prove more than it does would be worse than
@@ -368,7 +368,7 @@ export function describeCheck(result: ChainCheck): string {
     ``,
     `Note: this check proves nothing was changed, removed from the middle, or`,
     `reordered. It cannot tell you whether entries were removed from the END —`,
-    `a shortened chain is still a valid chain. That is what the signature over`,
+    `a shortened chain is still a valid chain. That is what the attestation over`,
     `the head of the record is for.`,
   )
   return lines.join('\n')
