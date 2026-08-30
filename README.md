@@ -23,7 +23,7 @@ No account. No key. No database to install. No network.
 ```bash
 npm install
 npm run record:demo     # the record, and what it can and cannot prove
-npm run agent:demo      # a business going through the first three stages
+npm run agent:demo      # one business through all eight stages, start to finish
 ```
 
 That runs a real PostgreSQL engine inside the Node process and shows five things:
@@ -43,7 +43,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 201 tests
+npm test          # 674 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 ```
@@ -177,20 +177,25 @@ Honest, because the demonstration above is checkable and this table should be to
 | The tool registry, and the catalogue generated from the code that runs | **built** |
 | The agent loop — one request, one turn, nothing carried between them | **built, 36 tests** |
 | Checking the model's arguments, and telling it exactly what to send instead | **built, 27 tests** |
-| Stages 1 to 3 — understand, research the name, secure the address | **built, 35 tests** |
+| All eight stages, and the rules that decide when each one is finished | **built, 61 tests** |
 | The rule that nothing costs money without a person's permission covering it | **built**, proved by nothing being charged rather than by an error |
 | Whether two business names collide, decided in plain code | **built, 24 tests** |
-| Stages 4 to 8 | not yet — and they refuse to complete rather than passing quietly |
+| The ownership agreement — every number, article number and cross-reference worked out in code | **built, 57 tests** |
+| Reading identity documents, and routing a value to a person on whether it can be found in the document rather than on a confidence score | **built, 27 tests** |
+| Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 35 tests** |
+| Classifying which vendor product each credential opens, by asking the vendor | **built, 29 tests** |
 | The verifier a stranger runs against a finished pack | not yet |
-| The outside services — documents, identity, registrar, search, signing | not yet |
+| The seal that sets the pack's permission level | not yet |
+| The outside services — documents, identity, registrar, search, signing | **not yet.** Every one is a written-down answer today |
 
 ### The second demonstration
 
 `npm run agent:demo` takes one business — two sisters, a bakery, one putting in
-cash and one putting in an oven — through the first three of the eight stages,
-against the same real database and the same append-only record.
+cash and one putting in an oven — through **all eight stages**, from a plain-English
+description to a published website, against the same real database and the same
+append-only record.
 
-Six things in it are worth watching for:
+Nine things in it are worth watching for:
 
 1. **The tools change when the stage changes.** Each stage sends the model its own
    list and nothing else, so a tool absent from a stage is not forbidden there —
@@ -206,10 +211,25 @@ Six things in it are worth watching for:
    Refused, and the registrar is not contacted at all.
 6. **Whether two business names collide is decided in plain code**, not by the
    model, and the working is shown.
+7. **The ownership agreement is drafted, and Charter refuses to choose two of its
+   terms.** Who runs the company, and whether there is a written way for an owner
+   to leave. Neither has a safe default, so the tool that writes either one down
+   refuses until the record shows a person was asked and answered.
+8. **A value read from an identity document goes to a person** — one the reader was
+   94% confident of. It goes anyway, because it could only be matched approximately
+   in the document, and whether a value can be *found* is tested before how sure
+   the reader *felt*. Nothing in the agent can clear it.
+9. **The run reaches the boundary and stops.** Stage seven has no tools at all. A
+   person approves sending the pack, naming it by its fingerprint, and only then
+   does the last stage run.
 
-At the end it prints the record — sixty-odd entries, who caused each one, and
-whether the chain holds — and then the complete list of everything the agent can
-do, generated from the code that runs rather than written alongside it.
+At the end it prints the record — 122 entries, who caused each one, and whether the
+chain holds — and then the complete list of everything the agent can do, generated
+from the code that runs rather than written alongside it.
+
+**Four entries in that record were caused by a person, and none of the four has a
+tool:** answering a question, granting permission to spend, checking a value against
+the document it was read from, and approving that the pack be sent.
 
 **What is real and what is stood in for, plainly.** Real: the database, the
 record and its chain, the rules the database enforces, the stage machine, every
