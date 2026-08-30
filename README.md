@@ -43,7 +43,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 674 tests
+npm test          # 685 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 ```

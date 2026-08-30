@@ -246,3 +246,7 @@ export function catalogue(registry: ReadonlyMap<string, Tool>): string {
   lines.push('   from it through any chain of any length.')
   return lines.join('\n')
 }
+
+// TEMP experiment
+import { ask } from "../sign/envelope.js"
+export const _t = ask
