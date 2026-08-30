@@ -14,6 +14,7 @@ import {
   draftAgreement,
 } from '../src/tools/stage-tools.js'
 import type { ToolContext } from '../src/tools/registry.js'
+import { DEFAULT_SETTINGS } from '../src/settings.js'
 
 /**
  * The tools, and the rule that stops one of them spending money it was not given.
@@ -51,6 +52,9 @@ const context = (over: Partial<ToolContext> = {}): ToolContext => ({
   facts: facts(),
   services: services(),
   now: () => new Date('2026-08-28T11:00:00.000Z'),
+  // The same settings a run with an empty `.env` would get, so what the tests
+  // exercise is what a stranger cloning this project would get.
+  settings: DEFAULT_SETTINGS,
   ...over,
 })
 

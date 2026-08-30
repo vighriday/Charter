@@ -44,6 +44,7 @@ import { STAGES, couldMoveOn, moveTo, nextStage, type StageName } from '../stage
 import type { Tool } from '../tools/registry.js'
 import type { Services } from '../tools/services.js'
 import { takeTurn, type TurnOutcome, type TurnTaker } from './loop.js'
+import { DEFAULT_SETTINGS, type Settings } from '../settings.js'
 
 export interface RunOptions {
   readonly db: Database
@@ -52,6 +53,15 @@ export interface RunOptions {
   readonly router: TurnTaker
   readonly services: Services
   readonly clock: Clock
+  /**
+   * The settings this run was started with, already checked.
+   *
+   * Read once, at the edge of the program, and carried down. Nothing deeper in
+   * reads the environment for itself, so a recorded run can be reproduced by
+   * anybody holding the same settings rather than by anybody who happens to have
+   * the same shell.
+   */
+  readonly settings?: Settings
   /** Told about everything as it happens, so a run can be watched while it runs. */
   readonly onEvent?: (kind: string, stage: StageName, detail: string) => void
 }
@@ -138,6 +148,7 @@ export async function runStage(options: RunOptions, stage: StageName): Promise<S
       services: options.services,
       turnsSoFar: await turnsTaken(db, caseId, stage),
       now: () => clock(),
+      settings: options.settings ?? DEFAULT_SETTINGS,
     })
 
     // One place writes to the record. Written in order, so the record reads the

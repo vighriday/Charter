@@ -243,7 +243,16 @@ beforeAll(async () => {
     ]),
     'verify',
   )
-  await checkIdentityField(person, 'Lucia Rivera', 'expiry_date', 'the value is correct')
+  // Clear whatever is actually waiting, rather than a list written down here.
+  // Two different rules put values in this queue — the match label, and the audit
+  // sample — and a test that cleared one field by name would pass while silently
+  // leaving the other, which is how the queue stops being a queue.
+  const waiting = await readFacts(db, CASE)
+  for (const check of waiting.identityChecks) {
+    for (const field of check.toReview) {
+      await checkIdentityField(person, check.owner, field, 'the value is correct')
+    }
+  }
   note('verify', await run(scripted([]), 'verify'))
   await step('verify')
 
@@ -305,25 +314,51 @@ describe('the work each stage actually did, read back from the record', () => {
     }
   })
 
-  it('sent the approximately-matched value to a person, and only that one', async () => {
+  it('sent the approximately-matched value to a person', async () => {
     // Read from the RECORD, not from the facts. By the end of the run a person has
     // cleared the review, so the queue is empty either way — an empty queue cannot
     // tell "the rule fired and somebody looked" apart from "the rule never fired".
     // The record still holds the moment it happened.
     const events = await readEvents(db, CASE)
     const sent = events.filter((event) => event.kind === 'identity.field.sent.for.review')
-
-    expect(sent, 'the review rule never fired at all').toHaveLength(1)
+    const payloads = await Promise.all(sent.map((one) => readPayload(db, CASE, one.seq)))
 
     // The reader was 94% confident of this value. It went to a person anyway,
     // because whether a value can be FOUND is tested before how sure the reader
-    // FELT. Ana's document, identical except for that one label, produced nothing.
-    const first = sent[0]
-    if (first === undefined) throw new Error('narrowing')
-    const payload = await readPayload(db, CASE, first.seq)
-    expect(payload?.['owner']).toBe('Lucia Rivera')
-    expect(payload?.['field']).toBe('expiry_date')
-    expect(payload?.['label']).toBe('fuzzy_match')
+    // FELT. Ana's document, identical except for that one label, produced nothing
+    // from this rule.
+    const fuzzy = payloads.filter((one) => one?.['label'] === 'fuzzy_match')
+    expect(fuzzy, 'the match-label rule never fired at all').toHaveLength(1)
+    expect(fuzzy[0]?.['owner']).toBe('Lucia Rivera')
+    expect(fuzzy[0]?.['field']).toBe('expiry_date')
+  })
+
+  it('also sent a value nothing was wrong with, because of the audit sample', async () => {
+    // The rule every other rule cannot cover. Everything else in the review fires
+    // when something looks wrong; none of it can catch a reader that is
+    // confidently, quietly wrong about a value it grounded and scored highly. The
+    // only way to find that is to look at some of the ones that passed.
+    //
+    // Which ones are chosen is worked out from a fingerprint of the case, the
+    // owner and the field name, so this test asserts a real outcome rather than
+    // a coin toss: the same run always chooses the same fields.
+    const events = await readEvents(db, CASE)
+    const sent = events.filter((event) => event.kind === 'identity.field.sent.for.review')
+    const payloads = await Promise.all(sent.map((one) => readPayload(db, CASE, one.seq)))
+
+    const sampled = payloads.filter((one) =>
+      (one?.['reasons'] as string[] | undefined)?.some((why) =>
+        why.startsWith('Nothing is wrong with this value'),
+      ),
+    )
+
+    expect(sampled.length, 'the audit sample never fired in a whole run').toBeGreaterThan(0)
+
+    // What the reviewer is told. "Nothing is wrong with this value" has to be the
+    // first thing they read, or they spend the review hunting for a fault that is
+    // not there.
+    const why = ((sampled[0]?.['reasons'] as string[] | undefined) ?? []).join(' ')
+    expect(why).toMatch(/Nothing is wrong with this value/)
   })
 
   it('leaves nothing waiting once a person has looked', () => {

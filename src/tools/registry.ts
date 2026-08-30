@@ -50,6 +50,7 @@ import type { CaseFacts } from '../stages/facts.js'
 import { STAGES, type StageName } from '../stages/stages.js'
 import { assertSupported, asJsonSchema, type ArgumentSchema } from './schema.js'
 import type { Services } from './services.js'
+import type { Settings } from '../settings.js'
 
 /** One entry to add to the record. */
 export interface ToolEvent {
@@ -78,6 +79,16 @@ export interface ToolContext {
   readonly services: Services
   /** Reads the current time. Passed in so tests are exact. */
   readonly now: () => Date
+  /**
+   * The settings this run was started with, already checked.
+   *
+   * Passed in rather than read from the environment inside a tool. A tool that
+   * read a setting for itself would behave differently depending on what was in
+   * the surrounding process, which makes it untestable and makes a recorded run
+   * impossible to reproduce. Here, everything that steers a tool arrived through
+   * this one object and can be written down.
+   */
+  readonly settings: Settings
 }
 
 export interface Tool {

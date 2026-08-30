@@ -51,3 +51,11 @@ jobs:
       # 201 tests when there were 658. This checks its numbers against reality.
       - name: the readme tells the truth
         run: npm run readme:check
+
+      # `.env.example` is generated from one list in the code, and every setting
+      # in that list names the file that reads it. This fails if the two have
+      # drifted, or if a setting claims a reader that never mentions it. Seven
+      # settings sat in that file for days, described as configuration, read by
+      # nothing at all.
+      - name: the settings file matches the code
+        run: npm run settings:check

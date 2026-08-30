@@ -39,7 +39,7 @@ const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'
 const OFF = '\x1b[0m'
 
-/** Ask the test runner how many tests there are. */
+/** Ask the test runner how many tests there are, in total and per file. */
 function countTests() {
   // Run the test runner through Node directly rather than through npx. npx
   // resolves differently on Windows depending on which shell started it, and a
@@ -53,7 +53,17 @@ function countTests() {
   // The runner prints a little before the JSON on some platforms, so start at the
   // first brace rather than assuming the whole of it is the report.
   const report = JSON.parse(output.slice(output.indexOf('{')))
-  return { total: report.numTotalTests, failed: report.numFailedTests }
+
+  // Per file as well as in total. The path comes back absolute and in whichever
+  // slash the platform uses, so it is cut down to the last two parts —
+  // "tests/thing.test.ts" — which is what the readme names.
+  const perFile = new Map()
+  for (const file of report.testResults) {
+    const name = file.name.split(/[\/]/).slice(-2).join('/')
+    perFile.set(name, (perFile.get(name) ?? 0) + file.assertionResults.length)
+  }
+
+  return { total: report.numTotalTests, failed: report.numFailedTests, perFile }
 }
 
 const readme = readFileSync('README.md', 'utf8')
@@ -71,7 +81,7 @@ if (claimed === null) {
 }
 
 const stated = Number(claimed[1].replace(/,/g, ''))
-const { total, failed } = countTests()
+const { total, failed, perFile } = countTests()
 
 if (failed > 0) {
   console.log(`${RED}  ${failed} test(s) are failing, so the count is not worth comparing yet.${OFF}`)
@@ -87,5 +97,76 @@ if (stated !== total) {
 }
 
 console.log(`${GREEN}  ok${OFF}    the readme says ${total} tests, and there are ${total}`)
+
+// ── every row of the "what is built" table ───────────────────────────────────
+//
+// Each row that states a count carries the test file behind it in an HTML
+// comment, which markdown does not show. Three counts in that table matched no
+// file at all until 30 August: numbers that had been true once and had not been
+// true for days, in the most quoted part of the most public file.
+//
+// A number nobody can trace is worse than no number. It reads as evidence.
+let problems = 0
+
+const ROW = /\*\*built, ([\d,]+) tests?\.?\*\*.*?<!--\s*([^>]*?)\s*-->/g
+const claimedFiles = new Set()
+
+for (const row of readme.matchAll(ROW)) {
+  const said = Number(row[1].replace(/,/g, ''))
+  const files = row[2].split(/\s+/).filter(Boolean)
+
+  let real = 0
+  for (const file of files) {
+    claimedFiles.add(file)
+    const count = perFile.get(file)
+    if (count === undefined) {
+      console.log(`${RED}  the readme names ${file}, and the runner produced nothing from it.${OFF}`)
+      problems += 1
+      continue
+    }
+    real += count
+  }
+
+  if (real !== said) {
+    console.log(
+      `${RED}  the readme says ${said} tests for ${files.join(' + ')}. There are ${real}.${OFF}`,
+    )
+    problems += 1
+  }
+}
+
+if (problems === 0) {
+  console.log(`${GREEN}  ok${OFF}    every per-row count matches its test file`)
+}
+
+// ── and nothing has silently fallen off the table ────────────────────────────
+//
+// The other direction, and the one that matters more. A wrong count is visible
+// once somebody checks. A whole area of the project quietly missing from the
+// table is invisible for ever, and the table reads as complete either way.
+const unclaimed = [...perFile.keys()].filter((file) => !claimedFiles.has(file)).sort()
+if (unclaimed.length > 0) {
+  console.log(`${RED}  these test files are in the suite and no row of the readme claims them:${OFF}`)
+  for (const file of unclaimed) console.log(`      ${file}  (${perFile.get(file)} tests)`)
+  console.log('')
+  console.log(`  Add a row, or add the file to an existing row's comment. A table that`)
+  console.log(`  silently omits a whole area still reads as though it were complete.`)
+  problems += 1
+} else {
+  console.log(`${GREEN}  ok${OFF}    every test file in the suite is claimed by a row`)
+}
+
+// The strongest form of the same check: the rows have to add up to the whole
+// suite. Two rows claiming one file, or a row double-counted, fails here even
+// though both of the checks above would pass.
+const summed = [...claimedFiles].reduce((sum, file) => sum + (perFile.get(file) ?? 0), 0)
+if (summed !== total) {
+  console.log(`${RED}  the rows account for ${summed} tests and the suite has ${total}.${OFF}`)
+  problems += 1
+} else {
+  console.log(`${GREEN}  ok${OFF}    the rows account for every one of the ${total} tests`)
+}
+
 console.log(`${DIM}${'─'.repeat(60)}${OFF}`)
 console.log('')
+process.exit(problems > 0 ? 1 : 0)

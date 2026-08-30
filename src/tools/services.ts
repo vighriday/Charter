@@ -118,9 +118,15 @@ export interface IdentityReader {
    * Read one document.
    *
    * `depth` is how hard the service is asked to work, in its own words. It is
-   * passed in rather than defaulted, because the cheapest and dearest settings
-   * differ by twenty-four times per page and a run must not be quietly cheaper in
-   * development than in a demonstration.
+   * passed in rather than defaulted, and it comes from a setting that is checked
+   * before anything runs, so a run cannot be quietly cheaper in development than
+   * in a demonstration and the record says which depth was used.
+   *
+   * The two cheapest depths return characters and layout and cannot say which
+   * marks on the page are the date of birth, so they are refused rather than
+   * accepted. The price difference between cheapest and dearest is about three
+   * and a half times, which is not the reason for choosing deliberately — the
+   * reason is that the cheap ones cannot do the job at all.
    */
   read(owner: string, documentRef: string, depth: string): Promise<ReadDocument>
 }

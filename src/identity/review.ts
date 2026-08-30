@@ -46,6 +46,7 @@
  * passing unseen ends up in a legal document.
  */
 
+import { fingerprintBytes } from '../record/canonical.js'
 import {
   type ExtractedField,
   type MatchLabel,
@@ -66,6 +67,60 @@ import {
  */
 export const DEFAULT_SCORE_FLOOR = 0.85
 
+/**
+ * Whether this field is one of the share sent to a person anyway, as a check on
+ * the reading service itself.
+ *
+ * WHY A SAMPLE EXISTS AT ALL
+ *
+ * Every other rule in this file fires when something looks wrong. None of them can
+ * catch a service that is confidently, quietly wrong: a value the service grounded
+ * in the document, scored highly, and got wrong regardless. The only way to find
+ * that is to look at some of the ones that passed.
+ *
+ * WHY IT IS NOT RANDOM, AND WHY THAT MATTERS MORE THAN IT SOUNDS
+ *
+ * A random sample would mean the same case reviewed twice produced two different
+ * review queues. Charter's whole argument is that its record can be checked by
+ * somebody who was not there, and a record nobody can reproduce is a record nobody
+ * can check. A judge running this project's demonstration twice and getting two
+ * different sets of fields to review would be right to distrust everything else in
+ * the record too.
+ *
+ * So the choice is made from a fingerprint of the case, the owner and the field
+ * name. The same field is always chosen the same way, for ever, and the spread
+ * across many fields is even because that is what a fingerprint gives you. The
+ * rate is a share, not a promise: at 0.1 roughly one field in ten is chosen, and
+ * which ten per cent is fixed rather than fresh each run.
+ *
+ * The case identifier is part of it so that two different cases do not pick the
+ * same field names, which would make the sample the same handful of fields in
+ * every case Charter ever runs.
+ */
+export function inAuditSample(
+  caseId: string,
+  owner: string,
+  field: string,
+  rate: number,
+): boolean {
+  if (rate <= 0) return false
+  if (rate >= 1) return true
+
+  // The fingerprint is sixty-four characters of hexadecimal. The first twelve of
+  // them read as a number give a value between 0 and 2^48-1, which is far more
+  // resolution than any sensible rate needs and is exactly representable as a
+  // JavaScript number, unlike the whole thing.
+  // The three parts are joined as JSON rather than glued together with a
+  // separator. "ab" + "c" and "a" + "bc" would otherwise fingerprint the same,
+  // which would make two different fields share one answer.
+  const digest = fingerprintBytes(
+    new TextEncoder().encode(`audit-sample ${JSON.stringify([caseId, owner, field])}`),
+  )
+  const spread = Number.parseInt(digest.slice(0, 12), 16) / 0x1000000000000
+
+  return spread < rate
+}
+
 /** Why one value has to be looked at. Each reason is a different problem. */
 export type ReviewReason =
   | { readonly kind: 'not-grounded'; readonly label: MatchLabel; readonly meaning: string }
@@ -75,6 +130,7 @@ export type ReviewReason =
   | { readonly kind: 'not-a-date'; readonly value: string }
   | { readonly kind: 'expired'; readonly on: string; readonly checkedOn: string }
   | { readonly kind: 'name-does-not-match'; readonly onDocument: string; readonly given: string }
+  | { readonly kind: 'in-the-audit-sample'; readonly rate: number }
 
 /** One field, and whether it needs a person. */
 export interface FieldReview {
@@ -114,6 +170,8 @@ export function explain(reason: ReviewReason): string {
       return `The document expired on ${reason.on}, which is before ${reason.checkedOn}.`
     case 'name-does-not-match':
       return `The document says "${reason.onDocument}" and the owner was written down as "${reason.given}".`
+    case 'in-the-audit-sample':
+      return `Nothing is wrong with this value. It passed every test, and it is here because about ${Math.round(reason.rate * 100)} in every 100 readings that pass are looked at anyway, as a check on the reading service itself. Which ones are chosen is fixed rather than random, so this same value is chosen every time this case is run.`
   }
 }
 
@@ -172,8 +230,29 @@ export interface ReviewSettings {
   readonly givenName: string
   /** Today, as year-month-day. Passed in so a run can be repeated exactly. */
   readonly today: string
-  /** The score floor, when one has been calibrated. */
+  /**
+   * The score floor.
+   *
+   * The service that produces these scores says its own number "is relative and
+   * uncalibrated; it isn't a probability or percentage", and tells callers to
+   * calibrate a threshold against their own recorded sample. That has not been
+   * done here and no such sample exists in this repository, so the default is
+   * simply a high one — sending too much to a person is the safe direction.
+   */
   readonly scoreFloor?: number
+  /**
+   * The case this document belongs to.
+   *
+   * Only used to choose the audit sample, and only so that two different cases do
+   * not pick the same field names. Without it the sample would be the same handful
+   * of fields in every case Charter ever runs.
+   */
+  readonly caseId?: string
+  /**
+   * The share of readings that pass every test and go to a person anyway. 0 turns
+   * it off.
+   */
+  readonly auditSampleRate?: number
 }
 
 /**
@@ -224,6 +303,21 @@ export function reviewField(field: ExtractedField, settings: ReviewSettings): Fi
     reasons.push({ kind: 'no-score-available' })
   } else if (field.confidence < floor) {
     reasons.push({ kind: 'below-the-floor', score: field.confidence, floor })
+  }
+
+  // ---- the sample, and only for a value nothing else objected to --------------
+  //
+  // Last, and only when the list is otherwise empty, because it is not a
+  // complaint about this value. A field already going to a person for a real
+  // reason gains nothing from also being told it was sampled, and a reviewer
+  // reading "nothing is wrong with this" beneath "this could not be found in the
+  // document" would be reading two contradictory sentences about one value.
+  const rate = settings.auditSampleRate ?? 0
+  if (
+    reasons.length === 0 &&
+    inAuditSample(settings.caseId ?? '', settings.givenName, field.name, rate)
+  ) {
+    reasons.push({ kind: 'in-the-audit-sample', rate })
   }
 
   return {

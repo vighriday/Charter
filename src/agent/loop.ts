@@ -73,6 +73,7 @@ import {
   type ToolEvent,
 } from '../tools/registry.js'
 import type { Services } from '../tools/services.js'
+import { DEFAULT_SETTINGS, type Settings } from '../settings.js'
 
 /**
  * How many times the model is asked again after sending arguments that do not fit.
@@ -109,6 +110,15 @@ export interface TurnInput {
   readonly turnsSoFar: number
   /** Reads the current time. Passed in so tests are exact. */
   readonly now: () => Date
+  /**
+   * The settings this run was started with, already checked.
+   *
+   * Optional here, and only here, so that a test can take a turn without
+   * assembling a whole settings object for something it is not testing. Every
+   * real caller passes one, and what is left out falls back to the same defaults
+   * `.env.example` publishes.
+   */
+  readonly settings?: Settings
 }
 
 export type TurnOutcome =
@@ -146,11 +156,26 @@ export interface TurnReport {
  */
 export async function takeTurn(input: TurnInput): Promise<TurnReport> {
   const stage = STAGES[input.stage]
+  const settings = input.settings ?? DEFAULT_SETTINGS
   const events: ToolEvent[] = []
 
-  if (input.turnsSoFar >= stage.maxTurns) {
+  // Two ceilings, and the SMALLER one binds.
+  //
+  // The stage carries its own limit in the code. The setting can lower it and can
+  // never raise it, which is the whole point: a setting able to raise a safety
+  // limit is not a safety limit, and somebody who set it to a thousand while
+  // chasing a problem would have quietly removed the thing that stops a failing
+  // tool spending a day's allowance overnight.
+  const turnCeiling = Math.min(stage.maxTurns, settings.maxTurnsPerStage)
+
+  if (input.turnsSoFar >= turnCeiling) {
+    const bound =
+      turnCeiling === stage.maxTurns
+        ? `its ${turnCeiling} turns`
+        : `the ${turnCeiling} turns MAX_TURNS_PER_STAGE allows it, out of the ` +
+          `${stage.maxTurns} this stage would otherwise take,`
     const why =
-      `stage "${input.stage}" has taken its ${stage.maxTurns} turns without finishing. ` +
+      `stage "${input.stage}" has taken ${bound} without finishing. ` +
       `Stopping rather than continuing: the whole day's allowance is a few hundred ` +
       `requests and does not return until midnight in the provider's own time zone, ` +
       `so a loop left running overnight costs tomorrow as well as today.`
@@ -176,6 +201,10 @@ export async function takeTurn(input: TurnInput): Promise<TurnReport> {
       history: [],
       tools,
       toolChoice: stage.toolChoice,
+      // MODEL_MAX_REQUEST_TOKENS: the hard ceiling on how large one request may
+      // be, checked before sending so an oversized request fails here rather than
+      // at the provider.
+      maxInputTokens: settings.maxRequestTokens,
     }
 
     // A correction is the same turn asked again, not a new turn. Counting each
@@ -279,6 +308,7 @@ export async function takeTurn(input: TurnInput): Promise<TurnReport> {
       facts: input.facts,
       services: input.services,
       now: input.now,
+      settings,
     })
 
     events.push({

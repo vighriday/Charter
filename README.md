@@ -46,7 +46,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 751 tests
+npm test          # 813 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 ```
@@ -103,12 +103,18 @@ the program works out while running. Rather than skipping those, the check repor
 every one and fails the build if a single one exists. It refuses to be blind rather
 than assuming the best.
 
-**And the honest state today.** The signing module itself is not written yet — that
-comes later in the build. Its rule is already in place and already armed: the moment
-that folder exists, the build fails until the rule is switched from "not built yet"
-to enforcing, so it cannot be quietly skipped. The same check is doing real work
-right now on the attestation key, where the only two files allowed to reach it are
-both commands a person types into a terminal.
+**And the rule fired for real.** It was armed on 28 August, while the signing
+module did not exist, with a note saying so and a test asserting the folder really
+was empty — a note that expires by itself rather than one somebody has to remember.
+On 30 August the first file was written into that folder and **the build failed**,
+exactly as designed. It stayed failing until somebody wrote down, in the open, which
+single file is allowed to reach it: `src/case/send-for-signature.ts`, which is not
+part of the agent, runs only after a person has approved, and reads that approval
+out of the append-only record rather than being handed it.
+
+Permission granted deliberately and in the open, never acquired by accident. That
+is the whole of what the rule is for, and it has now been tested by the thing
+happening rather than by us imagining it.
 
 ---
 
@@ -166,31 +172,44 @@ prevent it. Claiming prevention would be a claim the code cannot back.
 
 Honest, because the demonstration above is checkable and this table should be too.
 
+**Every count in this table is checked by the build.** `npm run readme:check` runs
+the suite, asks the runner how many tests each file produced, and fails if any
+number here is wrong — or if a test file exists that no row claims. A count nobody
+states is fine. A count nobody checks is how a readme ends up saying 201 when the
+answer is 658, which is what this one said on 30 August.
+
 | Part | State |
 | --- | --- |
-| Canonical text form, so a fingerprint reproduces on any machine (RFC 8785) | **built, 26 tests** |
-| The chained record, and the checker that names the first broken link | **built, 25 tests** |
-| Attestation over the head of the record (Ed25519, Node's own cryptography) | **built, 22 tests** |
-| Append-only rules enforced inside PostgreSQL, not by our code | **built, 21 tests** |
-| Record-and-replay, so the whole thing runs with no credentials | **built, 19 tests** |
-| Model adapter — two verbs, never combined; replies kept exactly as they arrived | **built, 88 tests** |
-| The rule that a person's details may only reach a service that keeps nothing | **built, with a test proving the ineligible service is never called** |
-| The consent boundary as a code boundary — nothing the model can trigger can reach the signing module, the attestation key, or the code that records a person's consent | **built, 54 tests**, armed before the module it guards exists |
-| The eight stages, which tools exist in each, and the order they run in | **built, 37 tests** |
-| The tool registry, and the catalogue generated from the code that runs | **built** |
-| The agent loop — one request, one turn, nothing carried between them | **built, 36 tests** |
-| Checking the model's arguments, and telling it exactly what to send instead | **built, 27 tests** |
-| All eight stages, and the rules that decide when each one is finished | **built, 61 tests** |
-| The rule that nothing costs money without a person's permission covering it | **built**, proved by nothing being charged rather than by an error |
-| Whether two business names collide, decided in plain code | **built, 24 tests** |
-| The ownership agreement — every number, article number and cross-reference worked out in code | **built, 57 tests** |
-| Reading identity documents, and routing a value to a person on whether it can be found in the document rather than on a confidence score | **built, 27 tests** |
-| Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 35 tests** |
-| Classifying which vendor product each credential opens, by asking the vendor | **built, 29 tests** |
-| The verifier a stranger runs against a finished pack | **built, 16 tests.** `npm run verify` |
-| The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document |
-| Attacks on our own boundary, run on every build | **built, 19 tests** — all eight from the plan |
-| The outside services — documents, identity, registrar, search, signing | **not yet.** Every one is a written-down answer today |
+| Canonical text form, so a fingerprint reproduces on any machine (RFC 8785) | **built, 26 tests** <!-- tests/canonical.test.ts --> |
+| The chained record, and the checker that names the first broken link | **built, 25 tests** <!-- tests/chain.test.ts --> |
+| Attestation over the head of the record (Ed25519, Node's own cryptography) | **built, 22 tests** <!-- tests/attestation.test.ts --> |
+| Append-only rules enforced inside PostgreSQL, not by our code | **built, 24 tests** <!-- tests/log.test.ts --> |
+| Record-and-replay, so the whole thing runs with no credentials | **built, 19 tests** <!-- tests/cache.test.ts --> |
+| Model adapter — two verbs, never combined; replies kept exactly as they arrived | **built, 88 tests** <!-- tests/gemini.test.ts tests/groq.test.ts tests/router.test.ts --> |
+| Counting each model's free daily allowance before sending, and refusing early | **built, 30 tests** <!-- tests/allowance.test.ts --> |
+| Assembling the real models from the settings, and saying plainly when a key is missing | **built, 18 tests** <!-- tests/build.test.ts --> |
+| The consent boundary as a code boundary — nothing the model can trigger can reach the signing module, the attestation key, or the code that records a person's consent | **built, 60 tests**, and the rule fired for real on 30 August <!-- tests/boundary.test.ts --> |
+| Attacks on our own boundary, run on every build | **built, 19 tests** — all eight from the plan <!-- tests/attacks.test.ts --> |
+| The agent loop — one request, one turn, nothing carried between them | **built, 41 tests** <!-- tests/loop.test.ts --> |
+| Checking the model's arguments, and telling it exactly what to send instead | **built, 27 tests** <!-- tests/tool-schema.test.ts --> |
+| All eight stages, which tools exist in each, and the rules that decide when each is finished | **built, 61 tests** <!-- tests/stages.test.ts --> |
+| Every tool, including the rule that nothing costs money without a person's permission covering it | **built, 46 tests**, the spending rule proved by nothing being charged rather than by an error <!-- tests/tools.test.ts --> |
+| One whole case through all eight stages, as a test rather than only as a demonstration | **built, 12 tests** <!-- tests/whole-run.test.ts --> |
+| Whether two business names collide, decided in plain code | **built, 24 tests** <!-- tests/names.test.ts --> |
+| The ownership agreement — every number, article number and cross-reference worked out in code | **built, 59 tests** <!-- tests/agreement.test.ts --> |
+| Reading identity documents, and routing a value to a person on whether it can be found in the document rather than on a confidence score | **built, 27 tests** <!-- tests/identity.test.ts --> |
+| Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 35 tests** <!-- tests/pack.test.ts --> |
+| The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document <!-- tests/seal.test.ts --> |
+| The checker a stranger runs against a finished pack | **built, 16 tests.** `npm run verify` <!-- tests/verify.test.ts --> |
+| Classifying which vendor product each credential opens, by asking the vendor | **built, 29 tests** <!-- tests/credentials.test.ts --> |
+| Every setting, and the file that reads each one — with `.env.example` generated from the code so the two cannot drift | **built, 43 tests** <!-- tests/settings.test.ts --> |
+| Changing one line of `.env` and proving nothing else moved | **built, 24 tests** <!-- tests/env-file.test.ts --> |
+| The readme's own numbers, checked against the code | **built, 16 tests** <!-- tests/readme.test.ts --> |
+| The tool registry, and the catalogue generated from the code that runs | **built.** [TOOLS.md](TOOLS.md), regenerated and compared on every build |
+| The outside services — documents, identity, registrar, search, publishing | **not yet.** Every one is a stand-in holding recorded answers, with no path to a network |
+| The ownership agreement as a Word file, and the screens | **not yet** |
+
+---
 
 ### The second demonstration
 
@@ -231,16 +250,24 @@ At the end it prints the record — 122 entries, who caused each one, and whethe
 chain holds — and then the complete list of everything the agent can do, generated
 from the code that runs rather than written alongside it.
 
-**Four entries in that record were caused by a person, and none of the four has a
-tool:** answering a question, granting permission to spend, checking a value against
-the document it was read from, and approving that the pack be sent.
+**Six entries in that record were caused by a person, of four kinds, and none of
+the four kinds has a tool:** answering a question, granting permission to spend,
+checking a value against the document it was read from, and approving that the pack
+be sent. There are six because two questions were asked and answered.
 
-**What is real and what is stood in for, plainly.** Real: the database, the
-record and its chain, the rules the database enforces, the stage machine, every
-tool, the checking of the model's arguments, the correction sent back, the
-spending rule, and the name comparison. Stood in for: the model's replies and the
-two outside services, which are written out rather than asked for. Every one of
-those still goes through exactly the code a real answer would.
+**What is real and what is stood in for, plainly.** The demonstration prints this
+itself, before it runs anything, rather than leaving it to be discovered.
+
+Real: the database, the record and its chain, the rules the database enforces, the
+stage machine, every tool, the checking of the model's arguments, the correction
+sent back, the spending rule, the name comparison, the settings, and the seal — a
+real certificate on a real multi-page PDF at permission level 2.
+
+Stood in for: the model's replies, and **all four** outside services — search, the
+registrar, the identity reader, and publishing. Each is a stand-in holding answers
+recorded in advance, with no path to the network at all, so a missing answer is an
+error rather than a quiet real call. Every one of them still goes through exactly
+the code a real answer would.
 
 The demonstration only shows what exists. Nothing in it is staged.
 

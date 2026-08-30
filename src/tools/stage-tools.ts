@@ -32,7 +32,7 @@ import type { JsonObject, JsonValue } from '../record/canonical.js'
 import { compareNames, verdictFrom, type Comparison } from '../names/compare.js'
 import { maySpend, afterSpending, cents, asMoney } from './guard.js'
 import { prepareAgreement } from '../agreement/prepare.js'
-import { reviewDocument, explain, DEFAULT_SCORE_FLOOR } from '../identity/review.js'
+import { reviewDocument, explain } from '../identity/review.js'
 import { Pack } from '../pack/assemble.js'
 import type { Tool, ToolContext, ToolOutcome, ToolEvent } from './registry.js'
 
@@ -714,16 +714,39 @@ export const readIdentityDocument: Tool = {
       }
     }
 
-    // How hard the service is asked to work. Set deliberately and recorded with
-    // the result, because the cheapest and dearest settings differ by
-    // twenty-four times per page and a run must not be quietly cheaper in
-    // development than in a demonstration.
-    const depth = 'understand'
+    // How hard the service is asked to work. EXTRACTION_DEPTH, checked before
+    // anything runs and recorded with the result — so a run cannot be quietly
+    // cheaper in development than in a demonstration, and the record says which
+    // depth it was.
+    //
+    // The two cheapest depths return characters and layout and cannot say which
+    // marks on the page are the date of birth. Setting one of them is refused at
+    // startup rather than accepted, because a run that read every document and
+    // found no fields would look like broken documents rather than a wrong
+    // setting. See DEPTHS_THAT_NAME_FIELDS in src/settings.ts.
+    const depth = context.settings.extractionDepth
 
     const document = await context.services.identity.read(owner, documentRef, depth)
     const today = context.now().toISOString().slice(0, 10)
 
-    const review = reviewDocument(document, { givenName: owner, today })
+    // Two settings steer this and neither is a model's to change.
+    //
+    // REVIEW_CONFIDENCE_FLOOR is the LAST test applied and the weakest, because
+    // the reading service says its own score "is relative and uncalibrated".
+    //
+    // REVIEW_AUDIT_SAMPLE_RATE sends a share of the values that passed every test
+    // to a person anyway. It is the only rule here that can catch a reader which
+    // is confidently, quietly wrong — every other rule fires when something looks
+    // wrong, and that failure does not look wrong. Which values are chosen is
+    // worked out from a fingerprint rather than at random, so the same case always
+    // produces the same review queue and a recorded run can be reproduced.
+    const review = reviewDocument(document, {
+      givenName: owner,
+      today,
+      scoreFloor: context.settings.reviewConfidenceFloor,
+      caseId: context.caseId,
+      auditSampleRate: context.settings.reviewAuditSampleRate,
+    })
 
     // What goes back to the model is the shape of the outcome and nothing read off
     // the document. Not a name, not a number, not a date. Everything in the next
@@ -763,7 +786,7 @@ export const readIdentityDocument: Tool = {
         owner,
         fieldsRead: String(document.fields.length),
         waitingOnAPerson: String(review.toReview.length),
-        floorUsed: String(DEFAULT_SCORE_FLOOR),
+        floorUsed: String(context.settings.reviewConfidenceFloor),
       },
       events,
     }
