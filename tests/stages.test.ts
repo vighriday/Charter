@@ -582,6 +582,7 @@ describe('reading identity documents, and who decides what a person sees', () =>
         depth: 'understand',
         toReview: index === 0 ? ['expiry_date'] : [],
         missing: [],
+        checkedByAPerson: [],
       })),
     }
     expect(because(half)).toContain('expiry_date')
@@ -596,6 +597,7 @@ describe('reading identity documents, and who decides what a person sees', () =>
         depth: 'understand',
         toReview: ['full_name'],
         missing: [],
+        checkedByAPerson: [],
       })),
     }
     expect(because(half)).toContain('No model takes any part in that decision')
@@ -610,6 +612,7 @@ describe('reading identity documents, and who decides what a person sees', () =>
         depth: 'understand',
         toReview: [],
         missing: [],
+        checkedByAPerson: [],
       })),
     }
     expect(couldMoveOn('verify', done).ready).toBe(true)
@@ -631,6 +634,7 @@ describe('reading identity documents, and who decides what a person sees', () =>
         // birth nobody had.
         toReview: [],
         missing: ['date_of_birth'],
+        checkedByAPerson: [],
       })),
     }
 
@@ -647,6 +651,7 @@ describe('reading identity documents, and who decides what a person sees', () =>
         depth: 'understand',
         toReview: [],
         missing: ['document_number'],
+        checkedByAPerson: [],
       })),
     }
     expect(because(short)).toContain('nothing to confirm')

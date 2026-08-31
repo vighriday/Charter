@@ -60,10 +60,12 @@ describe('every setting says who reads it, and is telling the truth', () => {
         ).toBeTruthy()
         continue
       }
-      expect(
-        existsSync(setting.readBy),
-        `${setting.name} says it is read by ${setting.readBy}, which does not exist`,
-      ).toBe(true)
+      for (const file of setting.readBy.split(/\s+/).filter(Boolean)) {
+        expect(
+          existsSync(file),
+          `${setting.name} says it is read by ${file}, which does not exist`,
+        ).toBe(true)
+      }
     }
   })
 
@@ -73,11 +75,13 @@ describe('every setting says who reads it, and is telling the truth', () => {
     // document, with nothing behind it.
     for (const setting of SETTINGS) {
       if (setting.readBy === null) continue
-      const source = readFileSync(setting.readBy, 'utf8')
-      expect(
-        source.includes(setting.name),
-        `${setting.readBy} is named as the reader of ${setting.name} and never mentions it`,
-      ).toBe(true)
+      for (const file of setting.readBy.split(/\s+/).filter(Boolean)) {
+        const source = readFileSync(file, 'utf8')
+        expect(
+          source.includes(setting.name),
+          `${file} is named as the reader of ${setting.name} and never mentions it`,
+        ).toBe(true)
+      }
     }
   })
 

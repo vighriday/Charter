@@ -203,6 +203,10 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
           depth,
           toReview: asTextList(payload, 'toReview'),
           missing: asTextList(payload, 'missing'),
+          // A fresh reading of the same document starts the checking over. A
+          // person who confirmed a value on an older, blurrier photograph has not
+          // confirmed the value on this one.
+          checkedByAPerson: [],
         }
         if (already === -1) identityChecks.push(check)
         else identityChecks[already] = check
@@ -220,18 +224,27 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         const at = identityChecks.findIndex((one) => one.owner === owner)
         if (at === -1) break
         const check = identityChecks[at] as IdentityCheck
-        if (found === 'the value is correct') {
-          // A field the document never produced cannot be confirmed. There is
-          // nothing to confirm. Leaving it in the queue is not stubbornness: the
-          // only thing that fixes a missing value is a document that has it, and
-          // an answer of "correct" about a value nobody has read is either a
-          // mistake or somebody clicking through.
-          if (check.missing.includes(field)) break
+        // A field the document never produced cannot be confirmed. There is
+        // nothing to confirm. Leaving it in the queue is not stubbornness: the only
+        // thing that fixes a missing value is a document that has it, and an answer
+        // of "correct" about a value nobody has read is either a mistake or
+        // somebody clicking through.
+        if (check.missing.includes(field)) break
 
-          identityChecks[at] = {
-            ...check,
-            toReview: check.toReview.filter((one) => one !== field),
-          }
+        // Recorded whichever way they answered. A value a person looked at and
+        // said was WRONG stays in the queue and is still a value somebody looked
+        // at, and the finished pack has to be able to say so.
+        const looked = check.checkedByAPerson.includes(field)
+          ? check.checkedByAPerson
+          : [...check.checkedByAPerson, field]
+
+        identityChecks[at] = {
+          ...check,
+          checkedByAPerson: looked,
+          toReview:
+            found === 'the value is correct'
+              ? check.toReview.filter((one) => one !== field)
+              : check.toReview,
         }
         break
       }

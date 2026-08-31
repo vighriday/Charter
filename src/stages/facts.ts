@@ -188,6 +188,15 @@ export interface IdentityCheck {
   readonly fieldsRead: string
   /** The fields a person must look at, by name. */
   readonly toReview: readonly string[]
+  /**
+   * The fields a person has actually looked at and answered on, by name.
+   *
+   * Kept separately from `toReview` rather than worked out by subtracting one list
+   * from the other. A value a person looked at and said was WRONG leaves neither
+   * list, and the finished pack has to be able to say "a person checked this"
+   * about a value that is still waiting.
+   */
+  readonly checkedByAPerson: readonly string[]
   /** Required fields the document did not produce at all. */
   readonly missing: readonly string[]
   /** How hard the reading service was asked to work, recorded with the result. */

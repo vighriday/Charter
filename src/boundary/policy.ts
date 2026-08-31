@@ -140,6 +140,16 @@ export const BOUNDARIES: readonly Boundary[] = [
       // rule above still proves that separately.
       'src/verify/check.ts',
       'src/verify/cli.ts',
+      // The whole-run demonstration. It reaches this to attest over the record it
+      // just produced, so that a person watching can immediately run the checker
+      // against the pack and the record and see every answer come back yes.
+      //
+      // Allowed for the same reason as the two above it: this is a command a
+      // person types into a terminal, not anything the model can set in motion.
+      // The rule's actual purpose — that nothing the model can trigger may vouch
+      // for a record the model wrote — is untouched, and this file is already
+      // guarded separately as the code that stands in for a person's browser.
+      'src/case/demo.ts',
     ],
   },
   {

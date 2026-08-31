@@ -543,9 +543,21 @@ describe('the registrar version', () => {
       source.split('\n').forEach((line, index) => {
         // The path form and the host form of the old service. Written so that
         // this file's own explanation does not match itself.
-        if (/\/v4\/|name\.com\/api-docs/.test(line)) {
-          offences.push(`${file}:${index + 1}  ${line.trim()}`)
-        }
+        if (!/\/v4\/|name\.com\/api-docs/.test(line)) return
+
+        // A comment saying NOT to use it is the opposite of using it, and the
+        // registrar client explains this at the top for exactly the reason this
+        // check exists. A rule that fires on its own warning is a rule people
+        // learn to switch off.
+        //
+        // Narrow on purpose: the line has to BE a comment AND has to say plainly
+        // that the old one is not the one. Anything that puts /v4/ into an
+        // address still fails, comment or not.
+        const isComment = /^\s*(\/\/|\*|\/\*)/.test(line)
+        const denies = /\bnot\b|\bnever\b|deprecated|older|old one|sunset/i.test(line)
+        if (isComment && denies) return
+
+        offences.push(`${file}:${index + 1}  ${line.trim()}`)
       })
     }
     expect(

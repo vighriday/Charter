@@ -51,6 +51,7 @@ import { STAGES, type StageName } from '../stages/stages.js'
 import { assertSupported, asJsonSchema, type ArgumentSchema } from './schema.js'
 import type { Services } from './services.js'
 import type { Settings } from '../settings.js'
+import type { SealCertificate } from '../seal/certificate.js'
 
 /** One entry to add to the record. */
 export interface ToolEvent {
@@ -89,6 +90,27 @@ export interface ToolContext {
    * this one object and can be written down.
    */
   readonly settings: Settings
+  /**
+   * The certificate that seals the finished pack.
+   *
+   * Made once per run and carried down, rather than made inside the tool. Making a
+   * certificate takes a second or two, and a tool that made its own would make a
+   * different one every time it ran — so two packs from one run would carry two
+   * different seals, and a person comparing them would be told, correctly, that
+   * they came from different places.
+   */
+  readonly certificate: SealCertificate
+  /**
+   * Where the finished pack goes, when the caller wants to keep it.
+   *
+   * Optional, and absent everywhere except a run somebody is watching. The bytes
+   * have to leave this process somehow — a pack nobody can open is not a pack —
+   * and this is the one way out, so it is easy to see who takes it.
+   *
+   * The record never holds the bytes. It holds the fingerprint of them, which is
+   * what a person compares the file they were handed against.
+   */
+  readonly keepPack?: (bytes: Uint8Array) => Promise<void>
 }
 
 export interface Tool {

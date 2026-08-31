@@ -74,11 +74,15 @@
 
 import { openBuiltIn } from '../db/driver.js'
 import { migrate } from '../db/migrate.js'
-import { fixedClock, readEvents, verifyRun } from '../record/log.js'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fixedClock, readEvents, readHead, readPayload, verifyRun } from '../record/log.js'
+import { attest, generateKeyPair } from '../record/attestation.js'
+
 import { describeCheck } from '../record/chain.js'
 import { buildRegistry, catalogue, type Tool } from '../tools/registry.js'
 import { ALL_TOOLS } from '../tools/stage-tools.js'
-import { preparedSearch, preparedRegistrar, preparedIdentity, preparedPublishing, type Services } from '../tools/services.js'
+import type { ReadDocument } from '../identity/fields.js'
 import {
   grantSpendPermission,
   answerQuestion,
@@ -92,6 +96,10 @@ import type { JsonObject } from '../record/canonical.js'
 import type { TurnResult } from '../model/types.js'
 import { loadEnvFile, readSettings, SettingRefusal } from '../settings.js'
 import { buildRouter } from '../model/build.js'
+import { chooseServices, describeChoices, howManyAreReal } from '../vendors/build.js'
+
+/** Where a run leaves the three files somebody needs to check it. Never committed. */
+const OUT = 'out'
 
 const CASE = 'demo-bakery'
 const TOKEN = 'a-long-unguessable-token-for-this-case'
@@ -175,12 +183,24 @@ async function main(): Promise<void> {
   const clock = fixedClock('2026-08-28T09:00:00.000Z', 1000)
   const registry: ReadonlyMap<string, Tool> = buildRegistry(ALL_TOOLS)
 
-  const services: Services = {
+  // What the stand-ins answer with. Written out here rather than fetched, because
+  // this walkthrough has to produce the same record every time so it can be checked
+  // line by line.
+  //
+  // These go to chooseServices, which is the same code the running product uses to
+  // decide, per service, between the real company and a stand-in. So this
+  // demonstration takes the same path a real run does — it is not a second
+  // arrangement that happens to look similar.
+  const preparedAnswers: {
+    readonly documents: Readonly<Record<string, ReadDocument>>
+    readonly searches: Readonly<Record<string, { readonly hits: readonly { readonly title: string; readonly url: string; readonly snippet: string }[]; readonly answeredBy: string }>>
+    readonly quotes: Readonly<Record<string, { readonly domain: string; readonly available: boolean; readonly priceCents?: string }>>
+  } = {
     // Two invented documents. No real person's identity document is used here,
     // and none ever will be: that is a rule of this project, not a limit of a
     // free tier. Lucia's expiry date is deliberately one the reader could only
     // match approximately, so the review rule can be seen firing.
-    identity: preparedIdentity({
+    documents: {
       'ana-passport': {
         owner: 'Ana Rivera',
         kind: 'passport',
@@ -205,9 +225,8 @@ async function main(): Promise<void> {
           { name: 'expiry_date', value: '2030-08-19', label: 'fuzzy_match', confidence: 0.94 },
         ],
       },
-    }),
-    publishing: preparedPublishing(),
-    search: preparedSearch({
+    },
+    searches: {
       'Rivera Sisters Bakery Texas': {
         answeredBy: 'the-first-search-service',
         hits: [
@@ -223,8 +242,8 @@ async function main(): Promise<void> {
           },
         ],
       },
-    }),
-    registrar: preparedRegistrar({
+    },
+    quotes: {
       'riverasistersbakery.com': {
         domain: 'riverasistersbakery.com',
         available: true,
@@ -236,45 +255,58 @@ async function main(): Promise<void> {
         // Deliberately above the permission the owners will grant.
         priceCents: '9900',
       },
-    }),
+    },
   }
+
+  // The four outside services, chosen by the same code the running product uses.
+  //
+  // Each one is either the real company or a stand-in, and which it is depends on
+  // two things: whether REPLAY_MODE was turned off deliberately, and whether the
+  // credential that service needs is actually present. On a fresh clone all four
+  // are stand-ins and the run still finishes, which is the point.
+  const services = chooseServices({
+    settings,
+    caseId: CASE,
+    env: process.env,
+    prepared: preparedAnswers,
+  })
 
   // ── What is real, said before anything runs ───────────────────────────────
   //
   // A judge is entitled to ask whether this only works because everything is
   // pretend. The honest answer is printed here, at the top, rather than left to be
-  // discovered: which models could actually be reached with the keys present, and
-  // what is standing in for what.
-  //
-  // Nothing is called either way. This walkthrough is scripted on purpose, so that
-  // it produces the same record every time and can be checked line by line. What
-  // the models would be is assembled and reported, not used.
+  // discovered — and it is generated from the same decision the code just made,
+  // not written out beside it where it could drift.
   heading('What is real in this run')
+
   const models = buildRouter({ settings, env: process.env })
-  console.log(`  ${DIM}models      ${models.why}${OFF}`)
+  console.log(`  ${DIM}models       ${models.why}${OFF}`)
   console.log(
     `  ${DIM}the model    a written-out stand-in, so this walkthrough produces the same
 ` +
       `               record every time and can be checked line by line${OFF}`,
   )
+  console.log('')
+  for (const line of describeChoices(services)) console.log(`  ${DIM}${line}${OFF}`)
+  console.log('')
   console.log(
-    `  ${DIM}services     stand-ins holding recorded answers, with no path to the
+    `  ${DIM}the seal     REAL. A self-issued certificate on a real multi-page PDF, at
 ` +
-      `               network at all. A missing answer is an error, never a real call${OFF}`,
+      `               permission level 2 — filling in and signing, and nothing else${OFF}`,
   )
   console.log(
-    `  ${DIM}the seal     real. A self-issued certificate, a real PDF, permission
-` +
-      `               level 2 — filling in and signing, and nothing else${OFF}`,
-  )
-  console.log(
-    `  ${DIM}the record   real. Every entry fingerprinted with the one before it, and
+    `  ${DIM}the record   REAL. Every entry fingerprinted with the one before it, and
 ` +
       `               the end of it attested. Check it with: npm run verify${OFF}`,
   )
   console.log(
-    `  ${DIM}depth        ${settings.extractionDepth}, from EXTRACTION_DEPTH; review floor ` +
+    `  ${DIM}settings     depth ${settings.extractionDepth} (EXTRACTION_DEPTH), review floor ` +
       `${settings.reviewConfidenceFloor}, audit sample ${settings.reviewAuditSampleRate}${OFF}`,
+  )
+  console.log('')
+  console.log(
+    `  ${DIM}${howManyAreReal(services)} of the four outside services are talking to a real ` +
+      `company in this run.${OFF}`,
   )
 
   // ── Stage one ──────────────────────────────────────────────────────────────
@@ -558,7 +590,23 @@ async function main(): Promise<void> {
   )
 
   const assembled = await runStage(
-    { db, caseId: CASE, registry, router: scripted([choosing('assemble_pack', {})]), services, clock, settings, onEvent: watching() },
+    {
+      db,
+      caseId: CASE,
+      registry,
+      router: scripted([choosing('assemble_pack', {})]),
+      services,
+      clock,
+      settings,
+      // The one way the finished bytes leave this process. The record keeps the
+      // fingerprint of them and never the bytes, so a person handed the file
+      // compares it against the record rather than being handed both by us.
+      keepPack: async (bytes) => {
+        mkdirSync(OUT, { recursive: true })
+        writeFileSync(join(OUT, 'pack.pdf'), bytes)
+      },
+      onEvent: watching(),
+    },
     'assemble',
   )
   console.log(
@@ -667,6 +715,84 @@ async function main(): Promise<void> {
       `  granting permission to spend, checking a value against the document it was\n` +
       `  read from, and approving that the pack be sent. None of the four has a tool.${OFF}`,
   )
+
+  // ── What a stranger can check for themselves ───────────────────────────────
+  //
+  // The three files needed to check this run, written where anybody can point the
+  // checker at them. Without this, everything above is a claim somebody would have
+  // to take our word for.
+  //
+  // `out/` is never committed. These are the output of one run and they carry
+  // whatever was fed into it.
+  heading('Check this run yourself')
+
+  mkdirSync(OUT, { recursive: true })
+
+  // The record, one entry per line, with each entry's payload beside it rather
+  // than inside what is fingerprinted. A payload can be forgotten at somebody's
+  // request while the entry stays and the chain still holds.
+  const written: string[] = []
+  for (const event of await readEvents(db, CASE)) {
+    const payload = await readPayload(db, CASE, event.seq)
+    written.push(JSON.stringify(payload === null ? event : { ...event, payload }))
+  }
+  writeFileSync(join(OUT, 'record.jsonl'), `${written.join('\n')}\n`, 'utf8')
+
+  // The attestation over the END of the record. This is what catches entries
+  // removed from the end, which the chain cannot do on its own — a shortened chain
+  // is still a valid chain.
+  //
+  // Made with a fresh key here rather than with Charter's own, because the private
+  // half of Charter's key is not on most machines that will run this, and a
+  // demonstration that only worked for us would prove nothing to anybody else.
+  const head = await readHead(db, CASE)
+  const keys = generateKeyPair()
+  writeFileSync(
+    join(OUT, 'attestation.json'),
+    `${JSON.stringify(
+      attest(
+        {
+          runId: CASE,
+          head: head.head,
+          count: head.count,
+          attestedAt: clock().toISOString(),
+        },
+        keys.privateKeyPem,
+      ),
+      null,
+      2,
+    )}\n`,
+    'utf8',
+  )
+  writeFileSync(join(OUT, 'attestation.pub'), keys.publicKeyPem, 'utf8')
+
+  console.log(`  ${GREEN}·${OFF} ${join(OUT, 'pack.pdf')}          the sealed pack, as a real PDF`)
+  console.log(`  ${GREEN}·${OFF} ${join(OUT, 'record.jsonl')}      every entry, in order`)
+  console.log(`  ${GREEN}·${OFF} ${join(OUT, 'attestation.json')}  vouches for the end of it`)
+  console.log('')
+  console.log(`  ${BOLD}npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json${OFF}`)
+  console.log('')
+  console.log(
+    `  ${DIM}That reads its key from keys/attestation.pub in this repository, never\n` +
+      `  from the pack. A checker that took its key out of the thing it was checking\n` +
+      `  would prove nothing at all: anybody could invent a key, vouch for anything\n` +
+      `  with it, and ship both together.${OFF}`,
+  )
+  if (keys === undefined) {
+    console.log(
+      `\n  ${DIM}The attestation was made with Charter's own key, whose private half is in\n` +
+        `  .env on this machine. The checker finds the matching public half in\n` +
+        `  keys/attestation.pub, committed to this repository.${OFF}`,
+    )
+  } else {
+    console.log(
+      `\n  ${DIM}This machine does not hold Charter's private key — it lives in .env and is\n` +
+        `  never committed, which is the point of it. So the attestation above was made\n` +
+        `  with a key generated for this run, and out/attestation.pub is its public\n` +
+        `  half. Pass it with --key, as shown above. A demonstration that only worked\n` +
+        `  on our own machine would prove nothing to anybody else.${OFF}`,
+    )
+  }
 
   // ── The catalogue ──────────────────────────────────────────────────────────
   heading('Everything this agent can do')

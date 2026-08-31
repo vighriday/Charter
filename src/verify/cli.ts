@@ -48,6 +48,16 @@ ${BOLD}Charter — check a pack without trusting us${OFF}
                     chain cannot do on its own — a shortened chain is still a
                     valid chain.
 
+  --key <file>      optional. Check the attestation against this public key
+                    instead of the one committed to this repository.
+
+                    Use it when somebody handed you a key SEPARATELY from the
+                    pack. Never take a key out of the pack itself: anybody could
+                    invent a key, vouch for anything with it, and ship both
+                    together, and a checker that accepted that would prove
+                    nothing at all. Which key was used is printed below every
+                    time, so nobody has to remember which one they chose.
+
 Everything is checked on your machine. Nothing is sent anywhere.
 `
 
@@ -79,7 +89,24 @@ function readRecord(path: string): { events: ChainedEvent[]; payloads: Map<strin
   return { events, payloads }
 }
 
-const args = process.argv.slice(2).filter((one) => !one.startsWith('-'))
+const argv = process.argv.slice(2)
+
+/**
+ * A key the person running this chose, handed to them separately from the pack.
+ *
+ * Optional, and the default matters more than the option: without it, the key
+ * comes from this repository. A checker that read its key out of the thing it was
+ * checking would prove nothing at all, so the key never comes from the pack —
+ * whichever of the two is used is printed every time.
+ */
+const chosenKey = ((): string | undefined => {
+  const at = argv.indexOf('--key')
+  return at === -1 ? undefined : argv[at + 1]
+})()
+
+const args = argv.filter(
+  (one, at) => !one.startsWith('-') && argv[at - 1] !== '--key',
+)
 
 if (args.length < 2) {
   console.log(HELP)
@@ -108,7 +135,7 @@ const attestation: Attestation | undefined =
     ? (JSON.parse(readFileSync(attestationPath, 'utf8')) as Attestation)
     : undefined
 
-const publicKeyPath = 'keys/attestation.pub'
+const publicKeyPath = chosenKey ?? 'keys/attestation.pub'
 if (!existsSync(publicKeyPath)) {
   console.error(
     `${RED}${publicKeyPath} is missing.${OFF}\n` +
@@ -137,7 +164,11 @@ console.log(`${DIM}${'─'.repeat(72)}${OFF}`)
 console.log(`  pack    ${packPath}   ${pack.length} bytes`)
 console.log(`  record  ${recordPath}   ${events.length} entries`)
 console.log(
-  `  key     ${publicKeyPath}   ${DIM}from this repository, never from the pack${OFF}`,
+  `  key     ${publicKeyPath}   ${DIM}${
+    chosenKey === undefined
+      ? 'from this repository, never from the pack'
+      : 'you chose this key. It did not come from the pack'
+  }${OFF}`,
 )
 console.log(`${DIM}${'─'.repeat(72)}${OFF}`)
 console.log('')

@@ -62,6 +62,8 @@ export interface RunOptions {
    * the same shell.
    */
   readonly settings?: Settings
+  /** Where the finished pack goes, when the caller wants to keep it. */
+  readonly keepPack?: (bytes: Uint8Array) => Promise<void>
   /** Told about everything as it happens, so a run can be watched while it runs. */
   readonly onEvent?: (kind: string, stage: StageName, detail: string) => void
 }
@@ -149,6 +151,7 @@ export async function runStage(options: RunOptions, stage: StageName): Promise<S
       turnsSoFar: await turnsTaken(db, caseId, stage),
       now: () => clock(),
       settings: options.settings ?? DEFAULT_SETTINGS,
+      ...(options.keepPack === undefined ? {} : { keepPack: options.keepPack }),
     })
 
     // One place writes to the record. Written in order, so the record reads the

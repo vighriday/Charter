@@ -34,6 +34,8 @@ import { maySpend, afterSpending, cents, asMoney } from './guard.js'
 import { prepareAgreement } from '../agreement/prepare.js'
 import { reviewDocument, explain } from '../identity/review.js'
 import { Pack, refusedAfterSealing } from '../pack/assemble.js'
+import { buildPackDocument } from '../pack/document.js'
+import { PERMISSION_FILL_IN_AND_SIGN_ONLY, sealPack } from '../seal/seal.js'
 import type { Tool, ToolContext, ToolOutcome, ToolEvent } from './registry.js'
 
 /** Read a required text argument. The shape was already checked before this ran. */
@@ -824,17 +826,69 @@ export const assemblePack: Tool = {
     // chosen by the model: what a legal pack contains is not a judgement call.
     const parts = [
       'the ownership agreement',
-      'the record of everything Charter did',
       'what Charter was asked to do and would not',
-      "each owner's identity document",
+      "each owner's identity document, and which values a person checked",
+      'where the owners sign',
     ]
 
     const pack = new Pack()
     pack.run('pdf_merge')
     pack.run('pdf_tag')
 
-    const bytes = await context.services.publishing.buildPack(context.caseId, parts)
-    const sealed = pack.seal(bytes)
+    // The agreement is prepared again here rather than carried from stage four.
+    //
+    // It is worked out entirely from facts that are already in the record, so this
+    // produces the same document stage four described — and it means the pack is
+    // built from the record rather than from something held in memory between
+    // stages. Anything built from memory cannot be rebuilt by somebody checking.
+    const prepared = prepareAgreement(context.facts, context.facts.agreement.dated)
+
+    // What each owner's document produced. Names of fields only. The values
+    // themselves are deliberately never put in the pack: a packet gathering every
+    // owner's date of birth and document number onto one page is a document nobody
+    // should be asked to carry around.
+    const identity = context.facts.identityChecks.map((check) => ({
+      owner: check.owner,
+      fieldsRead: check.fieldsRead,
+      checkedByAPerson: check.checkedByAPerson,
+      missing: check.missing,
+    }))
+
+    const document = await buildPackDocument({
+      caseId: context.caseId,
+      agreement: prepared.data,
+      explanation: prepared.explanation,
+      identity,
+      refusedInThisRun: pack.steps
+        .filter((step) => step.outcome === 'refused')
+        .map((step) => ({ operation: step.operation, why: step.why ?? '' })),
+      preparedOn: prepared.data.agreementDate,
+      // From the run's own clock, not from the wall. The pack is then the same
+      // bytes every time the same record is replayed, which is what lets two
+      // people compare one.
+      stampedAt: context.now(),
+    })
+
+    // Write, then SEAL, then fingerprint the sealed bytes. In that order, and
+    // nothing that rewrites the file runs afterwards. A fingerprint of a file that
+    // can still be rewritten proves only what the file used to be.
+    //
+    // Permission level 2: filling in and signing, and nothing else. Level 1 would
+    // stop the owners signing at all, which would make the pack useless for the one
+    // thing it exists for. Level 3 would let content be added to the page.
+    const stamped = await sealPack(document, context.certificate, {
+      at: context.now(),
+      reason:
+        'Sealed by Charter. From this point only filling in and signing are ' +
+        'permitted. Nothing here has been signed, and Charter cannot sign it.',
+    })
+
+    const sealed = pack.seal(stamped.bytes)
+
+    // The bytes leave this process here, and only here. The record keeps the
+    // fingerprint of them and never the bytes themselves, so a person handed the
+    // file compares it against the record rather than being handed both by us.
+    await context.keepPack?.(stamped.bytes)
 
     // What goes under the pack's own heading, "what Charter was asked to do and
     // would not".
@@ -857,6 +911,7 @@ export const assemblePack: Tool = {
         sealed: 'yes',
         fingerprint: sealed.fingerprint,
         sizeBytes: sealed.sizeBytes,
+        permissionLevel: String(PERMISSION_FILL_IN_AND_SIGN_ONLY),
         wouldRefuseAfterSealing: String(wouldRefuse.length),
         refusedInThisRun: String(didRefuse.length),
       },
@@ -867,6 +922,11 @@ export const assemblePack: Tool = {
             fingerprint: sealed.fingerprint,
             sizeBytes: sealed.sizeBytes,
             parts: parts as unknown as JsonValue,
+            // Which certificate sealed it, by its short name. Somebody handed a
+            // pack compares this against the one this project publishes, so a
+            // seal made with a certificate somebody invented does not pass.
+            certificate: stamped.certificateFingerprint,
+            permissionLevel: String(PERMISSION_FILL_IN_AND_SIGN_ONLY),
             wouldRefuseAfterSealing: wouldRefuse as unknown as JsonValue,
             refusedAfterSealing: didRefuse as unknown as JsonValue,
           },

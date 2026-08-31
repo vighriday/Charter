@@ -15,6 +15,14 @@ import {
 } from '../src/tools/stage-tools.js'
 import type { ToolContext } from '../src/tools/registry.js'
 import { DEFAULT_SETTINGS } from '../src/settings.js'
+import { makeSealCertificate } from '../src/seal/certificate.js'
+
+// Made once for the whole file. A certificate takes a second or two to make, and
+// the tools here are not what is being tested about it.
+const sharedCertificate = makeSealCertificate({
+  notBefore: new Date(Date.UTC(2026, 0, 1)),
+  password: 'a-long-enough-password',
+})
 
 /**
  * The tools, and the rule that stops one of them spending money it was not given.
@@ -55,6 +63,9 @@ const context = (over: Partial<ToolContext> = {}): ToolContext => ({
   // The same settings a run with an empty `.env` would get, so what the tests
   // exercise is what a stranger cloning this project would get.
   settings: DEFAULT_SETTINGS,
+  // One certificate for the whole file. Making one takes a second or two, and
+  // nothing here is testing certificates.
+  certificate: sharedCertificate,
   ...over,
 })
 

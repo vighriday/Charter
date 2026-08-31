@@ -52,6 +52,22 @@ export type MatchLabel =
   | 'fuzzy_match'
   | 'not_found'
 
+/**
+ * Every label, as a list.
+ *
+ * The same five as the type above, in a form code can actually check against. A
+ * label that arrives from the service and is not one of these becomes `not_found`,
+ * which sends the value to a person — the only safe direction, because a label
+ * nobody recognised is not evidence that a value is fine.
+ */
+export const MATCH_LABELS: readonly MatchLabel[] = [
+  'id_match',
+  'id_match_multiblock',
+  'id_match_partial',
+  'fuzzy_match',
+  'not_found',
+]
+
 /** What each label means, in plain words, for the person doing the review. */
 export const LABEL_MEANING: Readonly<Record<MatchLabel, string>> = {
   id_match: 'found exactly, in one place in the document',

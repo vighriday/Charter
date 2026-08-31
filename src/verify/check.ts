@@ -179,10 +179,10 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
     const check = verifyAttestation(input.attestation, input.publicKeyPem)
 
     findings.push({
-      question: 'Does the attestation match, against the key published in this repository?',
+      question: 'Does the attestation match, against the key that came from outside the pack?',
       answer: check.ok ? 'yes' : 'no',
       detail: check.ok
-        ? `Made with key ${keyIdOf(publicKey).slice(0, 16)}…, which is the key committed here. This is what catches entries removed from the end.`
+        ? `Made with key ${keyIdOf(publicKey).slice(0, 16)}…, which is the key this check was given. This is what catches entries removed from the end.`
         : `It does not: ${check.reason}`,
     })
 

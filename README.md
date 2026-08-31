@@ -46,10 +46,25 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 851 tests
+npm test          # 930 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
+npm run settings:check  # every setting either does something, or says it does not
 ```
+
+`npm run agent:demo` leaves three files in `out/`, and then you can check its work
+without taking our word for any of it:
+
+```bash
+npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json
+```
+
+That reads a real sealed PDF, confirms the seal permits only filling in and
+signing, confirms the file has not changed by one byte since it was sealed,
+confirms the record is unbroken, and confirms the attestation covers the end of it.
+It contacts nothing and it reads its key from this repository rather than from the
+pack — because a checker that took its key out of the thing it was checking would
+prove nothing at all.
 
 `npm install` is the whole setup. There is no container to build, no database to
 start, no port to free and no password to set. The append-only rules are installed
@@ -200,14 +215,17 @@ answer is 658, which is what this one said on 30 August.
 | Whether a written date is a day that actually happened, in one place both callers use | **built, 20 tests** <!-- tests/dates.test.ts --> |
 | Reading identity documents, and routing a value to a person on whether it can be found in the document rather than on a confidence score | **built, 27 tests** <!-- tests/identity.test.ts --> |
 | Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 40 tests** <!-- tests/pack.test.ts --> |
+| The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 25 tests** <!-- tests/document.test.ts --> |
+| The real clients for the outside companies — search, the registrar, reading identity documents — and the rule that picks between each one and its stand-in | **built, 52 tests**, exercised end to end with no account, no key and nothing spent <!-- tests/vendors.test.ts --> |
 | The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document <!-- tests/seal.test.ts --> |
 | The checker a stranger runs against a finished pack | **built, 16 tests.** `npm run verify` <!-- tests/verify.test.ts --> |
 | Classifying which vendor product each credential opens, by asking the vendor | **built, 29 tests** <!-- tests/credentials.test.ts --> |
 | Every setting, and the file that reads each one — with `.env.example` generated from the code so the two cannot drift | **built, 43 tests** <!-- tests/settings.test.ts --> |
 | Changing one line of `.env` and proving nothing else moved | **built, 24 tests** <!-- tests/env-file.test.ts --> |
-| The readme's own numbers, checked against the code | **built, 16 tests** <!-- tests/readme.test.ts --> |
+| The readme's own numbers, checked against the code | **built, 18 tests** <!-- tests/readme.test.ts --> |
 | The tool registry, and the catalogue generated from the code that runs | **built.** [TOOLS.md](TOOLS.md), regenerated and compared on every build |
-| The outside services — documents, identity, registrar, search, publishing | **not yet.** Every one is a stand-in holding recorded answers, with no path to a network |
+| Putting the finished website online | **not yet.** A stand-in today. The pack itself is Charter's own code and goes through no outside company |
+| Doctavian, Foxit and Perfect Corp | **not yet.** Named in the settings file, which says plainly that nothing reads them |
 | The ownership agreement as a Word file, and the screens | **not yet** |
 
 ---
@@ -257,18 +275,28 @@ checking a value against the document it was read from, and approving that the p
 be sent. There are six because two questions were asked and answered.
 
 **What is real and what is stood in for, plainly.** The demonstration prints this
-itself, before it runs anything, rather than leaving it to be discovered.
+itself, before it runs anything, rather than leaving it to be discovered — and it
+prints it from the same decision the code just made, not from a list written
+beside it where the two could drift.
 
 Real: the database, the record and its chain, the rules the database enforces, the
 stage machine, every tool, the checking of the model's arguments, the correction
-sent back, the spending rule, the name comparison, the settings, and the seal — a
-real certificate on a real multi-page PDF at permission level 2.
+sent back, the spending rule, the name comparison, the settings, **the Formation
+Pack itself** — a real multi-page PDF this project writes — and **the seal on it**,
+a real certificate at permission level 2.
 
-Stood in for: the model's replies, and **all four** outside services — search, the
-registrar, the identity reader, and publishing. Each is a stand-in holding answers
-recorded in advance, with no path to the network at all, so a missing answer is an
-error rather than a quiet real call. Every one of them still goes through exactly
-the code a real answer would.
+Stood in for by default: the model's replies, and the four outside services —
+search, the registrar, the identity reader, and publishing. Each stand-in holds
+answers recorded in advance with no path to the network at all, so a missing answer
+is an error rather than a quiet real call.
+
+**The real clients for three of those four exist and are tested.** A run uses one
+only when `REPLAY_MODE=false` *and* that service's credential is present — both,
+never either. That rule is not caution about failure: the search service allows 250
+searches a month against eight to twelve per run, so a rehearsal that went out to
+the network because a key happened to be lying around would spend a month's
+allowance. Publishing the website is the one that genuinely is not built, and the
+settings file says so in those words.
 
 The demonstration only shows what exists. Nothing in it is staged.
 

@@ -74,11 +74,16 @@ export interface Setting {
   /** What appears after the `=` in `.env.example`. Empty for anything secret. */
   readonly example: string
   /**
-   * The file that reads this, relative to the project root.
+   * The file or files that read this, relative to the project root, separated by
+   * spaces when there is more than one.
    *
    * `null` means nothing reads it yet, and then `notYetBuilt` must say which part
    * of the project is missing. That combination is printed in `.env.example` in
    * plain words, so a stranger is never told to set something that does nothing.
+   *
+   * A test opens every file named here and fails the build if it does not mention
+   * the setting. That is the test that would have caught the original problem: a
+   * promise in a document with nothing behind it.
    */
   readonly readBy: string | null
   /** Required when `readBy` is null. What is not built, and therefore not reading it. */
@@ -418,7 +423,7 @@ export const SETTINGS: readonly Setting[] = [
     ],
     kind: 'secret',
     example: '',
-    readBy: 'src/checks/classify.ts',
+    readBy: 'src/checks/classify.ts src/vendors/build.ts',
   },
   {
     name: 'NUTRIENT_PROCESSOR_KEY',
@@ -459,7 +464,7 @@ export const SETTINGS: readonly Setting[] = [
     ],
     kind: 'text',
     example: '',
-    readBy: 'src/checks/classify.ts',
+    readBy: 'src/checks/classify.ts src/vendors/build.ts',
   },
   {
     name: 'NAMECOM_TOKEN_TEST',
@@ -467,7 +472,7 @@ export const SETTINGS: readonly Setting[] = [
     what: [],
     kind: 'secret',
     example: '',
-    readBy: 'src/checks/classify.ts',
+    readBy: 'src/checks/classify.ts src/vendors/build.ts',
   },
   {
     name: 'NAMECOM_BASE_URL_TEST',
@@ -477,19 +482,22 @@ export const SETTINGS: readonly Setting[] = [
     ],
     kind: 'text',
     example: 'https://api.dev.name.com',
-    readBy: 'src/checks/classify.ts',
+    readBy: 'src/checks/classify.ts src/vendors/build.ts',
   },
   {
     name: 'NAMECOM_USERNAME_LIVE',
     section: 'NAME.COM — checks and registers the web address',
     what: [
-      'Leave the two LIVE lines empty unless you genuinely mean to spend money. This',
-      'project registers nothing real.',
+      'Leave the two LIVE lines empty unless you genuinely mean to spend money.',
+      '',
+      'The username and the token travel together: which environment you are in',
+      'decides BOTH halves at once, so a live token can never be paired with a',
+      'practice username. And a live registration is refused unless SPEND_REAL_MONEY',
+      'is true as well.',
     ],
     kind: 'text',
     example: '',
-    readBy: null,
-    notYetBuilt: NOT_BUILT_VENDOR,
+    readBy: 'src/vendors/build.ts',
   },
   {
     name: 'NAMECOM_TOKEN_LIVE',
@@ -497,8 +505,7 @@ export const SETTINGS: readonly Setting[] = [
     what: [],
     kind: 'secret',
     example: '',
-    readBy: null,
-    notYetBuilt: NOT_BUILT_VENDOR,
+    readBy: 'src/vendors/build.ts',
   },
 
   // ---- search ---------------------------------------------------------------
@@ -508,11 +515,15 @@ export const SETTINGS: readonly Setting[] = [
     what: [
       'serpapi.com, with tavily.com as the fallback behind the same internal tool.',
       'Which of the two answered goes into the record and is never shown to the model.',
+      '',
+      '250 searches a month, 50 an hour, and one run uses eight to twelve. That is',
+      'about twenty complete runs a month for the whole project, which is why saved',
+      'answers are the default and why a real search only happens when REPLAY_MODE is',
+      'false AND one of these keys is present.',
     ],
     kind: 'secret',
     example: '',
-    readBy: null,
-    notYetBuilt: NOT_BUILT_VENDOR,
+    readBy: 'src/vendors/build.ts',
   },
   {
     name: 'TAVILY_API_KEY',
@@ -520,8 +531,7 @@ export const SETTINGS: readonly Setting[] = [
     what: [],
     kind: 'secret',
     example: '',
-    readBy: null,
-    notYetBuilt: NOT_BUILT_VENDOR,
+    readBy: 'src/vendors/build.ts',
   },
 
   // ---- perfect corp ---------------------------------------------------------

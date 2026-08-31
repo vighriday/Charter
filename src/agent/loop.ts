@@ -74,6 +74,34 @@ import {
 } from '../tools/registry.js'
 import type { Services } from '../tools/services.js'
 import { DEFAULT_SETTINGS, type Settings } from '../settings.js'
+import { randomBytes } from 'node:crypto'
+import { makeSealCertificate, type SealCertificate } from '../seal/certificate.js'
+
+/**
+ * The certificate used to seal a pack when the caller did not supply one.
+ *
+ * Made once and kept, rather than made per turn. Making one takes a second or two,
+ * and — more importantly — a run that made a new one each time would produce packs
+ * carrying different seals, so a person comparing two of them would be told,
+ * correctly, that they came from different places.
+ *
+ * The password protects a copy of the private key inside the bundle. The format
+ * requires one; nothing here needs it to be memorable, and the bundle is never
+ * written to disk or sent anywhere.
+ *
+ * So it is made fresh each time the program starts rather than written down. A
+ * password in the source of a public repository is a password everybody has, and
+ * "it does not matter here" is exactly the sentence that precedes one that did.
+ */
+let madeAlready: SealCertificate | undefined
+
+export function sealCertificateFor(at: Date): SealCertificate {
+  madeAlready ??= makeSealCertificate({
+    notBefore: at,
+    password: randomBytes(24).toString('base64url'),
+  })
+  return madeAlready
+}
 
 /**
  * How many times the model is asked again after sending arguments that do not fit.
@@ -119,6 +147,16 @@ export interface TurnInput {
    * `.env.example` publishes.
    */
   readonly settings?: Settings
+  /**
+   * The certificate that seals the finished pack, made once for the whole run.
+   *
+   * Optional for the same reason, and made on demand when it is missing. Making
+   * one takes a second or two, which is why it is not made unless a tool that
+   * actually seals something is about to run.
+   */
+  readonly certificate?: SealCertificate
+  /** Where the finished pack goes, when the caller wants to keep it. */
+  readonly keepPack?: (bytes: Uint8Array) => Promise<void>
 }
 
 export type TurnOutcome =
@@ -309,6 +347,8 @@ export async function takeTurn(input: TurnInput): Promise<TurnReport> {
       services: input.services,
       now: input.now,
       settings,
+      certificate: input.certificate ?? sealCertificateFor(input.now()),
+      ...(input.keepPack === undefined ? {} : { keepPack: input.keepPack }),
     })
 
     events.push({
