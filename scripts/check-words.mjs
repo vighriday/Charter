@@ -222,7 +222,11 @@ function filesToCheck() {
   walk('docs')
   if (existsSync('CLAUDE.md')) internal.push('CLAUDE.md')
 
-  const readable = /\.(ts|tsx|js|mjs|cjs|md|json|sql|yml|yaml|txt|example)$/
+  // html and css are on this list because the website is the most public writing
+  // this project does, and until 31 August 2026 it was the only writing these
+  // rules did not read. A word rule that skips the page a judge actually opens
+  // is a rule about the wrong files.
+  const readable = /\.(ts|tsx|js|mjs|cjs|md|json|sql|yml|yaml|txt|html|css|svg|example)$/
   return [...new Set([...tracked, ...internal])].filter(
     (one) => readable.test(one) && existsSync(one) && !one.includes('package-lock'),
   )

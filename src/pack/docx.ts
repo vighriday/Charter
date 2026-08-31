@@ -225,6 +225,36 @@ const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
  * anything — it lays out what was already decided, which is the same division the
  * sealed pack follows.
  */
+/**
+ * How decisions are made, in the words the document itself prints.
+ *
+ * Pulled out of the document builder so the website can show a reader the same
+ * paragraphs that are in the file on disk. Two copies of this text would
+ * eventually disagree, and the disagreement would be between what a visitor was
+ * shown and what the owners actually signed, which is the worst place for it.
+ *
+ * The third paragraph is only there when an exact tie is arithmetically possible.
+ * That is not a detail: it is the reason the deadlock article exists at all, and
+ * the sentence says so.
+ */
+export function decisionParagraphs(data: AgreementData): readonly string[] {
+  const paragraphs = [
+    `An ordinary decision carries on ${data.ordinaryVote} of ownership. A decision ` +
+      `that changes this agreement itself carries on ${data.majorVote}.`,
+    'A majority means more than half. An owner holding exactly half does not carry ' +
+      'an ordinary decision alone.',
+  ]
+
+  if (data.deadlockPossible) {
+    paragraphs.push(
+      'These shares allow an exact tie, so this agreement includes a deadlock ' +
+        'article. It is left out when the arithmetic makes a tie impossible.',
+    )
+  }
+
+  return paragraphs
+}
+
 export function buildAgreementDocx(data: AgreementData): Uint8Array {
   const body: string[] = []
 
@@ -274,29 +304,12 @@ export function buildAgreementDocx(data: AgreementData): Uint8Array {
 
   // ---- decisions ------------------------------------------------------------
   body.push(paragraph('How decisions are made', { style: 'Heading1' }))
-  body.push(
-    paragraph(
-      `An ordinary decision carries on ${data.ordinaryVote} of ownership. A decision ` +
-        `that changes this agreement itself carries on ${data.majorVote}.`,
-    ),
-  )
-  body.push(
-    paragraph(
-      'A majority means more than half. An owner holding exactly half does not carry ' +
-        'an ordinary decision alone.',
-      { style: 'Quiet' },
-    ),
-  )
 
-  if (data.deadlockPossible) {
-    body.push(
-      paragraph(
-        'These shares allow an exact tie, so this agreement includes a deadlock ' +
-          'article. It is left out when the arithmetic makes a tie impossible.',
-        { style: 'Quiet' },
-      ),
-    )
-  }
+  // The first paragraph is the rule. The ones after it are the notes on the rule,
+  // set quieter, which is how the printed document distinguishes them.
+  decisionParagraphs(data).forEach((text, at) => {
+    body.push(paragraph(text, at === 0 ? {} : { style: 'Quiet' }))
+  })
 
   // ---- the articles ---------------------------------------------------------
   body.push(paragraph('The articles', { style: 'Heading1' }))

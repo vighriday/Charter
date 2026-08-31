@@ -126,3 +126,9 @@ snapshots/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Screenshots taken while checking the website's design. They are how the work
+# was reviewed, not part of the work: the page is rebuilt from the run every
+# time, so a picture of it goes stale the moment anything changes.
+/shots/
+/.playwright-mcp/

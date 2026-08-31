@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Charter</title>
+    <meta
+      name="description"
+      content="Charter prepares the whole packet for a United States company with more than one owner, and signs nothing. This page is one real run you can replay and check."
+    />
+
+    <link rel="icon" href="mark.svg" type="image/svg+xml" />
+    <link rel="preload" href="fonts/newsreader-roman.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/plexmono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="charter.css" />
+
+    <!--
+      The run, as a script rather than as something fetched.
+
+      A browser refuses to let a page opened straight off a disk fetch a
+      neighbouring file, and this page has to work that way: no server, no
+      network, nothing sent anywhere. The same data sits beside this page as
+      run.json, so anybody can open it and compare it against the record.
+
+      Written by scripts/site-data.mjs, which refuses to write it at all when the
+      run does not back what this page says.
+    -->
+    <script src="run.js"></script>
+  </head>
+
+  <body>
+    <!--
+      One icon set, drawn here, twenty lines. Every icon on this page is a
+      symbol of something the product actually does, drawn on the same 24 unit
+      grid with the same 1.6 stroke, so the set reads as one hand. No library,
+      no request to anybody, and nothing decorative.
+    -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <g id="i-mark" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <path d="M4 6h16M4 11h12M4 16h8" />
+          <path d="M4 21h16" stroke-dasharray="0.1 3.4" />
+        </g>
+        <g id="i-record" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <path d="M4 5h16M4 9.5h16M4 14h16M4 18.5h10" />
+        </g>
+        <g id="i-person" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <circle cx="12" cy="8" r="3.4" />
+          <path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6" />
+        </g>
+        <g id="i-doc" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+          <path d="M6 3h8l4 4v14H6z" />
+          <path d="M14 3v4h4" />
+          <path d="M9 12h6M9 16h6" stroke-linecap="round" />
+        </g>
+        <g id="i-seal" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="12" cy="10" r="6" />
+          <path d="M9 15.5 8 22l4-2 4 2-1-6.5" stroke-linejoin="round" />
+        </g>
+        <g id="i-check" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <path d="M12 3l8 3.5v6c0 4.6-3.2 8-8 9.5-4.8-1.5-8-4.9-8-9.5v-6z" stroke-linejoin="round" />
+          <path d="M9 12l2.2 2.2L15.5 10" />
+        </g>
+        <g id="i-stop" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <circle cx="12" cy="12" r="8.6" />
+          <path d="M8.6 12h6.8" />
+        </g>
+        <g id="i-refuse" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <circle cx="12" cy="12" r="8.6" />
+          <path d="M6.4 17.6 17.6 6.4" />
+        </g>
+        <g id="i-chain" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <path d="M10 13.8a3.6 3.6 0 0 0 5.4.4l2.8-2.8a3.6 3.6 0 1 0-5.1-5.1L11.6 7.8" />
+          <path d="M14 10.2a3.6 3.6 0 0 0-5.4-.4l-2.8 2.8a3.6 3.6 0 1 0 5.1 5.1l1.5-1.5" />
+        </g>
+        <g id="i-globe" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="12" cy="12" r="8.6" />
+          <path d="M3.4 12h17.2M12 3.4c2.4 2.6 3.6 5.5 3.6 8.6s-1.2 6-3.6 8.6c-2.4-2.6-3.6-5.5-3.6-8.6s1.2-6 3.6-8.6z" />
+        </g>
+        <g id="i-down" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 4v12M7 11.5l5 5 5-5M4.5 20h15" />
+        </g>
+        <g id="i-arrow" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4.5 12h15M13.5 6l6 6-6 6" />
+        </g>
+        <g id="i-play" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+          <path d="M7 4.8 19.5 12 7 19.2z" />
+        </g>
+        <g id="i-pause" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <path d="M9.2 5v14M14.8 5v14" />
+        </g>
+        <g id="i-back" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19.5 12h-15M10.5 6l-6 6 6 6" />
+        </g>
+        <g id="i-copy" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+          <path d="M9 9h11v11H9z" />
+          <path d="M15 9V4H4v11h5" />
+        </g>
+        <g id="i-eye" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke-linejoin="round" />
+          <circle cx="12" cy="12" r="2.8" />
+        </g>
+      </defs>
+    </svg>
+
+    <!-- ══════════════════════════════════════════════════════ the dark bar ══ -->
+    <header class="bar">
+      <div class="wrap bar-inner">
+        <span class="brand">
+          <svg viewBox="0 0 24 24"><use href="#i-mark" /></svg>
+          Charter
+        </span>
+
+        <span class="bar-status">
+          <i class="bar-dot"></i>
+          run <span data-run="caseId"></span> &middot; <span data-run="totalEntries"></span> entries
+          &middot; stopped at <span data-run="here"></span>
+        </span>
+
+        <span class="bar-actions">
+          <a class="bar-action" href="record.jsonl" download>
+            <svg viewBox="0 0 24 24"><use href="#i-down" /></svg>
+            the record
+          </a>
+          <a class="bar-action" href="pack.pdf" download>
+            <svg viewBox="0 0 24 24"><use href="#i-down" /></svg>
+            the packet
+          </a>
+        </span>
+      </div>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════ the tabs ══ -->
+    <nav class="tabs">
+      <div class="wrap tabs-inner" role="tablist" data-tabs>
+        <button class="tab" role="tab" data-tab="overview" aria-selected="true">
+          <svg viewBox="0 0 24 24"><use href="#i-mark" /></svg>
+          Overview
+        </button>
+        <button class="tab" role="tab" data-tab="run" aria-selected="false">
+          <svg viewBox="0 0 24 24"><use href="#i-record" /></svg>
+          The run
+          <span class="tab-count" data-run="totalEntries"></span>
+        </button>
+        <button class="tab" role="tab" data-tab="agreement" aria-selected="false">
+          <svg viewBox="0 0 24 24"><use href="#i-doc" /></svg>
+          The agreement
+          <span class="tab-count" data-run="agreement.articleCount"></span>
+        </button>
+        <button class="tab" role="tab" data-tab="packet" aria-selected="false">
+          <svg viewBox="0 0 24 24"><use href="#i-seal" /></svg>
+          The packet
+        </button>
+        <button class="tab" role="tab" data-tab="checks" aria-selected="false">
+          <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
+          The checks
+          <span class="tab-count" data-run="verify.findingCount"></span>
+        </button>
+        <button class="tab" role="tab" data-tab="limits" aria-selected="false">
+          <svg viewBox="0 0 24 24"><use href="#i-stop" /></svg>
+          The limits
+          <span class="tab-count" data-run="refusalCount"></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- the rail: one tick per entry, six of them blue. Only on the run view. -->
+    <div class="rail" aria-hidden="true" data-rail hidden></div>
+
+    <main>
+      <!-- ══════════════════════════════════════════════════════ 1. OVERVIEW ══ -->
+      <section class="view" data-view="overview">
+        <div class="wrap">
+          <div class="hero">
+            <div>
+              <h1 class="t-h1 hero-claim">It prepares the whole packet. It signs nothing.</h1>
+
+              <p class="lede hero-lede quiet">
+                Charter turns a plain description of a business into a prepared packet for a United
+                States company with more than one owner. It researches the name, secures a web
+                address, drafts the ownership agreement, reads the owners' identity documents, and
+                seals one file. Then it stops.
+              </p>
+
+              <div class="hero-acts">
+                <button class="button" data-go="run">
+                  <svg viewBox="0 0 24 24"><use href="#i-play" /></svg>
+                  Replay the run
+                </button>
+                <button class="button" data-kind="quiet" data-go="checks">
+                  <svg viewBox="0 0 24 24"><use href="#i-chain" /></svg>
+                  Try to break it
+                </button>
+              </div>
+            </div>
+
+            <!-- The mural. One tile per entry, drawn out of that entry's own
+                 fingerprint. On the dark panel because it is the record itself
+                 rather than something written about the record. -->
+            <div class="panel">
+              <div class="panel-head">
+                <span>every entry, as its own fingerprint</span>
+                <span data-run="totalEntries"></span>
+              </div>
+              <canvas class="mural" data-mural></canvas>
+              <div class="mural-key">
+                <span><i></i> the software</span>
+                <span><i class="is-human"></i> a person</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="gap"></div>
+
+          <div class="grid grid-4">
+            <div class="card">
+              <div class="card-head">
+                <svg viewBox="0 0 24 24"><use href="#i-record" /></svg>
+                entries
+              </div>
+              <div class="card-value" data-run="totalEntries"></div>
+              <p class="card-note">Everything that happened, in order, each one carrying the fingerprint of the one before it.</p>
+            </div>
+
+            <div class="card" data-human="true">
+              <div class="card-head">
+                <svg viewBox="0 0 24 24"><use href="#i-person" /></svg>
+                a person had to act
+              </div>
+              <div class="card-value" data-run="counts.human"></div>
+              <p class="card-note">The run stops dead at each one. There is no timeout anywhere, and no way to skip past.</p>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <svg viewBox="0 0 24 24"><use href="#i-refuse" /></svg>
+                refusals
+              </div>
+              <div class="card-value" data-run="refusalCount"></div>
+              <p class="card-note">One of them is Charter refusing a person, because the token identifying the case did not match.</p>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
+                tests
+              </div>
+              <div class="card-value" data-run="tests"></div>
+              <p class="card-note">Counted by running them. This page is not built at all when one of them fails.</p>
+            </div>
+          </div>
+
+          <div class="gap"></div>
+
+          <h2 class="t-head">Eight stages. The seventh has no tools at all.</h2>
+          <div class="gap-s"></div>
+          <p class="t-body quiet">
+            The model is shown different tools in each stage. A tool that exists but does not belong
+            to the stage the run is in cannot be called: it is not offered, and asking for it is
+            refused and written down. The seventh stage offers nothing, because the only thing that
+            happens there is a person deciding.
+          </p>
+
+          <div class="gap-m"></div>
+          <div class="flow" data-flow></div>
+
+          <div class="gap"></div>
+
+          <div class="grid grid-2">
+            <div>
+              <h2 class="t-head">The hard part was never the paperwork.</h2>
+              <div class="gap-s"></div>
+              <p class="t-body">
+                Forming a business on your own is already solved and it is free. What is not solved
+                is writing down an agreement between two people who trust each other completely
+                today and might not in three years.
+              </p>
+              <div class="gap-s"></div>
+              <p class="t-body quiet">
+                In this run the two owners hold half each, and said there is no agreed way for one
+                of them to leave. Charter did not invent one. It wrote down that there is no way
+                out, wrote down why, and included the article that decides what happens when the two
+                of them cannot agree.
+              </p>
+              <div class="gap-s"></div>
+              <button class="button" data-kind="quiet" data-go="agreement">
+                <svg viewBox="0 0 24 24"><use href="#i-doc" /></svg>
+                Read the agreement it wrote
+              </button>
+            </div>
+
+            <div>
+              <h2 class="t-head">A limit nobody can check is not a limit.</h2>
+              <div class="gap-s"></div>
+              <p class="t-body">
+                The software seals documents it made and signs its own record. It never signs for a
+                person. That is not a setting: there is no chain of imports from anything the model
+                can trigger to the module that carries a document to somebody to sign, and a test
+                walks every import on every build and fails if that ever changes.
+              </p>
+              <div class="gap-s"></div>
+              <p class="t-body quiet">
+                It was armed on 28 August while that module did not exist. On 30 August the first
+                file was written into that folder and the build failed, exactly as designed, and it
+                stayed failing until somebody wrote down in the open which single file is allowed to
+                reach it.
+              </p>
+              <div class="gap-s"></div>
+              <button class="button" data-kind="quiet" data-go="limits">
+                <svg viewBox="0 0 24 24"><use href="#i-stop" /></svg>
+                See what it would not do
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ 2. THE RUN ══ -->
+      <section class="view" data-view="run" hidden>
+        <div class="wrap">
+          <div class="view-head">
+            <div class="eyebrow">
+              <svg viewBox="0 0 24 24"><use href="#i-record" /></svg>
+              the record
+            </div>
+            <h2 class="t-h1">Watch it, and get stopped.</h2>
+            <div class="gap-s"></div>
+            <p class="lede quiet">
+              One real run from <span data-run="ranOnLong"></span>. Two sisters opening a bakery in
+              Texas. All <span data-run="totalEntries"></span> entries are already on this page
+              before you press anything, and you can drag the rail on the left backwards.
+              <span data-run="counts.human"></span> of them are things the software could not do for
+              itself. It is stopped at the first of those now.
+            </p>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <div class="record" data-record>
+            <!-- Every entry is built here, all of them, before anything is
+                 clicked. Rows the play head has reached are full ink and rows it
+                 has not are quieter. That is the whole visual difference:
+                 nothing is created, nothing fades in, nothing moves. -->
+          </div>
+
+          <div class="controls">
+            <button type="button" class="control" data-do="resume">
+              <svg viewBox="0 0 24 24"><use href="#i-play" /></svg>
+              resume
+            </button>
+            <button type="button" class="control" data-do="hold">
+              <svg viewBox="0 0 24 24"><use href="#i-pause" /></svg>
+              hold
+            </button>
+            <button type="button" class="control" data-do="back">
+              <svg viewBox="0 0 24 24"><use href="#i-back" /></svg>
+              back one
+            </button>
+            <button type="button" class="control" data-do="next-person">
+              <svg viewBox="0 0 24 24"><use href="#i-person" /></svg>
+              to the next person
+            </button>
+            <button type="button" class="control" data-do="show-everything">
+              <svg viewBox="0 0 24 24"><use href="#i-eye" /></svg>
+              show the whole record
+            </button>
+            <span class="controls-count">
+              entry <span data-run="here"></span> of <span data-run="totalEntries"></span>
+            </span>
+          </div>
+
+          <div class="gap"></div>
+
+          <h3 class="t-sub">Where the entries went</h3>
+          <div class="gap-s"></div>
+          <ul class="list" data-stages></ul>
+          <div class="gap-s"></div>
+          <p class="t-small quiet" data-stage-arithmetic></p>
+        </div>
+      </section>
+
+      <!--
+        The three blocks below are written here and moved into the record by the
+        replay, each one at the entry where it happened: the agreement where it
+        was drafted, the seal where it was sealed, the boundary at the single
+        entry the seventh stage has. Keeping the words here means the checks that
+        read this page read them too.
+      -->
+
+      <section class="moved" data-move-after="agreement.drafted" hidden>
+        <div class="gap-m"></div>
+        <div class="card">
+          <div class="card-head">
+            <svg viewBox="0 0 24 24"><use href="#i-doc" /></svg>
+            the agreement was written here
+          </div>
+          <p class="t-note">
+            <span data-run="agreement.articleCount"></span> articles, dated
+            <span data-run="agreement.dated"></span>. Two of them are in the document because of
+            what a person answered at entry <span data-run="exitQuestionEntry"></span>.
+          </p>
+          <div class="gap-s"></div>
+          <button class="button" data-kind="quiet" data-go="agreement">
+            <svg viewBox="0 0 24 24"><use href="#i-arrow" /></svg>
+            Read it
+          </button>
+        </div>
+        <div class="gap-m"></div>
+      </section>
+
+      <section class="moved" data-move-after="pack.sealed" hidden>
+        <div class="gap-m"></div>
+        <div class="card">
+          <div class="card-head">
+            <svg viewBox="0 0 24 24"><use href="#i-seal" /></svg>
+            the packet was sealed here
+          </div>
+          <ul class="spec">
+            <li>
+              <span class="spec-key">Sealed</span>
+              <span class="spec-value" data-run="pack.sizeBytes"></span>
+            </li>
+            <li>
+              <span class="spec-key">PDF permission level</span>
+              <span class="spec-value" data-run="pack.permissionLevel"></span>
+            </li>
+            <li>
+              <span class="spec-key">Fingerprint</span>
+              <span class="spec-value" data-run="pack.short"></span>
+            </li>
+          </ul>
+          <div class="gap-s"></div>
+          <p class="t-note quiet">
+            Permission level <span data-run="pack.permissionLevel"></span> means filling in and
+            signing, and nothing else. After the seal, anything that would rewrite the file is
+            refused, and the refusal is written into the record.
+          </p>
+        </div>
+        <div class="gap-m"></div>
+      </section>
+
+      <section class="moved" data-move-after="boundary" hidden>
+        <div class="gap-m"></div>
+        <div class="card">
+          <div class="card-head">
+            <svg viewBox="0 0 24 24"><use href="#i-stop" /></svg>
+            stage <span data-run="boundaryPosition"></span>, the boundary
+          </div>
+          <div class="tools-label">Tools</div>
+          <div class="tools-empty" data-empty-tools></div>
+          <div class="gap-s"></div>
+          <p class="t-body t-reserved">Its emptiness is the design.</p>
+          <div class="gap-s"></div>
+          <p class="t-note quiet">
+            The model is asked for nothing here. Ordinary code, which is not the agent and cannot be
+            reached by it, carries the packet to a person.
+          </p>
+        </div>
+        <div class="gap-m"></div>
+      </section>
+
+      <!-- ═════════════════════════════════════════════════ 3. THE AGREEMENT ══ -->
+      <section class="view" data-view="agreement" hidden>
+        <div class="wrap">
+          <div class="view-head">
+            <div class="eyebrow">
+              <svg viewBox="0 0 24 24"><use href="#i-doc" /></svg>
+              what the owners would sign
+            </div>
+            <h2 class="t-h1">
+              <span data-run="agreement.articleCount"></span> articles. Two are there because of
+              what you answered.
+            </h2>
+            <div class="gap-s"></div>
+            <p class="lede quiet">
+              Every article below is the real one, from the same code that wrote the file this run
+              left on disk. At entry <span data-run="exitQuestionEntry"></span> a person was asked
+              whether there is a written way for an owner to leave and be bought out. The answer was
+              no. So Charter did not invent one. It wrote down that there is no way out, and it
+              wrote down why.
+            </p>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <div class="grid grid-3">
+            <div class="card">
+              <div class="card-head">shares</div>
+              <p class="t-note">
+                <span data-run="ownerOne"></span> holds half. <span data-run="ownerTwo"></span>
+                holds half.
+              </p>
+            </div>
+            <div class="card">
+              <div class="card-head">an ordinary decision</div>
+              <p class="t-note" data-run="agreement.ordinaryVote"></p>
+            </div>
+            <div class="card">
+              <div class="card-head">changing this agreement</div>
+              <p class="t-note" data-run="agreement.majorVote"></p>
+            </div>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <h3 class="t-sub">How decisions are made</h3>
+          <div class="gap-s"></div>
+          <div data-decisions></div>
+
+          <div class="gap-m"></div>
+
+          <h3 class="t-sub">The articles</h3>
+          <div data-articles></div>
+
+          <div class="gap-s"></div>
+          <button type="button" class="control" data-do="all-articles">
+            <svg viewBox="0 0 24 24"><use href="#i-eye" /></svg>
+            show all <span data-run="agreement.articleCount"></span> articles
+          </button>
+
+          <div class="gap"></div>
+
+          <p class="t-body">
+            Neither owner can outvote the other, and under Texas law neither can walk out. Charter
+            did not choose that. It wrote down what the two of them said, and named the consequence
+            in the document instead of leaving it to be found in year three.
+          </p>
+          <div class="gap-s"></div>
+          <p class="t-body quiet">
+            This is a working copy. Nothing in it has been signed, and the software that prepared it
+            cannot sign it. Charter does not give legal advice, and nothing on this page is a view
+            about whether this agreement is right for these two people.
+          </p>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════════════════ 4. THE PACKET ══ -->
+      <section class="view" data-view="packet" hidden>
+        <div class="wrap">
+          <div class="view-head">
+            <div class="eyebrow">
+              <svg viewBox="0 0 24 24"><use href="#i-seal" /></svg>
+              what it actually made
+            </div>
+            <h2 class="t-h1">One file, sealed, and it ends on a line nobody has signed.</h2>
+            <div class="gap-s"></div>
+            <p class="lede quiet">
+              This is the document. The words below were read back out of the sealed bytes rather
+              than written again, so what you are looking at is what is in the file. The file itself
+              is beside this page, and its fingerprint is printed under it.
+            </p>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <div class="sheet-row">
+            <div>
+              <div class="sheet" data-sheet></div>
+              <div class="sheet-foot">
+                <span>
+                  page <span data-sheet-page></span> of <span data-sheet-pages></span>
+                </span>
+                <span style="display: flex; gap: 8px">
+                  <button type="button" class="control" data-do="page-back">
+                    <svg viewBox="0 0 24 24"><use href="#i-back" /></svg>
+                    back
+                  </button>
+                  <button type="button" class="control" data-do="page-next">
+                    next
+                    <svg viewBox="0 0 24 24"><use href="#i-arrow" /></svg>
+                  </button>
+                </span>
+              </div>
+              <div class="gap-s"></div>
+              <ul class="spec">
+                <li>
+                  <span class="spec-key">Bytes</span>
+                  <span class="spec-value" data-run="pack.sizeBytes"></span>
+                </li>
+                <li>
+                  <span class="spec-key">PDF permission level</span>
+                  <span class="spec-value" data-run="pack.permissionLevel"></span>
+                </li>
+                <li>
+                  <span class="spec-key">Fingerprint</span>
+                  <span class="spec-value" data-run="pack.short"></span>
+                </li>
+              </ul>
+              <div class="gap-s"></div>
+              <a class="button" href="pack.pdf" download>
+                <svg viewBox="0 0 24 24"><use href="#i-down" /></svg>
+                Take the sealed file
+              </a>
+            </div>
+
+            <div>
+              <h3 class="t-sub">What is inside it</h3>
+              <div class="gap-s"></div>
+              <ul class="list" data-pack-parts></ul>
+
+              <div class="gap-m"></div>
+
+              <h3 class="t-sub">The two identity documents</h3>
+              <div class="gap-s"></div>
+              <div data-documents></div>
+              <div class="gap-s"></div>
+              <p class="t-small quiet">
+                Field names only. Not one value read off either document is on this page, in the
+                data behind it, or anywhere a website could reach. The record was built that way
+                from the start, and a check refuses to write this page's data if anything shaped
+                like one turns up in it.
+              </p>
+
+              <div class="gap-m"></div>
+
+              <h3 class="t-sub">Where the owners sign</h3>
+              <div class="signature-lines">
+                <div class="signature-line">
+                  <div class="signature-who"><span data-run="ownerOne"></span>, signature</div>
+                  <div class="signature-blank">Print name</div>
+                  <div class="signature-blank">Date</div>
+                </div>
+                <div class="signature-line">
+                  <div class="signature-who"><span data-run="ownerTwo"></span>, signature</div>
+                  <div class="signature-blank">Print name</div>
+                  <div class="signature-blank">Date</div>
+                </div>
+              </div>
+              <p class="t-note">These lines are empty because the software cannot put anything on them.</p>
+            </div>
+          </div>
+
+          <div class="gap"></div>
+
+          <h2 class="t-head">The picture this run did not draw.</h2>
+          <div class="gap-s"></div>
+          <p class="t-body quiet">
+            The last stage draws the new business its first storefront picture. The tool that does
+            it takes no arguments at all, so the model cannot write its own description of somebody
+            else's business: the words come out of the record, and they are the ones a person typed
+            in the first minute of the run. In this run the service was standing in, so nothing was
+            drawn. Rather than show a picture that was never made, here is the frame and the exact
+            words that would have gone to it.
+          </p>
+
+          <div class="gap-m"></div>
+          <div class="frame"><p data-storefront-words></p></div>
+          <div class="sheet-foot">
+            <span><span data-run="storefront.shape"></span></span>
+            <span>not drawn, because the service was standing in</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════════════════ 5. THE CHECKS ══ -->
+      <section class="view" data-view="checks" hidden>
+        <div class="wrap">
+          <div class="view-head">
+            <div class="eyebrow">
+              <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
+              check it yourself
+            </div>
+            <h2 class="t-h1">Do not believe any of this. Break it.</h2>
+            <div class="gap-s"></div>
+            <p class="lede quiet">
+              Everything below runs in your browser, on the real fingerprints, with no network. The
+              same check runs on your own machine over the file itself, and this page prints its
+              questions in its own words rather than a friendlier copy of them.
+            </p>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <div class="card">
+            <div class="card-head">
+              <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
+              npm run verify
+            </div>
+            <div data-findings></div>
+            <div class="gap-s"></div>
+            <p class="t-note quiet">
+              <span data-run="verify.findingCount"></span> questions.
+              <span data-run="verify.yesCount"></span> answered yes.
+              <span data-run="verify.unsureCount"></span> it cannot answer, and it says so rather
+              than leaving it out.
+            </p>
+            <div class="gap-s"></div>
+            <button type="button" class="control" data-do="copy-verify">
+              <svg viewBox="0 0 24 24"><use href="#i-copy" /></svg>
+              npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json
+            </button>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <h3 class="t-sub">What this check cannot prove</h3>
+          <div class="gap-s"></div>
+          <div data-cannot></div>
+
+          <div class="gap"></div>
+
+          <h2 class="t-head">The past can still be rewritten. It can no longer be rewritten quietly.</h2>
+          <div class="gap-s"></div>
+          <p class="t-body quiet">
+            Below is the real detail of entry <span data-run="tamperEntry"></span>, one of the two
+            places this run wrote down how much of the company each owner holds. Change the
+            <code>50</code> to <code>60</code>. Your browser takes the fingerprint of what you
+            typed, rebuilds that entry's own fingerprint from it, and walks every link from the
+            first entry to the last.
+          </p>
+
+          <div class="gap-m"></div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span>every entry, as its own fingerprint</span>
+              <span data-run="totalEntries"></span>
+            </div>
+            <canvas class="mural" data-mural-2></canvas>
+            <div class="mural-key">
+              <span><i></i> the software</span>
+              <span><i class="is-human"></i> a person</span>
+              <span><i class="is-broken"></i> changed since it was written</span>
+            </div>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <div class="card">
+            <div class="card-head">
+              <svg viewBox="0 0 24 24"><use href="#i-chain" /></svg>
+              entry <span data-run="tamperEntry"></span>, its detail
+            </div>
+            <textarea class="tamper-field" rows="2" spellcheck="false" data-tamper-field></textarea>
+
+            <div class="tamper-controls">
+              <button type="button" class="control" data-do="rechain">
+                <svg viewBox="0 0 24 24"><use href="#i-chain" /></svg>
+                now rewrite the rest so it fits
+              </button>
+              <button type="button" class="control" data-do="drop-two">
+                <svg viewBox="0 0 24 24"><use href="#i-refuse" /></svg>
+                or drop the last two entries
+              </button>
+              <button type="button" class="control" data-do="tamper-reset">
+                <svg viewBox="0 0 24 24"><use href="#i-back" /></svg>
+                put it back
+              </button>
+            </div>
+
+            <div class="tamper-seam" data-tamper-seam></div>
+            <div class="tamper-verdict" data-tamper-verdict></div>
+          </div>
+
+          <div class="gap-s"></div>
+          <p class="t-small quiet">
+            This runs the same check on the same fingerprints, in about forty lines. The real check
+            reads the record file itself, and sends nothing anywhere.
+          </p>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════════════════ 6. THE LIMITS ══ -->
+      <section class="view" data-view="limits" hidden>
+        <div class="wrap">
+          <div class="view-head">
+            <div class="eyebrow">
+              <svg viewBox="0 0 24 24"><use href="#i-stop" /></svg>
+              where it stops
+            </div>
+            <h2 class="t-h1">Most software ships a list of what it can do. This is the other one.</h2>
+            <div class="gap-s"></div>
+            <p class="lede quiet">
+              These <span data-run="refusalCount"></span> refusals are in the record, and they are
+              printed inside the finished packet under this same heading. Entry
+              <span data-run="humanRefusalEntry"></span> is the one worth reading twice. It is
+              Charter refusing a person, because the token that identified the case did not match.
+              The limit runs in both directions.
+            </p>
+          </div>
+
+          <div class="gap-m"></div>
+          <div data-refusals></div>
+
+          <div class="gap"></div>
+
+          <h2 class="t-head">
+            <span data-run="serviceCount"></span> outside services. In this run, all of them were
+            standing in.
+          </h2>
+          <div class="gap-s"></div>
+          <p class="t-body quiet">
+            This matters more than a logo would. The run you can replay reached no network at all.
+            Every outside service was a stand-in holding answers recorded in advance, which is why a
+            missing answer is an error here instead of a quiet real call. Two of them produced
+            entries you can read: the search that changed the name, and the registrar that refused
+            twice before registering.
+          </p>
+
+          <div class="gap-m"></div>
+          <ul class="list" data-services></ul>
+
+          <div class="gap"></div>
+
+          <h2 class="t-head">The one thing it will never do.</h2>
+          <div class="gap-s"></div>
+          <p class="t-body">
+            The law here is more subtle than the slogan. The Uniform Electronic Transactions Act,
+            section 14, lets a contract be formed by electronic agents even when no person is aware
+            of it, and the result is attributed to the person to be bound. So the honest claim is
+            not that a machine may not act. It is that the same law defines a signature as a process
+            executed or adopted by a person, with the intent to sign. Forming can be handed over.
+            The signature is the act of a person, and a machine has no intent to lend it.
+          </p>
+
+          <div class="gap-m"></div>
+          <p class="t-h1">It prepares the whole packet. It signs nothing.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ══════════════════════════════════════════════════════ the colophon ══ -->
+    <footer class="foot">
+      <div class="wrap">
+        <p>
+          <b>Where the numbers came from.</b> Every value on this page is read from
+          <a href="run.json">run.json</a>, generated from the append-only record of one real run.
+          The generator refuses to write the file when the run does not back what the page says. The
+          record is beside this page, and so is the packet, and <code>npm run verify</code> checks
+          one against the other on your machine without sending anything anywhere.
+        </p>
+
+        <p>
+          <b>The second ink.</b> There is exactly one colour on this page besides the ink and the
+          paper. It appears <span data-run="counts.human"></span> times, because the record contains
+          <span data-run="counts.human"></span> entries whose actor is a person. If the record
+          changes, the count changes.
+        </p>
+
+        <p>
+          <b>There is a fifth colour in this stylesheet, and it is not in this page unless you
+          rewrite the record yourself.</b>
+        </p>
+
+        <p>
+          <b>What this page does not claim.</b> There are no customers and no testimonials, because
+          there are none. The run reached no network, so no outside timestamp was taken, and the
+          checker says so. This run values both owners' contributions at the same amount, while the
+          sentence a person typed about the oven says about twelve thousand dollars. The agreement
+          uses the value that was recorded as a fact. Nothing on this page is legal advice.
+        </p>
+
+        <p>
+          <b>The writing.</b> Our sentences contain no em dashes. Any you can see belong to the
+          record and to the agreement, quoted as they were written. A plain text version of this
+          page is at <a href="llms.txt">llms.txt</a>.
+        </p>
+      </div>
+    </footer>
+
+    <script src="demo.js"></script>
+  </body>
+</html>

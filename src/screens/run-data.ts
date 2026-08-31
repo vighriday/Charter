@@ -26,15 +26,26 @@
  * holds while somebody remembers it is not a rule.
  */
 
-import type { ChainedEvent } from '../record/chain.js'
+import { genesisHash, hashEvent, type ChainedEvent } from '../record/chain.js'
+import { fingerprint } from '../record/canonical.js'
 
 /** One entry of the record, as the website shows it. */
 export interface RunEntry {
+  /**
+   * Which run this belongs to.
+   *
+   * Repeated on every entry rather than written once at the top, because it is
+   * part of what gets fingerprinted. A reader who wants to recompute an entry's
+   * fingerprint needs it here, beside the entry, and not somewhere else in the
+   * file that they have to trust applies.
+   */
+  readonly runId: string
   readonly seq: string
   readonly kind: string
   /** `human`, `model`, `system` or `vendor`. */
   readonly actor: string
   readonly stage: string | null
+  /** When it happened. This is the `ts` that goes into the fingerprint. */
   readonly at: string
   /** The first twelve characters of this entry's fingerprint. Enough to compare. */
   readonly fingerprint: string
@@ -44,6 +55,35 @@ export interface RunEntry {
   readonly refusal: boolean
   /** Set on the entries a person caused, saying what they had to do. */
   readonly humanAct?: HumanAct
+
+  // ---- the chain itself, so a reader can check it rather than believe it -----
+  //
+  // WHY THE FULL FINGERPRINTS ARE HERE AND NOT JUST THE SHORT ONE
+  //
+  // The website says the record is tamper-evident, and then invites a visitor to
+  // alter an entry and watch the check fail. That check is a real one: it takes
+  // the fingerprint of the altered detail, rebuilds that entry's own fingerprint
+  // from its header, and walks every link from the first entry to the last.
+  //
+  // None of that can be done from a twelve-character abbreviation. Without these
+  // four fields the page could only draw a picture of a check happening, which is
+  // the one thing this project must never do.
+
+  /** The fingerprint of this entry's detail. Sixty-four characters. */
+  readonly payloadHash: string
+  /** The fingerprint of the entry before this one. Sixty-four characters. */
+  readonly prevHash: string
+  /** This entry's own fingerprint. Sixty-four characters. */
+  readonly hash: string
+  /**
+   * The entry's detail, exactly as it was written.
+   *
+   * Carried so the page can recompute `payloadHash` itself. Identity VALUES are
+   * never in here, because the record never held them: it holds which fields were
+   * read and which a person checked. `complaintsAbout` looks anyway, and refuses
+   * to let the file be written if anything shaped like one turns up.
+   */
+  readonly payload: Record<string, unknown> | null
 }
 
 /**
@@ -74,6 +114,24 @@ export interface RunStage {
   readonly to: string
 }
 
+/** One article of the ownership agreement, as the page prints it. */
+export interface RunArticle {
+  readonly number: number
+  /** The heading without its number. */
+  readonly heading: string
+  /** The heading as the document prints it, number and all. */
+  readonly fullHeading: string
+  /** Why this article exists, in plain words. The document's own sentence. */
+  readonly why: string
+}
+
+/** One question the checker asked, and what it answered. */
+export interface RunFinding {
+  readonly question: string
+  readonly answer: 'yes' | 'no' | 'cannot say'
+  readonly detail: string
+}
+
 export interface RunData {
   readonly caseId: string
   readonly businessName: string
@@ -90,6 +148,15 @@ export interface RunData {
     readonly sizeBytes: string
     readonly permissionLevel: string
     readonly parts: readonly string[]
+    /**
+     * The words actually in the sealed file, one list per page.
+     *
+     * Read back out of the bytes rather than written again, so the page shows a
+     * reader the document itself. A browser that will not render a PDF in place
+     * would otherwise leave the most important artifact on the site as a blank
+     * rectangle.
+     */
+    readonly pages: readonly (readonly string[])[]
   }
   /** The name the owners first chose, and the one they ended with. */
   readonly naming?: {
@@ -116,7 +183,11 @@ export interface RunData {
     readonly sentToAPerson: readonly { readonly field: string; readonly reasons: readonly string[] }[]
   }[]
   readonly agreement?: {
-    readonly articles: number
+    readonly articleCount: number
+    /** Every article, from the same code that wrote the document on disk. */
+    readonly articles: readonly RunArticle[]
+    /** The "How decisions are made" paragraphs, exactly as the document prints them. */
+    readonly decisions: readonly string[]
     readonly dated: string
     readonly ordinaryVote: string
     readonly majorVote: string
@@ -126,11 +197,60 @@ export interface RunData {
   /** The words that would have drawn the storefront picture. The owners' own. */
   readonly storefront?: { readonly fromWords: string; readonly shape: string }
   readonly site?: { readonly liveAt: string }
-  /** Which outside services were real in this run and which stood in. */
-  readonly services: readonly { readonly name: string; readonly kind: string; readonly why: string }[]
+  /**
+   * Which outside services were real in this run and which stood in.
+   *
+   * `company` and `host` come from the credential catalogue in `settings.ts`, so
+   * the page names a company only where a credential for that company exists.
+   * `company` is null for the one that is not built, and the page says so instead
+   * of naming somebody who was not involved.
+   */
+  readonly services: readonly {
+    readonly name: string
+    readonly kind: string
+    readonly why: string
+    readonly company: string | null
+    readonly host: string
+  }[]
   /** Whether anybody outside Charter vouched for when this record existed. */
   readonly anchor: string
   readonly generatedAt: string
+
+  // ---- what a reader needs to check the record without trusting anybody ------
+
+  /**
+   * Where this run's chain begins.
+   *
+   * Not a row of zeroes. It is derived from the run, so entries belonging to one
+   * run cannot be spliced into another. The page recomputes it and compares.
+   */
+  readonly genesis: string
+  /**
+   * The signed statement about where the record ended, if one was made.
+   *
+   * The proof and the key are deliberately absent. A visitor needs to know that a
+   * statement exists and what it covers. Handing them the signature over a public
+   * page would let anybody replay it, and it proves nothing they could check here
+   * anyway, because checking it needs the published key and the record file.
+   */
+  readonly attestation?: {
+    readonly head: string
+    readonly count: string
+    readonly keyId: string
+  }
+  /** How many tests this project runs. Counted by running them, never typed. */
+  readonly tests: number
+  /**
+   * What `npm run verify` answered, on this pack and this record.
+   *
+   * The page prints these questions in the checker's own words and its own order,
+   * including the ones it cannot answer. Writing them out again on the page would
+   * be a second copy able to drift from the code that does the checking.
+   */
+  readonly verify: {
+    readonly findings: readonly RunFinding[]
+    readonly cannotProve: readonly string[]
+  }
 }
 
 /**
@@ -202,9 +322,32 @@ export function readRun(input: {
   readonly businessName: string
   readonly state: string
   readonly owners: readonly string[]
-  readonly services: readonly { readonly name: string; readonly kind: string; readonly why: string }[]
+  readonly services: readonly {
+    readonly name: string
+    readonly kind: string
+    readonly why: string
+    readonly company: string | null
+    readonly host: string
+  }[]
   readonly anchor: string
   readonly generatedAt: string
+  /** Where this run's chain begins, worked out from the run itself. */
+  readonly genesis: string
+  /** The signed statement over the end of the record. Never its signature. */
+  readonly attestation?: { readonly head: string; readonly count: string; readonly keyId: string }
+  /** How many tests this project runs. Counted by running them. */
+  readonly tests: number
+  /** What the checker answered, in its own words. */
+  readonly verify: {
+    readonly findings: readonly RunFinding[]
+    readonly cannotProve: readonly string[]
+  }
+  /** The words in the sealed packet, one list per page, read out of the bytes. */
+  readonly packPages: readonly (readonly string[])[]
+  /** Every article of the agreement, from the code that wrote the document. */
+  readonly articles: readonly RunArticle[]
+  /** The "How decisions are made" paragraphs, as the document prints them. */
+  readonly decisions: readonly string[]
 }): RunData {
   const entries: RunEntry[] = []
   const counts: Record<string, number> = {}
@@ -248,6 +391,7 @@ export function readRun(input: {
     const humanAct = event.actor === 'human' ? HUMAN_ACTS[kind] : undefined
 
     entries.push({
+      runId: event.runId,
       seq: event.seq,
       kind,
       actor: event.actor,
@@ -257,6 +401,10 @@ export function readRun(input: {
       detail: input.describe(kind, payload ?? {}),
       refusal,
       ...(humanAct === undefined ? {} : { humanAct }),
+      payloadHash: event.payloadHash,
+      prevHash: event.prevHash,
+      hash: event.hash,
+      payload,
     })
 
     // ---- the facts the page shows beside the feed ---------------------------
@@ -353,7 +501,9 @@ export function readRun(input: {
 
     if (kind === 'agreement.drafted') {
       agreement = {
-        articles: Number(asText(payload, 'articleCount')) || 0,
+        articleCount: Number(asText(payload, 'articleCount')) || 0,
+        articles: input.articles,
+        decisions: input.decisions,
         dated: asText(payload, 'dated'),
         ordinaryVote: asText(payload, 'ordinaryVote'),
         majorVote: asText(payload, 'majorVote'),
@@ -368,6 +518,7 @@ export function readRun(input: {
         sizeBytes: asText(payload, 'sizeBytes'),
         permissionLevel: asText(payload, 'permissionLevel'),
         parts: asList(payload, 'parts'),
+        pages: input.packPages,
       }
     }
 
@@ -398,6 +549,10 @@ export function readRun(input: {
     ...(agreement === undefined ? {} : { agreement }),
     ...(storefront === undefined ? {} : { storefront }),
     ...(site === undefined ? {} : { site }),
+    genesis: input.genesis,
+    ...(input.attestation === undefined ? {} : { attestation: input.attestation }),
+    tests: input.tests,
+    verify: input.verify,
     services: input.services,
     anchor: input.anchor,
     generatedAt: input.generatedAt,
@@ -470,6 +625,160 @@ export function complaintsAbout(run: RunData): readonly string[] {
   }
   if (!run.identity.some((one) => one.sentToAPerson.length > 0)) {
     complaints.push('Nothing was sent to a person to check, and that rule is a large part of the page.')
+  }
+
+  // ---- the chain, rechecked from the file the page is actually handed --------
+  //
+  // WHY THIS IS CHECKED AGAIN HERE
+  //
+  // The page invites a visitor to alter an entry and watch the check fail. That
+  // only means anything if the check passes to begin with, on the exact data the
+  // page holds rather than on the record file it was read from. Something
+  // reshaping an entry on the way out would leave a page whose tamper control
+  // reports a break the moment it loads, and a stranger would rightly conclude
+  // the whole thing is theatre.
+  //
+  // So the chain is walked once more here, on `run.entries`, with the same
+  // functions the record itself uses. Nothing else in this file recomputes a
+  // fingerprint, and this is the reason.
+
+  if (!/^[0-9a-f]{64}$/.test(run.genesis)) {
+    complaints.push(
+      `The starting fingerprint of the chain is "${run.genesis}", which is not a fingerprint. ` +
+        `The page recomputes it and would report a break on the first entry.`,
+    )
+  }
+
+  const runIds = new Set(run.entries.map((one) => one.runId))
+  if (runIds.size > 1) {
+    complaints.push(
+      `The entries name ${runIds.size} different runs (${[...runIds].join(', ')}). A chain ` +
+        `belongs to one run, and the page would be replaying two things at once.`,
+    )
+  }
+
+  const runId = run.entries[0]?.runId ?? ''
+  if (runId !== '' && run.genesis !== genesisHash(runId)) {
+    complaints.push(
+      `The starting fingerprint does not match run "${runId}". It was worked out from a ` +
+        `different run, so the first link would not join.`,
+    )
+  }
+
+  let expectedPrev = run.genesis
+  let brokeAt = ''
+  for (const entry of run.entries) {
+    if (brokeAt !== '') break
+
+    if (fingerprint(entry.payload ?? {}) !== entry.payloadHash) {
+      brokeAt = `entry ${entry.seq}: its detail does not produce the fingerprint stored beside it`
+      break
+    }
+    if (entry.prevHash !== expectedPrev) {
+      brokeAt = `entry ${entry.seq}: it points back at an entry that is not the one before it`
+      break
+    }
+    const shouldBe = hashEvent(
+      {
+        runId: entry.runId,
+        seq: entry.seq,
+        ts: entry.at,
+        kind: entry.kind,
+        actor: entry.actor as ChainedEvent['actor'],
+        stage: entry.stage,
+        payloadHash: entry.payloadHash,
+      },
+      entry.prevHash,
+    )
+    if (shouldBe !== entry.hash) {
+      brokeAt = `entry ${entry.seq}: its own fingerprint is not the one its header produces`
+      break
+    }
+    expectedPrev = entry.hash
+  }
+  if (brokeAt !== '') {
+    complaints.push(
+      `The chain in the data handed to the page does not hold: ${brokeAt}. The page lets a ` +
+        `visitor break the record on purpose, which only means something when it is whole ` +
+        `to begin with.`,
+    )
+  }
+
+  if (run.attestation !== undefined && run.attestation.head !== expectedPrev && brokeAt === '') {
+    complaints.push(
+      `The attestation vouches for a record ending "${run.attestation.head.slice(0, 12)}" and ` +
+        `this record ends "${expectedPrev.slice(0, 12)}". One of the two is not about the other.`,
+    )
+  }
+  if (run.attestation !== undefined && run.attestation.count !== String(run.entries.length)) {
+    complaints.push(
+      `The attestation vouches for ${run.attestation.count} entries and the page holds ` +
+        `${run.entries.length}. The page shows exactly this comparison as a demonstration, ` +
+        `and it must start out agreeing.`,
+    )
+  }
+
+  // ---- everything else the page prints and cannot make up -------------------
+
+  if (run.tests <= 0) {
+    complaints.push(
+      'The page prints how many tests this project runs, and the count came back as ' +
+        `${run.tests}. That number is produced by running them, so a zero means they did not run.`,
+    )
+  }
+
+  if (run.verify.findings.length === 0) {
+    complaints.push(
+      'The checker produced no findings, and a whole section of the page is its output ' +
+        'printed in its own words.',
+    )
+  }
+  for (const finding of run.verify.findings) {
+    if (finding.answer === 'no') {
+      complaints.push(
+        `The checker answered no to "${finding.question}" (${finding.detail}). The page shows ` +
+          `this run as one that checks out, and it does not.`,
+      )
+    }
+  }
+  if (run.verify.cannotProve.length === 0) {
+    complaints.push(
+      'The checker listed nothing it cannot prove. The page prints that list at full size ' +
+        'beside the answers, because a check that appeared to prove everything would be the ' +
+        'least trustworthy thing on the page.',
+    )
+  }
+
+  if (run.agreement === undefined) {
+    complaints.push('No agreement was drafted, and the page shows the document it wrote.')
+  } else {
+    if (run.agreement.articles.length === 0) {
+      complaints.push(
+        'The agreement section has no articles to print, so the page would describe a ' +
+          'document it cannot show.',
+      )
+    }
+    if (run.agreement.articles.length !== run.agreement.articleCount) {
+      complaints.push(
+        `The run recorded ${run.agreement.articleCount} articles and ${run.agreement.articles.length} ` +
+          `were handed to the page. The page would print a different document from the one on disk.`,
+      )
+    }
+    if (run.agreement.decisions.length === 0) {
+      complaints.push(
+        'The agreement section prints how decisions are made, in the document\'s own words, ' +
+          'and none were handed to it.',
+      )
+    }
+  }
+
+  for (const service of run.services) {
+    if (service.company === null && service.kind === 'real') {
+      complaints.push(
+        `The service "${service.name}" was real in this run and no company is named for it. ` +
+          `A real call went somewhere, and the page would not say where.`,
+      )
+    }
   }
 
   const stageSeven = run.stages.find((one) => one.position === 7)

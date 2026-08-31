@@ -1,0 +1,211 @@
+CHARTER
+
+It prepares the whole packet. It signs nothing.
+
+Charter turns a plain description of a business into a prepared packet for a
+United States company with more than one owner. It researches the name, secures
+a web address, drafts the ownership agreement, reads the owners' identity
+documents, and seals one file. Then it stops.
+
+Forming a business on your own is already solved and it is free. The hard part
+was never the paperwork. It is writing down an agreement between two people who
+trust each other completely today and might not in three years.
+
+The website replays one real run, case demo-bakery, entry by entry. It stops at
+each of the 6 entries a person caused and will not carry on until somebody
+clicks. Nothing on it was typed in by hand. Every value below is read from the
+record of that run, which is beside this file as record.jsonl.
+
+----------------------------------------------------------------------
+
+THE RUN, COUNTED
+
+     154  entries
+     119  by the model
+      19  by ordinary code
+      10  by an outside service
+       6  by a person
+       5  refusals
+       8  stages
+       0  tools in the boundary stage
+      15  articles in the agreement
+   17766  bytes in the sealed packet
+       2  PDF permission level
+    1039  tests
+
+----------------------------------------------------------------------
+
+THE EIGHT STAGES
+
+  1. Understand
+     34 entries, 3 tools, 1 to 35
+     The person describes their business. Charter asks about anything it still needs, including permission to spend a stated amount on the web address.
+
+  2. Research the name
+     21 entries, 3 tools, 38 to 58
+     Search for businesses already using this name, and decide whether the proposed one is clear. Whether two names collide is decided in plain code, not by the model.
+
+  3. Secure the address
+     34 entries, 5 tools, 59 to 92
+     Check whether the web address is free, and register it only if a person has already given permission covering the price.
+
+  4. Draft the agreement
+     33 entries, 4 tools, 93 to 127
+     Ask the owners the few things the agreement cannot be written without, then prepare it. Every number, every article number and every cross-reference is worked out in plain code. The model chooses when, never what.
+
+  5. Verify identity
+     10 entries, 2 tools, 128 to 137
+     Read each owner's identity document, score every field, and send the doubtful ones to a person. No model takes part in that decision.
+
+  6. Assemble the pack
+     5 entries, 1 tools, 139 to 143
+     Merge everything into one file, add structure, then seal it and take the fingerprint of exactly what was sealed. After the seal, anything that would rewrite the file is refused and the refusal is recorded.
+
+  7. The boundary
+     1 entries, 0 tools, 144 to 144
+     The agent stops. A person approves, and ordinary code — not the agent — carries the pack to them to sign.
+
+  8. Publish
+     9 entries, 2 tools, 146 to 154
+     Build the website, draw its first picture from the owner's own words, put it online, and point the web address at it.
+
+  7 entries belong to no stage. 6 of them are a person. The rest are
+  Charter refusing a person, because the token did not match.
+
+----------------------------------------------------------------------
+
+WHAT CHARTER WAS ASKED TO DO AND WOULD NOT
+
+  entry 24: record_fact — arguments did not fit, asking again
+
+  entry 31: "register_address" exists, but not in stage "understand". Tools change only when the stage changes, and the model was never shown this one.
+
+  entry 37: the case token did not match
+
+  entry 67: not available
+
+  entry 75: "registering riverabaking.com" costs $99.00, and only $25.00 is left under the permission given on 2026-08-28T09:00:43.000Z ($25.00 in total, $0.00 already spent). A person has to raise the limit before this can run. Charter does not spend past a bound somebody set, even by a cent.
+
+
+----------------------------------------------------------------------
+
+WHAT THE CHECKER ANSWERS
+
+  npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json
+
+  [yes]  Is the pack a PDF that carries a seal?
+  [yes]  Does the seal say only filling in and signing are allowed?
+  [yes]  Does the seal cover the whole file?
+  [yes]  Is this the same pack the record describes?
+  [yes]  Is the record unbroken from the first entry to the last?
+  [yes]  Does the attestation match, against the key that came from outside the pack?
+  [yes]  Does the attestation cover the record that was handed over?
+  [ ? ]  Has somebody who is not Charter said this record existed?
+
+  8 questions. 7 answered yes. 1 it cannot answer, and it says so
+  rather than leaving it out.
+
+WHAT THIS CHECK CANNOT PROVE
+
+  - That this record is as old as it says. Charter holds the record and the key that vouches for it, so a record produced later, in one go, would look exactly like this one. An outside timestamp is what closes that, and this pack did not come with one.
+
+  - Who sealed this. The certificate is issued by Charter to Charter, so no outside authority has checked that Charter is who it says it is. A PDF reader will report the same thing. What is proved above is that the file has not changed since it was sealed, which is a claim about the bytes rather than about identity.
+
+  - That the record is complete in the sense of nothing having been left out at the time of writing. It proves nothing was altered or removed afterwards, which is a different and smaller claim.
+
+  - Anything about whether the agreement is right for these people. This is not a review of the document, and nothing here is a legal opinion.
+
+
+----------------------------------------------------------------------
+
+THE AGREEMENT
+
+  An ordinary decision carries on more than 50% of ownership. A decision that changes this agreement itself carries on at least 66.67%.
+
+  A majority means more than half. An owner holding exactly half does not carry an ordinary decision alone.
+
+  These shares allow an exact tie, so this agreement includes a deadlock article. It is left out when the arithmetic makes a tie impossible.
+
+  ARTICLE 1 — FORMATION, NAME AND PRINCIPAL OFFICE
+    Says which company this agreement is about, so it cannot be attached to the wrong one.
+
+  ARTICLE 2 — PURPOSE
+    Says what the business does. A purpose stated narrowly can limit what the company may later do, so it is stated broadly unless the owners ask otherwise.
+
+  ARTICLE 3 — MEMBERS AND OWNERSHIP INTERESTS
+    The list of owners and what share each one holds. This is the article people open the document to read.
+
+  ARTICLE 4 — CAPITAL CONTRIBUTIONS
+    What each owner put in. Texas allocates profit by contribution value as stated in the company records, so this article is the record the statute asks for.
+
+  ARTICLE 5 — ALLOCATION OF PROFITS AND LOSSES
+    How profit and loss are divided. Either it follows the contributions, or the owners agreed something different and the agreement has to say so in its own words.
+
+  ARTICLE 6 — DISTRIBUTIONS
+    When money actually leaves the company and reaches the owners. Being allocated a profit and being paid it are different events, and confusing them is a common and expensive surprise.
+
+  ARTICLE 7 — MANAGEMENT
+    Who runs the company day to day: the owners themselves, or somebody they appoint.
+
+  ARTICLE 8 — VOTING AND DECISIONS
+    What fraction of ownership has to agree before a decision carries, and which decisions need more than a simple majority.
+
+  ARTICLE 9 — TRANSFER OF MEMBERSHIP INTERESTS
+    Whether an owner may hand their share to somebody else, and what that person gets. In Texas a transferee normally receives the money rights without becoming a member who can vote.
+
+  ARTICLE 10 — NO WITHDRAWAL OR EXPULSION
+    Texas states that a member may not withdraw or be expelled. When the owners have chosen no way out, the agreement says so plainly rather than leaving people to discover it.
+
+  ARTICLE 11 — DEADLOCK
+    What happens when the owners cannot outvote each other. Included only when the shares make a tie genuinely possible, because a deadlock clause in a company that cannot deadlock is noise.
+
+  ARTICLE 12 — DISSOLUTION AND WINDING UP
+    How the company ends and in what order its money is paid out.
+
+  ARTICLE 13 — BOOKS, RECORDS AND INFORMATION
+    What the company must keep and what an owner is entitled to see. An owner cut off from the records cannot tell whether anything else in this document is being honoured.
+
+  ARTICLE 14 — AMENDMENT
+    What it takes to change this agreement later. Without it, the question of who may rewrite the deal is itself unsettled.
+
+  ARTICLE 15 — GOVERNING LAW AND EXECUTION
+    Which state's law reads this document, and the record that each person signed it.
+
+
+----------------------------------------------------------------------
+
+THE OUTSIDE SERVICES
+
+  SerpApi (serpapi.com), the search: stand-in
+    Saved answers, because REPLAY_MODE is true. It holds answers recorded in advance and has no path to the network at all, so a missing answer is an error rather than a quiet real call.
+
+  Name.com (name.com), the registrar: stand-in
+    Saved answers, because REPLAY_MODE is true. Nothing is registered and nothing is charged. It holds answers recorded in advance and has no path to the network at all, so a missing answer is an error rather than a quiet real call.
+
+  Nutrient (nutrient.io), the identity: stand-in
+    Documents recorded in advance, because REPLAY_MODE is true. No real person’s identity document is involved. It holds answers recorded in advance and has no path to the network at all, so a missing answer is an error rather than a quiet real call.
+
+  not built yet, the publishing: stand-in
+    Publishing the website is not built yet. The pack itself is assembled and sealed by Charter’s own code and does not go through any outside company, so what is standing in here is putting the finished site online.
+
+  Perfect Corp (yce.perfectcorp.com), the imagery: stand-in
+    Drawing the storefront picture is not wired to the real service yet. The words it would send are the owners' own, read from the record, so a run shows exactly what would have been drawn. No photograph of any person is ever sent, and that company's face and skin tools are absent from every stage of this project.
+
+
+----------------------------------------------------------------------
+
+THE LIMIT
+
+The Uniform Electronic Transactions Act, section 14, lets a contract be formed
+by electronic agents even when no person is aware of it, and the result is
+attributed to the person to be bound. So the honest claim is not that a machine
+may not act. It is that the same law defines a signature as a process executed
+or adopted by a person, with the intent to sign. Forming can be handed over.
+The signature is the act of a person, and a machine has no intent to lend it.
+
+That limit is not a setting. There is no chain of imports from anything the
+model can trigger to the module that carries a document to a person to sign,
+and a test walks every import on every build and fails if that ever changes.
+
+The record is append-only and tamper-evident. Modification is detected, not
+prevented. Nothing here is legal advice.

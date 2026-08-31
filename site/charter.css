@@ -1,0 +1,2072 @@
+/*
+  Charter, one stylesheet.
+
+  THE IDEA
+
+  This is a record printed on board, put inside an instrument you can actually
+  use. Everything the software did is toner black in a monospace face. The six
+  things only a person could do are written in blue on white paper laid into the
+  record. So the amount of blue on any screen is the amount of the run that
+  needed a human, and you can count it by eye before reading a word.
+
+  The chrome around it is the opposite material: one dark bar the colour of the
+  ink, so the paper reads as paper. Depth is used in exactly two places, the
+  raised cards and the six inserts, and both are surfaces you could pick up.
+
+  THE FIFTH COLOUR
+
+  There is one more colour in here and it is not in the rendered page when it
+  loads. It appears only when a visitor rewrites the record themselves. Reload
+  and it is gone.
+*/
+
+/* ══════════════════════════════════════════════════════════════════════════
+   1. THE FOUR TYPE FILES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: normal;
+  font-display: swap;
+  src: url('fonts/newsreader-roman.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 400;
+  font-stretch: normal;
+  font-display: swap;
+  src: url('fonts/newsreader-italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/plexmono-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/plexmono-500.woff2') format('woff2');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   2. THE TOKENS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ---- ink and paper ---------------------------------------------------- */
+  --board: #e8ebe4;
+  --paper: #fbfcf9;
+  --ink: #171815;
+  --ink-62: color-mix(in oklab, var(--ink) 62%, transparent);
+  --ink-40: color-mix(in oklab, var(--ink) 40%, transparent);
+  --rule: color-mix(in oklab, var(--ink) 12%, transparent);
+  --rule-strong: color-mix(in oklab, var(--ink) 20%, transparent);
+
+  /* On the dark bar, where the ground is ink and the marks are board. */
+  --on-ink: #e8ebe4;
+  --on-ink-62: color-mix(in oklab, var(--on-ink) 62%, transparent);
+  --on-ink-rule: color-mix(in oklab, var(--on-ink) 18%, transparent);
+
+  /* ---- the second ink ---------------------------------------------------
+     The human entries, the six buttons, the six insert headings, the six
+     notches on the rail, the six transcribed rows. Nothing else is ever this
+     colour. A signature is made in blue so an original can be told from a
+     photocopy of it, which is the distinction this record exists to keep.   */
+  --written: #1e3766;
+  --written-lift: #2c5497;
+
+  /* ---- the fifth colour, absent until somebody rewrites the record ------ */
+  --stamp: #8e2c21;
+
+  /* ---- the two families ------------------------------------------------- */
+  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---- depth. Two elevations, and no others. ---------------------------- */
+  --lift-1:
+    0 0 0 0.8px color-mix(in oklab, var(--ink) 9%, transparent), 0 1px 2px rgb(23 24 21 / 4%),
+    0 4px 10px rgb(23 24 21 / 4%);
+  --lift-2:
+    0 0 1px rgb(23 24 21 / 17%), 0 0 3px rgb(23 24 21 / 8%), 0 10px 24px rgb(23 24 21 / 7%);
+
+  /* ---- motion ----------------------------------------------------------- */
+  --motion-speed: 1;
+  --dur-fast: calc(120ms * var(--motion-speed));
+  --dur-base: calc(200ms * var(--motion-speed));
+  --dur-slow: calc(320ms * var(--motion-speed));
+  --ease-user: cubic-bezier(0.2, 0, 0, 1);
+  --ease-page: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- measure ----------------------------------------------------------- */
+  --page: 1200px;
+  --edge: 40px;
+  --bar: 56px;
+  --tabs: 52px;
+  --rail: 26px;
+  --seam-col: 62px;
+  --row-line: 20px;
+  --radius: 10px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   3. THE RESET
+   ══════════════════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.5;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  /* The ground. Board stock with a faint square grid pressed into it, the way
+     ledger paper is ruled. Two gradients, no image, no request to anybody. */
+  background-color: var(--board);
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--ink) 3%, transparent) 0.8px, transparent 0.8px),
+    linear-gradient(90deg, color-mix(in oklab, var(--ink) 3%, transparent) 0.8px, transparent 0.8px);
+  background-size: 32px 32px;
+  background-position: -0.4px -0.4px;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure,
+blockquote {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 400;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+code,
+kbd,
+samp {
+  font-family: var(--mono);
+  font-size: inherit;
+}
+
+.num,
+code,
+.row,
+.spec,
+.bar,
+.controls,
+.tabs {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--written) 18%, transparent);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--board),
+    0 0 0 4px var(--written);
+  border-radius: 4px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   4. THE TYPE SCALE
+   Eight sizes. Six line heights. Four tracking values. Additions refused.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.t-h1 {
+  font-family: var(--serif);
+  font-size: clamp(34px, 4.4vw, 60px);
+  font-variation-settings: 'opsz' 60;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+}
+
+.t-head {
+  font-family: var(--serif);
+  font-size: clamp(26px, 2.6vw, 34px);
+  font-variation-settings: 'opsz' 34;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.t-sub {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-variation-settings: 'opsz' 26;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.t-body {
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  max-width: 62ch;
+}
+
+.t-note {
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.5;
+  max-width: 66ch;
+}
+
+.t-small {
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 70ch;
+}
+
+.t-row {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: var(--row-line);
+}
+
+.t-stamp {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+/* The only italic on the site. Two places: the refusals, and the things the
+   check says it cannot prove. So the slant itself comes to mean the product is
+   telling you where it falls short. */
+.t-reserved {
+  font-style: italic;
+}
+
+.quiet {
+  color: var(--ink-62);
+}
+
+.lede {
+  font-size: 22px;
+  line-height: 1.45;
+  max-width: 60ch;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   5. THE FRAME
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.wrap {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 0 var(--edge);
+}
+
+.gap {
+  height: 96px;
+}
+
+.gap-s {
+  height: 24px;
+}
+
+.gap-m {
+  height: 48px;
+}
+
+.gap-l {
+  height: 72px;
+}
+
+.rule {
+  height: 0;
+  border-top: 0.8px solid var(--rule);
+}
+
+.rule-strong {
+  height: 0;
+  border-top: 0.8px solid var(--rule-strong);
+}
+
+/* ---- the dark bar -------------------------------------------------------- */
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: var(--bar);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-family: var(--serif);
+  font-size: 21px;
+  letter-spacing: -0.01em;
+  flex: 0 0 auto;
+}
+
+.brand svg {
+  width: 22px;
+  height: 22px;
+}
+
+.bar-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 11px;
+  border: 0.8px solid var(--on-ink-rule);
+  border-radius: 100px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--on-ink-62);
+  white-space: nowrap;
+}
+
+.bar-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--written-lift);
+  flex: 0 0 auto;
+}
+
+.bar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.bar-action {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 7px;
+  border: 0.8px solid var(--on-ink-rule);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--on-ink-62);
+  text-decoration: none;
+  transition:
+    color var(--dur-fast) var(--ease-user),
+    border-color var(--dur-fast) var(--ease-user),
+    background-color var(--dur-fast) var(--ease-user);
+}
+
+.bar-action svg {
+  width: 14px;
+  height: 14px;
+}
+
+.bar-action:hover {
+  color: var(--on-ink);
+  border-color: color-mix(in oklab, var(--on-ink) 40%, transparent);
+  background: color-mix(in oklab, var(--on-ink) 6%, transparent);
+}
+
+/* ---- the tabs ------------------------------------------------------------ */
+
+.tabs {
+  position: sticky;
+  top: var(--bar);
+  z-index: 30;
+  background: color-mix(in oklab, var(--board) 86%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 0.8px solid var(--rule);
+}
+
+.tabs-inner {
+  display: flex;
+  gap: 2px;
+  height: var(--tabs);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+  transition: color var(--dur-fast) var(--ease-user);
+}
+
+.tab svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.7;
+}
+
+.tab::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 2px;
+  background: transparent;
+  transition: background-color var(--dur-fast) var(--ease-user);
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[aria-selected='true'] {
+  color: var(--ink);
+}
+
+.tab[aria-selected='true'] svg {
+  opacity: 1;
+}
+
+.tab[aria-selected='true']::after {
+  background: var(--ink);
+}
+
+.tab-count {
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 100px;
+  background: var(--rule);
+  color: var(--ink-62);
+}
+
+/* ---- a view -------------------------------------------------------------- */
+
+.view {
+  padding-bottom: 120px;
+}
+
+.view-head {
+  padding: 56px 0 12px;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+  margin-bottom: 16px;
+}
+
+.eyebrow svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   6. CARDS AND PANELS
+   Two elevations and no others. A card is a thing you could pick up. A panel is
+   a hole cut in the board.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.card {
+  background: var(--paper);
+  border-radius: var(--radius);
+  box-shadow: var(--lift-1);
+  padding: 24px 26px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+  margin-bottom: 16px;
+}
+
+.card-head svg {
+  width: 16px;
+  height: 16px;
+}
+
+.card-value {
+  font-family: var(--mono);
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-note {
+  margin-top: 10px;
+  font-size: 15px;
+  color: var(--ink-62);
+}
+
+.card[data-human='true'] .card-value,
+.card[data-human='true'] .card-head {
+  color: var(--written);
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* A panel is the record itself rather than a statement about it. */
+.panel {
+  background: var(--ink);
+  border-radius: 14px;
+  padding: 30px;
+  color: var(--on-ink);
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--on-ink-62);
+  margin-bottom: 20px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   7. THE HERO
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 540px);
+  gap: 60px;
+  align-items: center;
+  padding: 68px 0 12px;
+}
+
+.hero-claim {
+  max-width: 15ch;
+}
+
+.hero-lede {
+  margin-top: 26px;
+}
+
+.hero-acts {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 46px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-family: var(--serif);
+  font-size: 17px;
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  transition:
+    transform var(--dur-fast) var(--ease-user),
+    background-color var(--dur-fast) var(--ease-user);
+}
+
+.button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.button:hover {
+  background: color-mix(in oklab, var(--ink) 86%, var(--board));
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
+.button[data-kind='quiet'] {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 0.8px var(--rule-strong);
+}
+
+.button[data-kind='quiet']:hover {
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   8. THE MURAL
+   One tile per entry, drawn out of that entry's own fingerprint. Not
+   decoration: the pattern IS the number, and when the number changes the
+   pattern changes in front of you.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.mural {
+  width: 100%;
+  display: block;
+}
+
+.mural-key {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+}
+
+.panel .mural-key {
+  color: var(--on-ink-62);
+}
+
+.mural-key span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mural-key i {
+  width: 10px;
+  height: 10px;
+  border-radius: 1px;
+  background: var(--ink);
+  display: block;
+}
+
+.panel .mural-key i {
+  background: var(--on-ink);
+}
+
+/* Named after the panel rule, so the second ink survives being put on the dark
+   ground. A key whose swatch is the wrong colour teaches the wrong thing. */
+.mural-key .is-human,
+.panel .mural-key .is-human {
+  background: var(--written-lift);
+}
+
+.mural-key .is-broken,
+.panel .mural-key .is-broken {
+  background: var(--stamp);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9. THE STAGE FLOW
+   Eight nodes in a row. The seventh is drawn as a hole, because it is one.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  margin-top: 8px;
+}
+
+.flow-step {
+  position: relative;
+  padding-right: 10px;
+}
+
+.flow-step::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  right: 0;
+  top: 13px;
+  height: 0.8px;
+  background: var(--rule-strong);
+}
+
+.flow-step:last-child::before {
+  display: none;
+}
+
+.flow-dot {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--board);
+  box-shadow: inset 0 0 0 0.8px var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.flow-step[data-empty='true'] .flow-dot {
+  box-shadow: inset 0 0 0 0.8px var(--ink-40);
+  color: var(--ink-40);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    color-mix(in oklab, var(--ink) 10%, transparent) 3px,
+    color-mix(in oklab, var(--ink) 10%, transparent) 4px
+  );
+}
+
+.flow-title {
+  margin-top: 14px;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.25;
+  padding-right: 12px;
+}
+
+.flow-tools {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+}
+
+.flow-step[data-empty='true'] .flow-tools {
+  color: var(--written);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   10. THE SPEC LIST
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.spec {
+  border-bottom: 0.8px solid var(--rule);
+}
+
+.spec li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-top: 0.8px solid var(--rule);
+}
+
+.spec-key {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+}
+
+.spec-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   11. THE RECORD
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.record {
+  border-top: 0.8px solid var(--rule);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--seam-col) 36px 58px 172px 1fr 92px;
+  gap: 12px;
+  align-items: baseline;
+  min-height: var(--row-line);
+  padding: 1px 0 1px 10px;
+  border-left: 2px solid transparent;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: var(--row-line);
+  color: var(--ink-62);
+  transition: color var(--dur-fast) var(--ease-user);
+}
+
+.row[data-reached='true'] {
+  color: var(--ink);
+}
+
+.row[data-actor='model'] {
+  border-left-color: color-mix(in oklab, var(--ink) 18%, transparent);
+}
+
+.row[data-actor='system'] {
+  border-left-color: color-mix(in oklab, var(--ink) 34%, transparent);
+}
+
+.row[data-actor='vendor'] {
+  border-left-color: color-mix(in oklab, var(--ink) 55%, transparent);
+}
+
+.row[data-actor='human'] {
+  border-left-color: var(--written);
+  color: var(--written);
+}
+
+.row[data-refusal='true'] {
+  border-left-color: var(--rule-strong);
+}
+
+.row:hover {
+  background: color-mix(in oklab, var(--ink) 3%, transparent);
+}
+
+.row-seam {
+  font-size: 11.5px;
+  letter-spacing: 0.045em;
+  color: var(--ink-40);
+  white-space: nowrap;
+}
+
+.row[data-reached='true'] .row-seam {
+  color: var(--ink-62);
+}
+
+.row-seq {
+  color: var(--ink-62);
+  text-align: right;
+}
+
+.row-actor {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+  white-space: nowrap;
+}
+
+.row[data-actor='human'] .row-actor {
+  color: var(--written);
+}
+
+.row-kind {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.row-detail {
+  overflow-wrap: anywhere;
+}
+
+.row-chip {
+  justify-self: end;
+}
+
+.chip {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  background: var(--rule);
+  border-radius: 4px;
+  padding: 1px 6px;
+  cursor: copy;
+  white-space: nowrap;
+  color: var(--ink-62);
+  transition: background-color var(--dur-fast) var(--ease-user);
+}
+
+.chip:hover {
+  background: var(--rule-strong);
+  color: var(--ink);
+}
+
+.chip[data-open='true'] {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-align: left;
+}
+
+/* ---- what came back from outside ---------------------------------------- */
+
+.returned {
+  margin: 6px 0 12px calc(var(--seam-col) + 60px);
+  padding: 14px 18px;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
+  color: var(--ink-62);
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 72ch;
+}
+
+.returned b {
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.why {
+  margin: 2px 0 10px calc(var(--seam-col) + 60px);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 20px;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+/* ---- a stage header inside the record ----------------------------------- */
+
+.stage-head {
+  margin: 40px 0 18px;
+  padding: 18px 0 0;
+  border-top: 0.8px solid var(--rule-strong);
+}
+
+.stage-head:first-child {
+  margin-top: 0;
+}
+
+.stage-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.stage-no,
+.stage-range {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  color: var(--ink-62);
+  white-space: nowrap;
+}
+
+.stage-range {
+  text-transform: uppercase;
+}
+
+.stage-what {
+  margin-top: 6px;
+  color: var(--ink-62);
+  max-width: 66ch;
+  font-size: 17px;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.tool {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-62);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 0.8px var(--rule);
+  border-radius: 5px;
+  padding: 3px 8px;
+}
+
+.tools-label {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+  margin-top: 12px;
+}
+
+/* The boundary stage. Measured at load against the tallest filled tool row on
+   the page, so the emptiness is exactly as big as the fullest thing Charter
+   does. */
+.tools-empty {
+  margin-top: 12px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 0.8px var(--rule-strong);
+  min-height: 30px;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 7px,
+    color-mix(in oklab, var(--ink) 5%, transparent) 7px,
+    color-mix(in oklab, var(--ink) 5%, transparent) 8px
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   12. THE SIX INSERTS
+   The only surface colour in the system. The shadow carries the material
+   argument on a screen where the tone difference collapses.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.insert {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: 34px 36px;
+  margin: 24px 0 28px calc(var(--seam-col) + 60px);
+  max-width: 720px;
+  box-shadow: var(--lift-2);
+  animation: fade-in var(--dur-slow) var(--ease-page) both;
+  transition:
+    background-color var(--dur-base) var(--ease-user),
+    box-shadow var(--dur-base) var(--ease-user);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.insert-stamp {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+}
+
+.insert-stamp svg {
+  width: 15px;
+  height: 15px;
+  color: var(--written);
+}
+
+.insert-heading {
+  margin-top: 14px;
+  color: var(--written);
+  font-family: var(--serif);
+  font-size: clamp(26px, 2.6vw, 34px);
+  font-variation-settings: 'opsz' 34;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.insert-why {
+  margin-top: 14px;
+  color: var(--ink-62);
+  font-size: 17px;
+  max-width: 58ch;
+}
+
+.insert-answer {
+  margin-top: 18px;
+  color: var(--written);
+  font-size: 20px;
+  max-width: 58ch;
+}
+
+.insert-aside {
+  margin-top: 14px;
+  color: var(--ink-62);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+
+.insert-act {
+  margin-top: 26px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* The six buttons. The only imperative sentences on the site addressed to the
+   reader, and they stay the only ones. */
+.act {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--written);
+  color: var(--paper);
+  border-radius: 8px;
+  padding: 0 22px;
+  height: 46px;
+  font-family: var(--serif);
+  font-size: 17px;
+  transition:
+    transform var(--dur-fast) var(--ease-user),
+    background-color var(--dur-fast) var(--ease-user);
+}
+
+.act svg {
+  width: 16px;
+  height: 16px;
+}
+
+.act::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+.act:hover {
+  background: var(--written-lift);
+}
+
+.act:active {
+  transform: scale(0.97);
+}
+
+.insert[data-done='true'] {
+  background: transparent;
+  box-shadow: inset 0 0 0 0.8px var(--rule);
+}
+
+.insert[data-skipped='true'] .insert-act {
+  display: none;
+}
+
+.insert-skipped {
+  display: none;
+  margin-top: 24px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+}
+
+.insert[data-skipped='true'] .insert-skipped {
+  display: block;
+}
+
+.transcribed {
+  display: grid;
+  grid-template-columns: var(--seam-col) 36px 58px 172px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  margin-top: 22px;
+  padding: 1px 0 1px 10px;
+  border-left: 2px solid var(--written);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: var(--row-line);
+  color: var(--written);
+  animation: fade-in var(--dur-base) var(--ease-user) both;
+}
+
+.transcribed-bridge {
+  margin-top: 14px;
+  font-size: 17px;
+  max-width: 62ch;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   13. CONTROLS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 0.8px solid var(--rule);
+}
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 0.8px var(--rule);
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+  transition:
+    color var(--dur-fast) var(--ease-user),
+    box-shadow var(--dur-fast) var(--ease-user);
+}
+
+.control svg {
+  width: 14px;
+  height: 14px;
+}
+
+.control:hover {
+  color: var(--ink);
+  box-shadow: inset 0 0 0 0.8px var(--rule-strong);
+}
+
+.control[disabled] {
+  color: var(--ink-40);
+  cursor: default;
+}
+
+.controls-count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   14. LISTS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.list {
+  border-bottom: 0.8px solid var(--rule);
+}
+
+.list > li {
+  border-top: 0.8px solid var(--rule);
+  padding: 14px 0;
+}
+
+.stage-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto auto auto;
+  gap: 18px;
+  align-items: baseline;
+}
+
+.stage-row-title {
+  font-family: var(--serif);
+  font-size: 20px;
+}
+
+.stage-row-n {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-62);
+  text-align: right;
+  white-space: nowrap;
+  min-width: 88px;
+}
+
+.service {
+  display: grid;
+  grid-template-columns: 210px 96px 1fr;
+  gap: 20px;
+  align-items: baseline;
+}
+
+.service-name {
+  font-family: var(--serif);
+  font-size: 20px;
+}
+
+.service-host {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-62);
+  margin-top: 3px;
+}
+
+.service-kind {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+}
+
+.service-why {
+  color: var(--ink-62);
+  font-size: 15px;
+  max-width: 62ch;
+}
+
+.service-entries {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+
+/* ---- the articles -------------------------------------------------------- */
+
+.article {
+  position: relative;
+  padding: 24px 0;
+  border-top: 0.8px solid var(--rule);
+}
+
+.article[data-yours='true']::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 24px;
+  bottom: 24px;
+  width: 2px;
+  background: var(--written);
+}
+
+.article-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+}
+
+.article[data-yours='true'] .article-heading {
+  color: var(--written);
+}
+
+.article-title {
+  margin-top: 8px;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-variation-settings: 'opsz' 26;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.article-why {
+  margin-top: 10px;
+  font-size: 20px;
+  max-width: 62ch;
+}
+
+/* ---- the checker --------------------------------------------------------- */
+
+.check {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 11px 0;
+  border-top: 0.8px solid var(--rule);
+}
+
+.check:first-child {
+  border-top: none;
+}
+
+.check-answer {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-62);
+  white-space: pre;
+}
+
+.check-question {
+  font-size: 20px;
+  max-width: 62ch;
+}
+
+.cannot {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 20px;
+  line-height: 1.5;
+  max-width: 62ch;
+  padding: 14px 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   15. THE TAMPER SECTION
+   The only place --stamp is ever used. On a fresh load it is not in the
+   rendered document at all.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.tamper-field {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: var(--row-line);
+  color: var(--ink);
+  background: var(--board);
+  border: none;
+  box-shadow: inset 0 0 0 0.8px var(--rule-strong);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 12px;
+  resize: vertical;
+}
+
+.tamper-seam {
+  margin-top: 18px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: var(--row-line);
+  color: var(--ink-62);
+  overflow-x: auto;
+}
+
+.tamper-seam b {
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.tamper-verdict {
+  margin-top: 18px;
+  font-size: 20px;
+  max-width: 66ch;
+}
+
+.tamper-verdict[data-broken='true'] {
+  color: var(--stamp);
+}
+
+.tamper-seam[data-broken='true'] .struck {
+  color: var(--stamp);
+  text-decoration: line-through;
+}
+
+.row[data-moved='true'] {
+  border-left-color: var(--stamp);
+}
+
+.tamper-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   16. THE PACKET
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.sheet-row {
+  display: grid;
+  grid-template-columns: minmax(0, 500px) minmax(0, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+
+/* The real document, set in this page's own type from the words read back out
+   of the sealed bytes. Lifted and turned a fraction, so it reads as an object
+   on a desk rather than as a box on a screen. */
+.sheet {
+  position: relative;
+  background: var(--paper);
+  border-radius: 4px;
+  box-shadow: var(--lift-2);
+  padding: 44px 42px;
+  min-height: 620px;
+  transform: rotate(-0.35deg);
+}
+
+.sheet::before,
+.sheet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  border-radius: 4px;
+  box-shadow: var(--lift-1);
+  z-index: -1;
+}
+
+.sheet::before {
+  transform: rotate(0.9deg) translate(3px, 3px);
+}
+
+.sheet::after {
+  transform: rotate(1.8deg) translate(6px, 6px);
+}
+
+.sheet-line {
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.sheet-line[data-heading='true'] {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  color: var(--ink-62);
+  margin-top: 14px;
+}
+
+.sheet-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+}
+
+.frame {
+  aspect-ratio: 1664 / 928;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 0.8px var(--rule-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 11px,
+    color-mix(in oklab, var(--ink) 4%, transparent) 11px,
+    color-mix(in oklab, var(--ink) 4%, transparent) 12px
+  );
+}
+
+.frame p {
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.5;
+  max-width: 46ch;
+  text-align: center;
+}
+
+.document {
+  border-top: 0.8px solid var(--rule);
+  padding: 16px 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 20px;
+  align-items: baseline;
+}
+
+.document:last-child {
+  border-bottom: 0.8px solid var(--rule);
+}
+
+.document-owner {
+  font-family: var(--serif);
+  font-size: 20px;
+}
+
+.document-fields {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-62);
+  white-space: nowrap;
+}
+
+.document-note {
+  grid-column: 1 / -1;
+  font-size: 15px;
+  color: var(--ink-62);
+}
+
+.document[data-checked='true'] .document-note {
+  color: var(--written);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   17. THE EXECUTION PAGE
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.signature-lines {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 300px));
+  gap: 44px;
+  margin: 32px 0 40px;
+}
+
+.signature-line {
+  border-top: 0.8px solid var(--ink);
+  padding-top: 10px;
+}
+
+.signature-who {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.signature-blank {
+  margin-top: 20px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   18. THE FOOT
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.foot {
+  background: var(--ink);
+  color: var(--on-ink-62);
+  padding: 60px 0 72px;
+}
+
+.foot p {
+  margin-top: 18px;
+  font-size: 15px;
+  max-width: 74ch;
+}
+
+.foot b {
+  font-weight: 400;
+  color: var(--on-ink);
+}
+
+.foot a {
+  color: var(--on-ink);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   19. THE RAIL
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.rail {
+  position: fixed;
+  top: calc(var(--bar) + var(--tabs));
+  bottom: 0;
+  left: max(6px, calc((100vw - var(--page)) / 2 + 8px));
+  width: var(--rail);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 0;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.rail[data-dragging='true'] {
+  cursor: ew-resize;
+}
+
+.rail-tick {
+  height: 1px;
+  width: 9px;
+  background: var(--ink-40);
+  flex: 0 0 auto;
+}
+
+.rail-tick[data-human='true'] {
+  height: 2px;
+  width: 16px;
+  background: var(--written);
+}
+
+.rail-tick[data-refusal='true'] {
+  width: 15px;
+  background: var(--ink);
+}
+
+.rail-tick[data-reached='true'] {
+  background: var(--ink);
+}
+
+.rail-tick[data-human='true'][data-reached='true'] {
+  background: var(--written);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   20. WIDTHS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1240px) {
+  :root {
+    --edge: 28px;
+    --seam-col: 44px;
+  }
+
+  .rail {
+    left: 2px;
+  }
+
+  .hero {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 1040px) {
+  :root {
+    --edge: 24px;
+    --seam-col: 0px;
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    padding-top: 48px;
+  }
+
+  .hero-claim {
+    max-width: 20ch;
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sheet-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+
+  .flow {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px 0;
+  }
+
+  .flow-step:nth-child(4)::before {
+    display: none;
+  }
+
+  .row,
+  .transcribed {
+    grid-template-columns: 0 34px 56px 160px 1fr 92px;
+    gap: 10px;
+  }
+
+  .transcribed {
+    grid-template-columns: 0 34px 56px 160px 1fr;
+  }
+
+  .row-seam {
+    display: none;
+  }
+
+  .returned,
+  .why,
+  .insert {
+    margin-left: 44px;
+  }
+
+  .service {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .rail {
+    width: 18px;
+    left: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --edge: 18px;
+    --bar: 52px;
+  }
+
+  .gap {
+    height: 64px;
+  }
+
+  .bar-status {
+    display: none;
+  }
+
+  .grid-4,
+  .grid-3,
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flow-step:nth-child(2)::before,
+  .flow-step:nth-child(4)::before,
+  .flow-step:nth-child(6)::before {
+    display: none;
+  }
+
+  .row,
+  .transcribed {
+    grid-template-columns: 34px 52px 1fr auto;
+    grid-template-areas:
+      'seq actor kind chip'
+      'detail detail detail detail';
+    gap: 4px 10px;
+    padding-left: 8px;
+  }
+
+  .row-seq {
+    grid-area: seq;
+  }
+
+  .row-actor {
+    grid-area: actor;
+  }
+
+  .row-kind {
+    grid-area: kind;
+  }
+
+  .row-chip {
+    grid-area: chip;
+  }
+
+  .row-detail {
+    grid-area: detail;
+    padding-bottom: 4px;
+  }
+
+  .stage-row {
+    grid-template-columns: 20px 1fr;
+    gap: 6px 12px;
+  }
+
+  .stage-row-n {
+    grid-column: 2;
+    text-align: left;
+    min-width: 0;
+  }
+
+  .check {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .signature-lines {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .insert {
+    padding: 24px 22px;
+    margin-left: 0;
+  }
+
+  .returned,
+  .why {
+    margin-left: 0;
+  }
+
+  .sheet {
+    padding: 30px 24px;
+    min-height: 0;
+  }
+
+  .panel {
+    padding: 20px;
+  }
+
+  .rail {
+    width: 14px;
+  }
+
+  .rail-tick {
+    width: 5px;
+  }
+
+  .rail-tick[data-human='true'] {
+    width: 11px;
+    height: 3px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   21. REDUCED MOTION
+   The system is deleted rather than shortened. The six gates still block, with
+   no timeout, because a stop is content and not an animation.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-speed: 0.001;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .insert,
+  .transcribed {
+    opacity: 1;
+  }
+
+  .row {
+    color: var(--ink);
+  }
+
+  .sheet,
+  .sheet::before,
+  .sheet::after {
+    transform: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   22. PRINT
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media print {
+  .rail,
+  .controls,
+  .tamper-controls,
+  .bar,
+  .tabs {
+    display: none;
+  }
+
+  .row {
+    color: var(--ink);
+  }
+
+  body {
+    background: #fff;
+  }
+}

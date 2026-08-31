@@ -650,6 +650,123 @@ export const SETTINGS: readonly Setting[] = [
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Which company is behind each outside service
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The five things Charter needs from outside, and the company behind each one.
+ *
+ * WHY THIS IS HERE AND NOT ON THE WEBSITE
+ *
+ * The website names these companies. If the name lived in the page's own markup,
+ * it would be a claim nobody could check, and it would go stale the day a service
+ * changed. So the name lives beside the credential that service uses, and the page
+ * is handed it.
+ *
+ * `section` is the exact heading the company's credentials appear under in the
+ * list above, and `host` is where they answer. Both are checked: a test looks
+ * every one up in `SETTINGS` and fails the build if the heading is not there word
+ * for word, or if the address is written nowhere in that section's own
+ * explanation. So renaming a section, or moving a company to a different address,
+ * stops the build instead of quietly changing what a visitor is told.
+ *
+ * PUBLISHING HAS NO COMPANY, ON PURPOSE. Putting the finished website online is
+ * not built yet, and nothing here pretends otherwise. `company` is null and the
+ * page prints that it is not built rather than naming somebody who is not
+ * involved.
+ */
+export interface CompanyBehindAService {
+  /** The company's ordinary name, as a person would say it. */
+  readonly company: string | null
+  /**
+   * Where they answer.
+   *
+   * Must appear somewhere in that section's own explanation, rather than being
+   * written twice. Empty when there is no company.
+   */
+  readonly host: string
+  /**
+   * The heading their credentials appear under in `SETTINGS`.
+   *
+   * Null when the service has no credentials in the list at all, which is only
+   * true for publishing, because it is not built.
+   */
+  readonly section: string | null
+}
+
+export const COMPANY_BEHIND: Readonly<Record<string, CompanyBehindAService>> = {
+  search: {
+    company: 'SerpApi',
+    host: 'serpapi.com',
+    section: 'SEARCH — live research on whether the business name is already taken',
+  },
+  registrar: {
+    company: 'Name.com',
+    host: 'name.com',
+    section: 'NAME.COM — checks and registers the web address',
+  },
+  identity: {
+    company: 'Nutrient',
+    host: 'nutrient.io',
+    section: 'NUTRIENT — reads the owners’ identity documents and scores each field',
+  },
+  publishing: {
+    company: null,
+    host: '',
+    section: null,
+  },
+  imagery: {
+    company: 'Perfect Corp',
+    host: 'yce.perfectcorp.com',
+    section: 'PERFECT CORP — draws the new business’s first storefront picture',
+  },
+}
+
+/**
+ * Every complaint about the company list, collected rather than thrown one at a
+ * time.
+ *
+ * Returns an empty list when every named heading is a real heading in `SETTINGS`
+ * and every named address really is written in that heading's first line. A test
+ * calls this and fails the build on anything it returns.
+ */
+export function complaintsAboutCompanies(): readonly string[] {
+  const complaints: string[] = []
+
+  for (const [slot, one] of Object.entries(COMPANY_BEHIND)) {
+    if (one.section === null) {
+      if (one.company !== null) {
+        complaints.push(
+          `The service "${slot}" names the company ${one.company} but no settings section, ` +
+            `so nothing ties that name to a credential anybody could check.`,
+        )
+      }
+      continue
+    }
+
+    const inSection = SETTINGS.filter((setting) => setting.section === one.section)
+    if (inSection.length === 0) {
+      complaints.push(
+        `The service "${slot}" points at the settings section "${one.section}", and no ` +
+          `setting is under that heading. Either the heading was renamed or the company was.`,
+      )
+      continue
+    }
+
+    const explained = inSection.flatMap((setting) => setting.what).join('\n')
+    if (one.host !== '' && !explained.includes(one.host)) {
+      complaints.push(
+        `The service "${slot}" says ${one.company} answers at "${one.host}", and nothing ` +
+          `written under "${one.section}" mentions that address. The website would tell a ` +
+          `visitor an address this project does not use.`,
+      )
+    }
+  }
+
+  return complaints
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Reading a settings file
 // ─────────────────────────────────────────────────────────────────────────────
 
