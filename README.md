@@ -52,19 +52,35 @@ npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
 ```
 
-`npm run agent:demo` leaves three files in `out/`, and then you can check its work
-without taking our word for any of it:
+`npm run agent:demo` leaves five files in `out/`:
+
+| File | What it is |
+| --- | --- |
+| `pack.pdf` | The Formation Pack. A real sealed multi-page PDF, at the permission level that allows filling in and signing and nothing else |
+| `agreement.docx` | The same agreement, editable, for taking to somebody you trust before anybody signs anything |
+| `record.jsonl` | Every entry of the run, in order, each carrying the fingerprint of the one before it |
+| `attestation.json` | Vouches for the END of that record, which the chain cannot do on its own |
+| `report.html` | One page. Open it in a browser — what the law does if you write nothing down, everything that happened and who caused it, and every refusal |
+
+Then check its work without taking our word for any of it:
 
 ```bash
 npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json
 ```
 
-That reads a real sealed PDF, confirms the seal permits only filling in and
-signing, confirms the file has not changed by one byte since it was sealed,
-confirms the record is unbroken, and confirms the attestation covers the end of it.
-It contacts nothing and it reads its key from this repository rather than from the
-pack — because a checker that took its key out of the thing it was checking would
-prove nothing at all.
+That confirms the seal permits only filling in and signing, that the file has not
+changed by one byte since it was sealed, that the record is unbroken, and that the
+attestation covers the end of it. It contacts nothing, and it reads its key from
+this repository rather than from the pack — because a checker that took its key out
+of the thing it was checking would prove nothing at all.
+
+It also answers one question **no**, honestly: whether anybody who is not Charter
+has said this record existed. We hold the record and the key that vouches for it,
+so everything else is checked with things we made. Run with `REPLAY_MODE=false` and
+Charter asks a timestamp authority to stamp the end of the record — somebody who is
+not us, shown a fingerprint and never the record. That does not stop a record being
+rewritten. It means a rewritten record produces a different ending while the old
+statement still exists, held by somebody else.
 
 `npm install` is the whole setup. There is no container to build, no database to
 start, no port to free and no password to set. The append-only rules are installed
