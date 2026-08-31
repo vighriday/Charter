@@ -1,0 +1,1849 @@
+{
+  "caseId": "demo-bakery",
+  "businessName": "Rivera Sisters Baking Co",
+  "state": "TX",
+  "owners": [
+    "Ana Rivera",
+    "Lucia Rivera"
+  ],
+  "entries": [
+    {
+      "seq": "1",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:01.000Z",
+      "fingerprint": "ab16c74de886",
+      "detail": "turn 1, offering ask_question,record_fact,request_spend_permission",
+      "refusal": false
+    },
+    {
+      "seq": "2",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:02.000Z",
+      "fingerprint": "2ef286ffd37a",
+      "detail": "written-out:for-this-demonstration chose ask_question",
+      "refusal": false
+    },
+    {
+      "seq": "3",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:03.000Z",
+      "fingerprint": "fdf9da5fb5b3",
+      "detail": "ask_question",
+      "refusal": false
+    },
+    {
+      "seq": "4",
+      "kind": "question.asked",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:04.000Z",
+      "fingerprint": "a94732ae16ec",
+      "detail": "Which of you is putting in the oven, and roughly what is it worth?",
+      "refusal": false
+    },
+    {
+      "seq": "5",
+      "kind": "question.answered",
+      "actor": "human",
+      "stage": null,
+      "at": "2026-08-28T09:00:06.000Z",
+      "fingerprint": "4540af324703",
+      "detail": "a person answered: Lucia is. It is a commercial oven she already owns, worth about $12,000.",
+      "refusal": false,
+      "humanAct": {
+        "button": "Answer",
+        "why": "The software asked something it has no safe default for. It will not guess, and it will not carry on until somebody answers."
+      }
+    },
+    {
+      "seq": "6",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:08.000Z",
+      "fingerprint": "8b7dc86a6c1b",
+      "detail": "turn 2, offering ask_question,record_fact,request_spend_permission",
+      "refusal": false
+    },
+    {
+      "seq": "7",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:09.000Z",
+      "fingerprint": "ea23410f5d08",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "8",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:10.000Z",
+      "fingerprint": "277d3fac8da0",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "9",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:11.000Z",
+      "fingerprint": "83a5bffa5100",
+      "detail": "description = Two sisters opening a bakery in Austin. Ana is putting in $20,000 cash, Lucia is putting in a commercial oven she already owns.",
+      "refusal": false
+    },
+    {
+      "seq": "10",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:13.000Z",
+      "fingerprint": "344815ebdb7f",
+      "detail": "turn 3, offering ask_question,record_fact,request_spend_permission",
+      "refusal": false
+    },
+    {
+      "seq": "11",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:14.000Z",
+      "fingerprint": "aabd1c712e04",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "12",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:15.000Z",
+      "fingerprint": "b5b897acd77c",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "13",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:16.000Z",
+      "fingerprint": "5bc80a294dbb",
+      "detail": "state = TX",
+      "refusal": false
+    },
+    {
+      "seq": "14",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:18.000Z",
+      "fingerprint": "a28087a51d9d",
+      "detail": "turn 4, offering ask_question,record_fact,request_spend_permission",
+      "refusal": false
+    },
+    {
+      "seq": "15",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:19.000Z",
+      "fingerprint": "7ce864dbca7d",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "16",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:20.000Z",
+      "fingerprint": "bc6af1eb84ea",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "17",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:21.000Z",
+      "fingerprint": "bd8a3569aa87",
+      "detail": "proposed_name = Rivera Sisters Bakery",
+      "refusal": false
+    },
+    {
+      "seq": "18",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:23.000Z",
+      "fingerprint": "75c73786344f",
+      "detail": "turn 5, offering ask_question,record_fact,request_spend_permission",
+      "refusal": false
+    },
+    {
+      "seq": "19",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:24.000Z",
+      "fingerprint": "b70556abf231",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "20",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:25.000Z",
+      "fingerprint": "fc95b249caa2",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "21",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:26.000Z",
+      "fingerprint": "13096d3a2c1a",
+      "detail": "owner = Ana Rivera",
+      "refusal": false
+    },
+    {
+      "seq": "22",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:28.000Z",
+      "fingerprint": "c17124160f37",
+      "detail": "turn 6, offering ask_question,record_fact,request_spend_permission",
+      "refusal": false
+    },
+    {
+      "seq": "23",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:29.000Z",
+      "fingerprint": "1cc4992cc652",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "24",
+      "kind": "tool.arguments.rejected",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:30.000Z",
+      "fingerprint": "a37c02de1590",
+      "detail": "record_fact — arguments did not fit, asking again",
+      "refusal": true
+    },
+    {
+      "seq": "25",
+      "kind": "turn.retried",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:31.000Z",
+      "fingerprint": "91ddf983f97a",
+      "detail": "asked again after a correction",
+      "refusal": false
+    },
+    {
+      "seq": "26",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:32.000Z",
+      "fingerprint": "9b184cf0caab",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "27",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:33.000Z",
+      "fingerprint": "f40936f3c362",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "28",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:34.000Z",
+      "fingerprint": "2e947858c79a",
+      "detail": "owner = Lucia Rivera",
+      "refusal": false
+    },
+    {
+      "seq": "29",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:36.000Z",
+      "fingerprint": "a31eff0e51b5",
+      "detail": "turn 7, offering ask_question,record_fact,request_spend_permission",
+      "refusal": false
+    },
+    {
+      "seq": "30",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:37.000Z",
+      "fingerprint": "14b839c207eb",
+      "detail": "written-out:for-this-demonstration chose register_address",
+      "refusal": false
+    },
+    {
+      "seq": "31",
+      "kind": "tool.refused",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:38.000Z",
+      "fingerprint": "aa9cbdfe8f62",
+      "detail": "refused register_address",
+      "refusal": true
+    },
+    {
+      "seq": "32",
+      "kind": "turn.retried",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:39.000Z",
+      "fingerprint": "11e50773ac58",
+      "detail": "asked again after a correction",
+      "refusal": false
+    },
+    {
+      "seq": "33",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:40.000Z",
+      "fingerprint": "13d9bbe9ffce",
+      "detail": "written-out:for-this-demonstration chose request_spend_permission",
+      "refusal": false
+    },
+    {
+      "seq": "34",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:41.000Z",
+      "fingerprint": "b41825790523",
+      "detail": "request_spend_permission",
+      "refusal": false
+    },
+    {
+      "seq": "35",
+      "kind": "spend.requested",
+      "actor": "model",
+      "stage": "understand",
+      "at": "2026-08-28T09:00:42.000Z",
+      "fingerprint": "ee0f7c90df07",
+      "detail": "asked to spend up to 2500 cents",
+      "refusal": false
+    },
+    {
+      "seq": "36",
+      "kind": "spend.authorised",
+      "actor": "human",
+      "stage": null,
+      "at": "2026-08-28T09:00:44.000Z",
+      "fingerprint": "079084000eda",
+      "detail": "a person granted up to 2500 cents",
+      "refusal": false,
+      "humanAct": {
+        "button": "Allow up to $25.00",
+        "why": "The software can ask to spend. It has no tool that grants permission, and the code that writes one is not reachable from anything it can trigger."
+      }
+    },
+    {
+      "seq": "37",
+      "kind": "human.act.refused",
+      "actor": "system",
+      "stage": null,
+      "at": "2026-08-28T09:00:45.000Z",
+      "fingerprint": "29e845e6eb16",
+      "detail": "human.act.refused",
+      "refusal": true
+    },
+    {
+      "seq": "38",
+      "kind": "stage.entered",
+      "actor": "system",
+      "stage": "research",
+      "at": "2026-08-28T09:00:46.000Z",
+      "fingerprint": "5f296605eb5b",
+      "detail": "stage 2",
+      "refusal": false
+    },
+    {
+      "seq": "39",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:00:48.000Z",
+      "fingerprint": "b26a1cf54ec8",
+      "detail": "turn 1, offering search_web,compare_names,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "40",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:00:49.000Z",
+      "fingerprint": "6bd2c9bf4931",
+      "detail": "written-out:for-this-demonstration chose search_web",
+      "refusal": false
+    },
+    {
+      "seq": "41",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:00:50.000Z",
+      "fingerprint": "539e1933acb2",
+      "detail": "search_web",
+      "refusal": false
+    },
+    {
+      "seq": "42",
+      "kind": "search.performed",
+      "actor": "vendor",
+      "stage": "research",
+      "at": "2026-08-28T09:00:51.000Z",
+      "fingerprint": "01a6a1cce754",
+      "detail": "\"Rivera Sisters Bakery Texas\" — 2 result(s)",
+      "refusal": false
+    },
+    {
+      "seq": "43",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:00:53.000Z",
+      "fingerprint": "988bc3661ed4",
+      "detail": "turn 2, offering search_web,compare_names,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "44",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:00:54.000Z",
+      "fingerprint": "a22edff8bf71",
+      "detail": "written-out:for-this-demonstration chose compare_names",
+      "refusal": false
+    },
+    {
+      "seq": "45",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:00:55.000Z",
+      "fingerprint": "da09b2308b6a",
+      "detail": "compare_names",
+      "refusal": false
+    },
+    {
+      "seq": "46",
+      "kind": "names.compared",
+      "actor": "system",
+      "stage": "research",
+      "at": "2026-08-28T09:00:56.000Z",
+      "fingerprint": "aeb6fdc141a4",
+      "detail": "name check: collides",
+      "refusal": false
+    },
+    {
+      "seq": "47",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:00:58.000Z",
+      "fingerprint": "981abcd69228",
+      "detail": "turn 3, offering search_web,compare_names,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "48",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:00:59.000Z",
+      "fingerprint": "4757d79932b7",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "49",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:01:00.000Z",
+      "fingerprint": "87fa8ca2e4d6",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "50",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:01:01.000Z",
+      "fingerprint": "6a2f83414849",
+      "detail": "proposed_name = Rivera Sisters Baking Co",
+      "refusal": false
+    },
+    {
+      "seq": "51",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:01:03.000Z",
+      "fingerprint": "e8f1b1d4422e",
+      "detail": "turn 4, offering search_web,compare_names,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "52",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:01:04.000Z",
+      "fingerprint": "247dfa6b6fbd",
+      "detail": "written-out:for-this-demonstration chose search_web",
+      "refusal": false
+    },
+    {
+      "seq": "53",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:01:05.000Z",
+      "fingerprint": "46e199200529",
+      "detail": "search_web",
+      "refusal": false
+    },
+    {
+      "seq": "54",
+      "kind": "search.performed",
+      "actor": "vendor",
+      "stage": "research",
+      "at": "2026-08-28T09:01:06.000Z",
+      "fingerprint": "e6e1667a20ec",
+      "detail": "\"Rivera Sisters Baking Co Texas\" — 1 result(s)",
+      "refusal": false
+    },
+    {
+      "seq": "55",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:01:08.000Z",
+      "fingerprint": "b78c6e01c945",
+      "detail": "turn 5, offering search_web,compare_names,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "56",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:01:09.000Z",
+      "fingerprint": "446b2b0549ed",
+      "detail": "written-out:for-this-demonstration chose compare_names",
+      "refusal": false
+    },
+    {
+      "seq": "57",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "research",
+      "at": "2026-08-28T09:01:10.000Z",
+      "fingerprint": "386bae09e03d",
+      "detail": "compare_names",
+      "refusal": false
+    },
+    {
+      "seq": "58",
+      "kind": "names.compared",
+      "actor": "system",
+      "stage": "research",
+      "at": "2026-08-28T09:01:11.000Z",
+      "fingerprint": "bdbb9c57944d",
+      "detail": "name check: clear",
+      "refusal": false
+    },
+    {
+      "seq": "59",
+      "kind": "stage.entered",
+      "actor": "system",
+      "stage": "address",
+      "at": "2026-08-28T09:01:12.000Z",
+      "fingerprint": "0ced7ab07567",
+      "detail": "stage 3",
+      "refusal": false
+    },
+    {
+      "seq": "60",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:14.000Z",
+      "fingerprint": "816f5f6312b3",
+      "detail": "turn 1, offering check_address,register_address,set_address_records,list_address_records,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "61",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:15.000Z",
+      "fingerprint": "3c09cd865555",
+      "detail": "written-out:for-this-demonstration chose check_address",
+      "refusal": false
+    },
+    {
+      "seq": "62",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:16.000Z",
+      "fingerprint": "ed7e091e453e",
+      "detail": "check_address",
+      "refusal": false
+    },
+    {
+      "seq": "63",
+      "kind": "address.checked",
+      "actor": "vendor",
+      "stage": "address",
+      "at": "2026-08-28T09:01:17.000Z",
+      "fingerprint": "686d0f341fba",
+      "detail": "riverasistersbaking.com — taken",
+      "refusal": false
+    },
+    {
+      "seq": "64",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:19.000Z",
+      "fingerprint": "ed8183f45daf",
+      "detail": "turn 2, offering check_address,register_address,set_address_records,list_address_records,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "65",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:20.000Z",
+      "fingerprint": "082eeb83e12b",
+      "detail": "written-out:for-this-demonstration chose register_address",
+      "refusal": false
+    },
+    {
+      "seq": "66",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:21.000Z",
+      "fingerprint": "8f9dadbd56e9",
+      "detail": "register_address",
+      "refusal": false
+    },
+    {
+      "seq": "67",
+      "kind": "address.registration.refused",
+      "actor": "vendor",
+      "stage": "address",
+      "at": "2026-08-28T09:01:22.000Z",
+      "fingerprint": "174f8784c17a",
+      "detail": "refused to register riverasistersbaking.com",
+      "refusal": true
+    },
+    {
+      "seq": "68",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:24.000Z",
+      "fingerprint": "a8d038a9b25a",
+      "detail": "turn 3, offering check_address,register_address,set_address_records,list_address_records,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "69",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:25.000Z",
+      "fingerprint": "8a00da6e26c2",
+      "detail": "written-out:for-this-demonstration chose check_address",
+      "refusal": false
+    },
+    {
+      "seq": "70",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:26.000Z",
+      "fingerprint": "6949b9a50448",
+      "detail": "check_address",
+      "refusal": false
+    },
+    {
+      "seq": "71",
+      "kind": "address.checked",
+      "actor": "vendor",
+      "stage": "address",
+      "at": "2026-08-28T09:01:27.000Z",
+      "fingerprint": "98906c8b7e4f",
+      "detail": "riverabaking.com — free",
+      "refusal": false
+    },
+    {
+      "seq": "72",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:29.000Z",
+      "fingerprint": "db8aa2bd778b",
+      "detail": "turn 4, offering check_address,register_address,set_address_records,list_address_records,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "73",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:30.000Z",
+      "fingerprint": "493bd41f2788",
+      "detail": "written-out:for-this-demonstration chose register_address",
+      "refusal": false
+    },
+    {
+      "seq": "74",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:31.000Z",
+      "fingerprint": "01d8977e239a",
+      "detail": "register_address",
+      "refusal": false
+    },
+    {
+      "seq": "75",
+      "kind": "address.registration.refused",
+      "actor": "vendor",
+      "stage": "address",
+      "at": "2026-08-28T09:01:32.000Z",
+      "fingerprint": "c46ebde7111b",
+      "detail": "refused to register riverabaking.com",
+      "refusal": true
+    },
+    {
+      "seq": "76",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:34.000Z",
+      "fingerprint": "cb8c1e6980c6",
+      "detail": "turn 5, offering check_address,register_address,set_address_records,list_address_records,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "77",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:35.000Z",
+      "fingerprint": "9d599300f27b",
+      "detail": "written-out:for-this-demonstration chose check_address",
+      "refusal": false
+    },
+    {
+      "seq": "78",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:36.000Z",
+      "fingerprint": "4d9f48a92dec",
+      "detail": "check_address",
+      "refusal": false
+    },
+    {
+      "seq": "79",
+      "kind": "address.checked",
+      "actor": "vendor",
+      "stage": "address",
+      "at": "2026-08-28T09:01:37.000Z",
+      "fingerprint": "fbbd00e84a39",
+      "detail": "riverasistersbakingco.com — free",
+      "refusal": false
+    },
+    {
+      "seq": "80",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:40.000Z",
+      "fingerprint": "9b6194b1c2bd",
+      "detail": "turn 6, offering check_address,register_address,set_address_records,list_address_records,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "81",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:41.000Z",
+      "fingerprint": "d6c97f587d79",
+      "detail": "written-out:for-this-demonstration chose register_address",
+      "refusal": false
+    },
+    {
+      "seq": "82",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:42.000Z",
+      "fingerprint": "9475710bc37b",
+      "detail": "register_address",
+      "refusal": false
+    },
+    {
+      "seq": "83",
+      "kind": "address.registered",
+      "actor": "vendor",
+      "stage": "address",
+      "at": "2026-08-28T09:01:43.000Z",
+      "fingerprint": "7f3285fb3bd2",
+      "detail": "registered riverasistersbakingco.com",
+      "refusal": false
+    },
+    {
+      "seq": "84",
+      "kind": "spend.applied",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:44.000Z",
+      "fingerprint": "5d41f82450d0",
+      "detail": "1299 cents spent, 1299 of 2500 used",
+      "refusal": false
+    },
+    {
+      "seq": "85",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:46.000Z",
+      "fingerprint": "dc7210203028",
+      "detail": "turn 7, offering check_address,register_address,set_address_records,list_address_records,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "86",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:47.000Z",
+      "fingerprint": "1d5d749bceee",
+      "detail": "written-out:for-this-demonstration chose set_address_records",
+      "refusal": false
+    },
+    {
+      "seq": "87",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:48.000Z",
+      "fingerprint": "addddc5ff45b",
+      "detail": "set_address_records",
+      "refusal": false
+    },
+    {
+      "seq": "88",
+      "kind": "address.records.written",
+      "actor": "vendor",
+      "stage": "address",
+      "at": "2026-08-28T09:01:49.000Z",
+      "fingerprint": "9a9992bf3501",
+      "detail": "3 address record(s) sent for riverasistersbakingco.com",
+      "refusal": false
+    },
+    {
+      "seq": "89",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:51.000Z",
+      "fingerprint": "5fd111e602e3",
+      "detail": "turn 8, offering check_address,register_address,set_address_records,list_address_records,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "90",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:52.000Z",
+      "fingerprint": "dc18652bab4e",
+      "detail": "written-out:for-this-demonstration chose list_address_records",
+      "refusal": false
+    },
+    {
+      "seq": "91",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "address",
+      "at": "2026-08-28T09:01:53.000Z",
+      "fingerprint": "9258246c36cd",
+      "detail": "list_address_records",
+      "refusal": false
+    },
+    {
+      "seq": "92",
+      "kind": "address.records.listed",
+      "actor": "vendor",
+      "stage": "address",
+      "at": "2026-08-28T09:01:54.000Z",
+      "fingerprint": "b0be50864752",
+      "detail": "read back 3 record(s) from the registrar, and they match what was sent",
+      "refusal": false
+    },
+    {
+      "seq": "93",
+      "kind": "stage.entered",
+      "actor": "system",
+      "stage": "draft",
+      "at": "2026-08-28T09:01:55.000Z",
+      "fingerprint": "08795849da55",
+      "detail": "stage 4",
+      "refusal": false
+    },
+    {
+      "seq": "94",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:01:57.000Z",
+      "fingerprint": "cfe5b4d0eefa",
+      "detail": "turn 1, offering ask_question,record_fact,record_agreement_choice,draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "95",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:01:58.000Z",
+      "fingerprint": "56f2f3092045",
+      "detail": "written-out:for-this-demonstration chose ask_question",
+      "refusal": false
+    },
+    {
+      "seq": "96",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:01:59.000Z",
+      "fingerprint": "20b19455645f",
+      "detail": "ask_question",
+      "refusal": false
+    },
+    {
+      "seq": "97",
+      "kind": "question.asked",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:00.000Z",
+      "fingerprint": "b537266ed9ef",
+      "detail": "Who will run the company day to day — the two of you, or someone you appoint?",
+      "refusal": false
+    },
+    {
+      "seq": "98",
+      "kind": "question.answered",
+      "actor": "human",
+      "stage": null,
+      "at": "2026-08-28T09:02:02.000Z",
+      "fingerprint": "df3915f5c579",
+      "detail": "a person answered: The two of us.",
+      "refusal": false,
+      "humanAct": {
+        "button": "Answer",
+        "why": "The software asked something it has no safe default for. It will not guess, and it will not carry on until somebody answers."
+      }
+    },
+    {
+      "seq": "99",
+      "kind": "question.answered",
+      "actor": "human",
+      "stage": null,
+      "at": "2026-08-28T09:02:04.000Z",
+      "fingerprint": "2fa061c8973f",
+      "detail": "a person answered: No. We have not agreed one.",
+      "refusal": false,
+      "humanAct": {
+        "button": "Answer",
+        "why": "The software asked something it has no safe default for. It will not guess, and it will not carry on until somebody answers."
+      }
+    },
+    {
+      "seq": "100",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:06.000Z",
+      "fingerprint": "92ea35ffdb27",
+      "detail": "turn 2, offering ask_question,record_fact,record_agreement_choice,draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "101",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:07.000Z",
+      "fingerprint": "a800809d7c50",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "102",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:08.000Z",
+      "fingerprint": "9fee0100416c",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "103",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:09.000Z",
+      "fingerprint": "5f309efcdcdb",
+      "detail": "owner_share = 50",
+      "refusal": false
+    },
+    {
+      "seq": "104",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:11.000Z",
+      "fingerprint": "975d85119d81",
+      "detail": "turn 3, offering ask_question,record_fact,record_agreement_choice,draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "105",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:12.000Z",
+      "fingerprint": "314bc3d32050",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "106",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:13.000Z",
+      "fingerprint": "620308ab099b",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "107",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:14.000Z",
+      "fingerprint": "ee2ef60b8084",
+      "detail": "owner_share = 50",
+      "refusal": false
+    },
+    {
+      "seq": "108",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:16.000Z",
+      "fingerprint": "1f49640a305d",
+      "detail": "turn 4, offering ask_question,record_fact,record_agreement_choice,draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "109",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:17.000Z",
+      "fingerprint": "7f9542ee07ab",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "110",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:18.000Z",
+      "fingerprint": "fb9316d7aac4",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "111",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:19.000Z",
+      "fingerprint": "70b3478e3737",
+      "detail": "owner_contribution_value = 2000000",
+      "refusal": false
+    },
+    {
+      "seq": "112",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:21.000Z",
+      "fingerprint": "6adc69612445",
+      "detail": "turn 5, offering ask_question,record_fact,record_agreement_choice,draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "113",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:22.000Z",
+      "fingerprint": "f860022e8f6b",
+      "detail": "written-out:for-this-demonstration chose record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "114",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:23.000Z",
+      "fingerprint": "94e026fe5bab",
+      "detail": "record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "115",
+      "kind": "fact.recorded",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:24.000Z",
+      "fingerprint": "a118220dd668",
+      "detail": "owner_contribution_value = 2000000",
+      "refusal": false
+    },
+    {
+      "seq": "116",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:26.000Z",
+      "fingerprint": "963389b526ca",
+      "detail": "turn 6, offering ask_question,record_fact,record_agreement_choice,draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "117",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:27.000Z",
+      "fingerprint": "22924f2217ae",
+      "detail": "written-out:for-this-demonstration chose record_agreement_choice",
+      "refusal": false
+    },
+    {
+      "seq": "118",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:28.000Z",
+      "fingerprint": "4e4194edc37b",
+      "detail": "record_agreement_choice",
+      "refusal": false
+    },
+    {
+      "seq": "119",
+      "kind": "agreement.choice.recorded",
+      "actor": "system",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:29.000Z",
+      "fingerprint": "314d6a82b21d",
+      "detail": "managed_by = the owners themselves",
+      "refusal": false
+    },
+    {
+      "seq": "120",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:31.000Z",
+      "fingerprint": "3022dcff7751",
+      "detail": "turn 7, offering ask_question,record_fact,record_agreement_choice,draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "121",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:32.000Z",
+      "fingerprint": "5f9ff6cad6b6",
+      "detail": "written-out:for-this-demonstration chose record_agreement_choice",
+      "refusal": false
+    },
+    {
+      "seq": "122",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:33.000Z",
+      "fingerprint": "a2369ac491ed",
+      "detail": "record_agreement_choice",
+      "refusal": false
+    },
+    {
+      "seq": "123",
+      "kind": "agreement.choice.recorded",
+      "actor": "system",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:34.000Z",
+      "fingerprint": "64675f62871b",
+      "detail": "exit_process = no",
+      "refusal": false
+    },
+    {
+      "seq": "124",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:37.000Z",
+      "fingerprint": "aa2b3cb2eefe",
+      "detail": "turn 8, offering ask_question,record_fact,record_agreement_choice,draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "125",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:38.000Z",
+      "fingerprint": "5b9c80796fe3",
+      "detail": "written-out:for-this-demonstration chose draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "126",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:39.000Z",
+      "fingerprint": "77ff8503512e",
+      "detail": "draft_agreement",
+      "refusal": false
+    },
+    {
+      "seq": "127",
+      "kind": "agreement.drafted",
+      "actor": "system",
+      "stage": "draft",
+      "at": "2026-08-28T09:02:40.000Z",
+      "fingerprint": "a7ac8a0e98a8",
+      "detail": "15 articles, dated 2026-08-28",
+      "refusal": false
+    },
+    {
+      "seq": "128",
+      "kind": "stage.entered",
+      "actor": "system",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:41.000Z",
+      "fingerprint": "5bb4ba1be3e1",
+      "detail": "stage 5",
+      "refusal": false
+    },
+    {
+      "seq": "129",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:44.000Z",
+      "fingerprint": "cc7960e7d715",
+      "detail": "turn 1, offering read_identity_document,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "130",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:45.000Z",
+      "fingerprint": "92757f4e87ff",
+      "detail": "written-out:for-this-demonstration chose read_identity_document",
+      "refusal": false
+    },
+    {
+      "seq": "131",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:46.000Z",
+      "fingerprint": "a228c26cf224",
+      "detail": "read_identity_document",
+      "refusal": false
+    },
+    {
+      "seq": "132",
+      "kind": "identity.read",
+      "actor": "system",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:47.000Z",
+      "fingerprint": "de8cc09c0b48",
+      "detail": "Ana Rivera: 4 value(s) read, 0 to a person",
+      "refusal": false
+    },
+    {
+      "seq": "133",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:50.000Z",
+      "fingerprint": "cde342f5d0c7",
+      "detail": "turn 2, offering read_identity_document,record_fact",
+      "refusal": false
+    },
+    {
+      "seq": "134",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:51.000Z",
+      "fingerprint": "c19e75b9b797",
+      "detail": "written-out:for-this-demonstration chose read_identity_document",
+      "refusal": false
+    },
+    {
+      "seq": "135",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:52.000Z",
+      "fingerprint": "0d51d1895c75",
+      "detail": "read_identity_document",
+      "refusal": false
+    },
+    {
+      "seq": "136",
+      "kind": "identity.read",
+      "actor": "system",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:53.000Z",
+      "fingerprint": "6d3efb3bdbe3",
+      "detail": "Lucia Rivera: 4 value(s) read, 1 to a person",
+      "refusal": false
+    },
+    {
+      "seq": "137",
+      "kind": "identity.field.sent.for.review",
+      "actor": "system",
+      "stage": "verify",
+      "at": "2026-08-28T09:02:54.000Z",
+      "fingerprint": "30a5be741db0",
+      "detail": "Lucia Rivera expiry_date — fuzzy_match",
+      "refusal": false
+    },
+    {
+      "seq": "138",
+      "kind": "identity.field.checked",
+      "actor": "human",
+      "stage": null,
+      "at": "2026-08-28T09:02:56.000Z",
+      "fingerprint": "bd76b1e702e5",
+      "detail": "a person checked Lucia Rivera expiry_date: the value is correct",
+      "refusal": false,
+      "humanAct": {
+        "button": "I checked this against the document",
+        "why": "A value read off an identity document could only be matched approximately. Nothing in the software can clear that. A person looks, or the case waits."
+      }
+    },
+    {
+      "seq": "139",
+      "kind": "stage.entered",
+      "actor": "system",
+      "stage": "assemble",
+      "at": "2026-08-28T09:02:57.000Z",
+      "fingerprint": "63637ec7a02b",
+      "detail": "stage 6",
+      "refusal": false
+    },
+    {
+      "seq": "140",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "assemble",
+      "at": "2026-08-28T09:03:01.000Z",
+      "fingerprint": "83f25ebcfc26",
+      "detail": "turn 1, offering assemble_pack",
+      "refusal": false
+    },
+    {
+      "seq": "141",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "assemble",
+      "at": "2026-08-28T09:03:02.000Z",
+      "fingerprint": "e734d349fe46",
+      "detail": "written-out:for-this-demonstration chose assemble_pack",
+      "refusal": false
+    },
+    {
+      "seq": "142",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "assemble",
+      "at": "2026-08-28T09:03:03.000Z",
+      "fingerprint": "8f231c683be7",
+      "detail": "assemble_pack",
+      "refusal": false
+    },
+    {
+      "seq": "143",
+      "kind": "pack.sealed",
+      "actor": "system",
+      "stage": "assemble",
+      "at": "2026-08-28T09:03:04.000Z",
+      "fingerprint": "33ea7bcf58bc",
+      "detail": "sealed 17766 bytes, fingerprint d114ad228b69",
+      "refusal": false
+    },
+    {
+      "seq": "144",
+      "kind": "stage.entered",
+      "actor": "system",
+      "stage": "boundary",
+      "at": "2026-08-28T09:03:05.000Z",
+      "fingerprint": "cea87e7020d4",
+      "detail": "stage 7",
+      "refusal": false
+    },
+    {
+      "seq": "145",
+      "kind": "signature.approved",
+      "actor": "human",
+      "stage": null,
+      "at": "2026-08-28T09:03:07.000Z",
+      "fingerprint": "858d7977eab6",
+      "detail": "Ana Rivera approved sending this exact pack",
+      "refusal": false,
+      "humanAct": {
+        "button": "Approve sending the packet",
+        "why": "This is the boundary. Stage seven has no tools at all, and the packet does not move until a person names it by its fingerprint and approves."
+      }
+    },
+    {
+      "seq": "146",
+      "kind": "stage.entered",
+      "actor": "system",
+      "stage": "publish",
+      "at": "2026-08-28T09:03:08.000Z",
+      "fingerprint": "0a9daeea91c7",
+      "detail": "stage 8",
+      "refusal": false
+    },
+    {
+      "seq": "147",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "publish",
+      "at": "2026-08-28T09:03:10.000Z",
+      "fingerprint": "cfd7c8dc7212",
+      "detail": "turn 1, offering draw_storefront,publish_site",
+      "refusal": false
+    },
+    {
+      "seq": "148",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "publish",
+      "at": "2026-08-28T09:03:11.000Z",
+      "fingerprint": "53c712882e2d",
+      "detail": "written-out:for-this-demonstration chose draw_storefront",
+      "refusal": false
+    },
+    {
+      "seq": "149",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "publish",
+      "at": "2026-08-28T09:03:12.000Z",
+      "fingerprint": "2e4450745602",
+      "detail": "draw_storefront",
+      "refusal": false
+    },
+    {
+      "seq": "150",
+      "kind": "storefront.drawn",
+      "actor": "system",
+      "stage": "publish",
+      "at": "2026-08-28T09:03:13.000Z",
+      "fingerprint": "e6595ddd442c",
+      "detail": "drew the storefront from 127 characters of the owners' own words",
+      "refusal": false
+    },
+    {
+      "seq": "151",
+      "kind": "turn.started",
+      "actor": "model",
+      "stage": "publish",
+      "at": "2026-08-28T09:03:15.000Z",
+      "fingerprint": "389ff0779ec7",
+      "detail": "turn 2, offering draw_storefront,publish_site",
+      "refusal": false
+    },
+    {
+      "seq": "152",
+      "kind": "model.answered",
+      "actor": "model",
+      "stage": "publish",
+      "at": "2026-08-28T09:03:16.000Z",
+      "fingerprint": "d09560ccacc6",
+      "detail": "written-out:for-this-demonstration chose publish_site",
+      "refusal": false
+    },
+    {
+      "seq": "153",
+      "kind": "tool.ran",
+      "actor": "model",
+      "stage": "publish",
+      "at": "2026-08-28T09:03:17.000Z",
+      "fingerprint": "d3eaff9547ea",
+      "detail": "publish_site",
+      "refusal": false
+    },
+    {
+      "seq": "154",
+      "kind": "site.published",
+      "actor": "system",
+      "stage": "publish",
+      "at": "2026-08-28T09:03:18.000Z",
+      "fingerprint": "7d79272a9095",
+      "detail": "live at https://riverasistersbakingco.com",
+      "refusal": false
+    }
+  ],
+  "stages": [
+    {
+      "name": "understand",
+      "position": 1,
+      "title": "Understand",
+      "whatHappens": "The person describes their business. Charter asks about anything it still needs, including permission to spend a stated amount on the web address.",
+      "tools": [
+        "ask_question",
+        "record_fact",
+        "request_spend_permission"
+      ],
+      "from": "1",
+      "to": "35"
+    },
+    {
+      "name": "research",
+      "position": 2,
+      "title": "Research the name",
+      "whatHappens": "Search for businesses already using this name, and decide whether the proposed one is clear. Whether two names collide is decided in plain code, not by the model.",
+      "tools": [
+        "search_web",
+        "compare_names",
+        "record_fact"
+      ],
+      "from": "38",
+      "to": "58"
+    },
+    {
+      "name": "address",
+      "position": 3,
+      "title": "Secure the address",
+      "whatHappens": "Check whether the web address is free, and register it only if a person has already given permission covering the price.",
+      "tools": [
+        "check_address",
+        "register_address",
+        "set_address_records",
+        "list_address_records",
+        "record_fact"
+      ],
+      "from": "59",
+      "to": "92"
+    },
+    {
+      "name": "draft",
+      "position": 4,
+      "title": "Draft the agreement",
+      "whatHappens": "Ask the owners the few things the agreement cannot be written without, then prepare it. Every number, every article number and every cross-reference is worked out in plain code. The model chooses when, never what.",
+      "tools": [
+        "ask_question",
+        "record_fact",
+        "record_agreement_choice",
+        "draft_agreement"
+      ],
+      "from": "93",
+      "to": "127"
+    },
+    {
+      "name": "verify",
+      "position": 5,
+      "title": "Verify identity",
+      "whatHappens": "Read each owner's identity document, score every field, and send the doubtful ones to a person. No model takes part in that decision.",
+      "tools": [
+        "read_identity_document",
+        "record_fact"
+      ],
+      "from": "128",
+      "to": "137"
+    },
+    {
+      "name": "assemble",
+      "position": 6,
+      "title": "Assemble the pack",
+      "whatHappens": "Merge everything into one file, add structure, then seal it and take the fingerprint of exactly what was sealed. After the seal, anything that would rewrite the file is refused and the refusal is recorded.",
+      "tools": [
+        "assemble_pack"
+      ],
+      "from": "139",
+      "to": "143"
+    },
+    {
+      "name": "boundary",
+      "position": 7,
+      "title": "The boundary",
+      "whatHappens": "The agent stops. A person approves, and ordinary code — not the agent — carries the pack to them to sign.",
+      "tools": [],
+      "from": "144",
+      "to": "144"
+    },
+    {
+      "name": "publish",
+      "position": 8,
+      "title": "Publish",
+      "whatHappens": "Build the website, draw its first picture from the owner's own words, put it online, and point the web address at it.",
+      "tools": [
+        "draw_storefront",
+        "publish_site"
+      ],
+      "from": "146",
+      "to": "154"
+    }
+  ],
+  "counts": {
+    "model": 119,
+    "human": 6,
+    "system": 19,
+    "vendor": 10
+  },
+  "totalEntries": 154,
+  "refusals": [
+    {
+      "seq": "24",
+      "kind": "tool.arguments.rejected",
+      "why": "record_fact — arguments did not fit, asking again"
+    },
+    {
+      "seq": "31",
+      "kind": "tool.refused",
+      "why": "\"register_address\" exists, but not in stage \"understand\". Tools change only when the stage changes, and the model was never shown this one."
+    },
+    {
+      "seq": "37",
+      "kind": "human.act.refused",
+      "why": "the case token did not match"
+    },
+    {
+      "seq": "67",
+      "kind": "address.registration.refused",
+      "why": "not available"
+    },
+    {
+      "seq": "75",
+      "kind": "address.registration.refused",
+      "why": "\"registering riverabaking.com\" costs $99.00, and only $25.00 is left under the permission given on 2026-08-28T09:00:43.000Z ($25.00 in total, $0.00 already spent). A person has to raise the limit before this can run. Charter does not spend past a bound somebody set, even by a cent."
+    }
+  ],
+  "pack": {
+    "fingerprint": "d114ad228b69679478176b830da666e0532e40b586bce8fe73ac19c4fb0c6981",
+    "sizeBytes": "17766",
+    "permissionLevel": "2",
+    "parts": [
+      "the ownership agreement",
+      "what Charter was asked to do and would not",
+      "each owner's identity document, and which values a person checked",
+      "where the owners sign"
+    ]
+  },
+  "naming": {
+    "firstChoice": "Rivera Sisters Bakery",
+    "collidedWith": "Rivera Sisters Bakery",
+    "settledOn": "Rivera Sisters Baking Co"
+  },
+  "addresses": [
+    {
+      "domain": "riverasistersbaking.com",
+      "outcome": "taken"
+    },
+    {
+      "domain": "riverabaking.com",
+      "outcome": "too dear",
+      "priceCents": "9900"
+    },
+    {
+      "domain": "riverasistersbakingco.com",
+      "outcome": "registered",
+      "priceCents": "1299"
+    }
+  ],
+  "records": {
+    "sent": [
+      {
+        "host": "",
+        "kind": "A",
+        "answer": "76.76.21.21"
+      },
+      {
+        "host": "www",
+        "kind": "CNAME",
+        "answer": "riverasistersbakingco.com."
+      },
+      {
+        "host": "_charter",
+        "kind": "TXT",
+        "answer": "charter-case=demo-bakery"
+      }
+    ],
+    "held": [
+      {
+        "host": "",
+        "kind": "A",
+        "answer": "76.76.21.21"
+      },
+      {
+        "host": "www",
+        "kind": "CNAME",
+        "answer": "riverasistersbakingco.com."
+      },
+      {
+        "host": "_charter",
+        "kind": "TXT",
+        "answer": "charter-case=demo-bakery"
+      }
+    ],
+    "match": true
+  },
+  "identity": [
+    {
+      "owner": "Ana Rivera",
+      "fieldsRead": "4",
+      "sentToAPerson": []
+    },
+    {
+      "owner": "Lucia Rivera",
+      "fieldsRead": "4",
+      "sentToAPerson": [
+        {
+          "field": "expiry_date",
+          "reasons": [
+            "The value matched only approximately."
+          ]
+        }
+      ]
+    }
+  ],
+  "agreement": {
+    "articles": 15,
+    "dated": "2026-08-28",
+    "ordinaryVote": "more than 50%",
+    "majorVote": "at least 66.67%",
+    "deadlockPossible": true,
+    "explanation": [
+      "Shares total exactly 100%: Ana Rivera 50%, Lucia Rivera 50%.",
+      "Each owner’s share of profit matches their share of what they put in, so the agreement records that this is deliberate.",
+      "15 articles, numbered from one after leaving out the ones that do not apply. Every cross-reference was resolved against that numbering, and a reference to an article that is not in the document stops the build.",
+      "The owners run the company themselves, so decisions are made by the owners voting.",
+      "No process for an owner to leave was agreed, so the agreement says plainly that there is no way out. Texas states that a member may not withdraw or be expelled, and an agreement that adds nothing leaves that as the term.",
+      "These shares allow an exact tie, so a deadlock article is included. It is left out when the arithmetic makes a tie impossible."
+    ]
+  },
+  "storefront": {
+    "fromWords": "Two sisters opening a bakery in Austin. Ana is putting in $20,000 cash, Lucia is putting in a commercial oven she already owns.",
+    "shape": "1664x928"
+  },
+  "site": {
+    "liveAt": "https://riverasistersbakingco.com"
+  },
+  "services": [
+    {
+      "name": "search",
+      "kind": "stand-in",
+      "why": "Saved answers, because REPLAY_MODE is true. It holds answers recorded in advance and has no path to the network at all, so a missing answer is an error rather than a quiet real call."
+    },
+    {
+      "name": "registrar",
+      "kind": "stand-in",
+      "why": "Saved answers, because REPLAY_MODE is true. Nothing is registered and nothing is charged. It holds answers recorded in advance and has no path to the network at all, so a missing answer is an error rather than a quiet real call."
+    },
+    {
+      "name": "identity",
+      "kind": "stand-in",
+      "why": "Documents recorded in advance, because REPLAY_MODE is true. No real person’s identity document is involved. It holds answers recorded in advance and has no path to the network at all, so a missing answer is an error rather than a quiet real call."
+    },
+    {
+      "name": "publishing",
+      "kind": "stand-in",
+      "why": "Publishing the website is not built yet. The pack itself is assembled and sealed by Charter’s own code and does not go through any outside company, so what is standing in here is putting the finished site online."
+    },
+    {
+      "name": "imagery",
+      "kind": "stand-in",
+      "why": "Drawing the storefront picture is not wired to the real service yet. The words it would send are the owners' own, read from the record, so a run shows exactly what would have been drawn. No photograph of any person is ever sent, and that company's face and skin tools are absent from every stage of this project."
+    }
+  ],
+  "anchor": "Not attempted, because REPLAY_MODE is true and this run reached no network at all. Run with REPLAY_MODE=false to ask an authority to stamp the head of the record.",
+  "generatedAt": "2026-08-28T09:03:21.000Z"
+}
