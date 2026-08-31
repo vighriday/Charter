@@ -1,7 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import { maySpend, afterSpending, cents, asMoney, remainingUnder, NotAWholeNumberOfCents } from '../src/tools/guard.js'
 import { emptyCase, type CaseFacts, type SpendAuthorisation } from '../src/stages/facts.js'
-import { preparedSearch, preparedRegistrar, preparedIdentity, preparedPublishing, NoRecordedAnswer, type Services } from '../src/tools/services.js'
+import {
+  preparedSearch,
+  preparedRegistrar,
+  preparedIdentity,
+  preparedPublishing,
+  preparedImagery,
+  NoRecordedAnswer,
+  type Services,
+} from '../src/tools/services.js'
+
 import {
   askQuestion,
   recordFact,
@@ -52,6 +61,7 @@ const services = (over: Partial<Services> = {}): Services => ({
   registrar: preparedRegistrar({}),
   identity: preparedIdentity({}),
   publishing: preparedPublishing(),
+  imagery: preparedImagery(),
   ...over,
 })
 

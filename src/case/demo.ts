@@ -231,14 +231,29 @@ async function main(): Promise<void> {
       },
     },
     searches: {
+      // The first search finds a bakery already trading under the exact name the
+      // owners chose. This is the beat that matters: a live search changes the
+      // decision. No trained model could have known this business exists, because
+      // it opened after every model was trained.
       'Rivera Sisters Bakery Texas': {
         answeredBy: 'the-first-search-service',
         hits: [
+          {
+            title: 'Rivera Sisters Bakery',
+            url: 'https://example.com/rivera-sisters-bakery',
+            snippet: 'Family bakery on South Congress. Open since March. Austin, TX.',
+          },
           {
             title: 'Zenith Plumbing LLC — Austin, TX',
             url: 'https://example.com/zenith',
             snippet: 'Plumbing services in central Austin.',
           },
+        ],
+      },
+      // The second search, after the owners changed the name.
+      'Rivera Sisters Baking Co Texas': {
+        answeredBy: 'the-first-search-service',
+        hits: [
           {
             title: 'Riviera Boat Hire',
             url: 'https://example.com/riviera',
@@ -248,16 +263,23 @@ async function main(): Promise<void> {
       },
     },
     quotes: {
-      'riverasistersbakery.com': {
-        domain: 'riverasistersbakery.com',
+      // The first choice is gone. Somebody else holds it, which is the ordinary
+      // case and almost never demonstrated.
+      'riverasistersbaking.com': {
+        domain: 'riverasistersbaking.com',
+        available: false,
+      },
+      // The second is free and costs more than the owners agreed to spend.
+      'riverabaking.com': {
+        domain: 'riverabaking.com',
+        available: true,
+        priceCents: '9900',
+      },
+      // The third is free and inside the permission.
+      'riverasistersbakingco.com': {
+        domain: 'riverasistersbakingco.com',
         available: true,
         priceCents: '1299',
-      },
-      'riverabakery.com': {
-        domain: 'riverabakery.com',
-        available: true,
-        // Deliberately above the permission the owners will grant.
-        priceCents: '9900',
       },
     },
   }
@@ -425,7 +447,16 @@ async function main(): Promise<void> {
 
   const stageTwo = scripted([
     choosing('search_web', { query: 'Rivera Sisters Bakery Texas' }),
-    choosing('compare_names', { found_names: ['Zenith Plumbing LLC', 'Riviera Boat Hire'] }),
+    // The comparison is made in plain code. The model hands over what it found and
+    // is told the verdict; it does not reach one.
+    choosing('compare_names', {
+      found_names: ['Rivera Sisters Bakery', 'Zenith Plumbing LLC'],
+    }),
+    // The verdict came back "collides", so the name has to change. This is the
+    // decision changing because of something found live.
+    choosing('record_fact', { about: 'proposed_name', value: 'Rivera Sisters Baking Co' }),
+    choosing('search_web', { query: 'Rivera Sisters Baking Co Texas' }),
+    choosing('compare_names', { found_names: ['Riviera Boat Hire'] }),
   ])
   const research = await runStage(
     { db, caseId: CASE, registry, router: stageTwo, services, clock, settings, onEvent: watching() },
@@ -447,12 +478,19 @@ async function main(): Promise<void> {
   )
 
   const stageThree = scripted([
-    // An address costing more than the permission covers.
-    choosing('check_address', { domain: 'riverabakery.com' }),
-    choosing('register_address', { domain: 'riverabakery.com' }),
-    // The one the owners actually asked for, inside the permission.
-    choosing('check_address', { domain: 'riverasistersbakery.com' }),
-    choosing('register_address', { domain: 'riverasistersbakery.com' }),
+    // The first choice. Somebody else already holds it.
+    choosing('check_address', { domain: 'riverasistersbaking.com' }),
+    choosing('register_address', { domain: 'riverasistersbaking.com' }),
+    // The second. Free, and dearer than the owners agreed to spend.
+    choosing('check_address', { domain: 'riverabaking.com' }),
+    choosing('register_address', { domain: 'riverabaking.com' }),
+    // The third. Free, and inside the permission.
+    choosing('check_address', { domain: 'riverasistersbakingco.com' }),
+    choosing('register_address', { domain: 'riverasistersbakingco.com' }),
+    // Registering a name and pointing it somewhere are two different acts.
+    choosing('set_address_records', { domain: 'riverasistersbakingco.com' }),
+    // And accepted is not the same as stored, so the records are read back.
+    choosing('list_address_records', { domain: 'riverasistersbakingco.com' }),
   ])
   const address = await runStage(
     { db, caseId: CASE, registry, router: stageThree, services, clock, settings, onEvent: watching() },
@@ -658,7 +696,19 @@ async function main(): Promise<void> {
   heading(`Stage 8 of 8 — ${eight === undefined ? '?' : STAGES[eight].title}`)
 
   const published = await runStage(
-    { db, caseId: CASE, registry, router: scripted([choosing('publish_site', {})]), services, clock, settings, onEvent: watching() },
+    {
+      db,
+      caseId: CASE,
+      registry,
+      // The picture is drawn from the sentence the owners typed in stage one,
+      // which is already in the record because it started the legal work. A
+      // business formed this morning owns no photographs.
+      router: scripted([choosing('draw_storefront', {}), choosing('publish_site', {})]),
+      services,
+      clock,
+      settings,
+      onEvent: watching(),
+    },
     'publish',
   )
   console.log(

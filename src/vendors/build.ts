@@ -41,10 +41,12 @@ import type { Settings } from '../settings.js'
 import type { Services } from '../tools/services.js'
 import {
   preparedIdentity,
+  preparedImagery,
   preparedPublishing,
   preparedRegistrar,
   preparedSearch,
   type IdentityReader,
+  type ImageryService,
   type PublishingService,
   type RegistrarService,
   type SearchService,
@@ -66,8 +68,10 @@ export interface Chosen<T> {
 }
 
 export interface ChosenServices extends Services {
-  /** Which of the four are real, for the record and for the person watching. */
-  readonly chosen: Readonly<Record<'search' | 'registrar' | 'identity' | 'publishing', Chosen<unknown>>>
+  /** Which of the five are real, for the record and for the person watching. */
+  readonly chosen: Readonly<
+    Record<'search' | 'registrar' | 'identity' | 'publishing' | 'imagery', Chosen<unknown>>
+  >
 }
 
 export interface ChooseOptions {
@@ -224,12 +228,29 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
       'so what is standing in here is putting the finished site online.',
   }
 
+  // ---- drawing the storefront ------------------------------------------------
+  //
+  // Always the stand-in today, and said plainly. The words it would send are the
+  // owners' own, read from the record, so what a run shows is exactly what would
+  // have been drawn.
+  const imagery: Chosen<ImageryService> = {
+    service: preparedImagery(),
+    kind: 'stand-in',
+    why:
+      'Drawing the storefront picture is not wired to the real service yet. The ' +
+      'words it would send are the owners\' own, read from the record, so a run ' +
+      'shows exactly what would have been drawn. No photograph of any person is ' +
+      'ever sent, and that company\'s face and skin tools are absent from every ' +
+      'stage of this project.',
+  }
+
   return {
     search: search.service,
     registrar: registrar.service,
     identity: identity.service,
     publishing: publishing.service,
-    chosen: { search, registrar, identity, publishing },
+    imagery: imagery.service,
+    chosen: { search, registrar, identity, publishing, imagery },
   }
 }
 
@@ -240,7 +261,7 @@ export function describeChoices(services: ChosenServices): readonly string[] {
   )
 }
 
-/** How many of the four are talking to a real company. */
+/** How many of the five are talking to a real company. */
 export function howManyAreReal(services: ChosenServices): number {
   return Object.values(services.chosen).filter((one) => one.kind === 'real').length
 }

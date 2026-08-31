@@ -88,6 +88,23 @@ export interface AddressRegistration {
   readonly sandbox: boolean
 }
 
+/**
+ * One address record, which is how a name is pointed at a machine.
+ *
+ * `kind` is the record type in the registrar's own vocabulary. `A` points a name
+ * at a numbered address. `CNAME` points a name at another name. `TXT` holds text,
+ * which is how most services ask you to prove you hold a name.
+ */
+export interface AddressRecord {
+  /** The part in front, or empty for the name itself. `www` gives www.example.com. */
+  readonly host: string
+  readonly kind: 'A' | 'CNAME' | 'TXT'
+  /** Where it points, or the text it holds. */
+  readonly answer: string
+  /** How long anybody may remember it, in seconds. */
+  readonly ttl: string
+}
+
 export interface RegistrarService {
   /** Is this address free, and what would it cost? Costs nothing to ask. */
   quote(domain: string): Promise<AddressQuote>
@@ -100,6 +117,30 @@ export interface RegistrarService {
    * governs is a rule that moves when the thing is replaced.
    */
   register(domain: string, priceCents: string): Promise<AddressRegistration>
+  /**
+   * Write address records, so the name points at the website.
+   *
+   * Free, and not the same act as registering. A name with no records is a name
+   * nobody can reach, so registering without this leaves the owners holding
+   * something that does not work.
+   */
+  setRecords(domain: string, records: readonly AddressRecord[]): Promise<void>
+  /**
+   * Read the records back from the registrar.
+   *
+   * WHY READING BACK IS A SEPARATE ACT
+   *
+   * Writing returns success. Success means the request was accepted, not that
+   * anything was stored. Reading back is the only way to find out what the
+   * registrar actually holds, and it is the difference between "we sent it" and
+   * "they have it".
+   *
+   * It proves the registrar stored a row. It does NOT prove anything resolves
+   * anywhere, and nothing in this project may say otherwise: the registrar's own
+   * testing guide states that record changes in their practice environment succeed
+   * through the interface but do not become publicly answerable.
+   */
+  listRecords(domain: string): Promise<readonly AddressRecord[]>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,6 +172,45 @@ export interface IdentityReader {
   read(owner: string, documentRef: string, depth: string): Promise<ReadDocument>
 }
 
+/**
+ * Draws a picture for the new business's website from the owners' own words.
+ *
+ * WHY A BUSINESS FORMED THIS MORNING NEEDS THIS
+ *
+ * It owns no photographs. It has no shopfront yet, no products photographed, no
+ * staff pictures. The one thing it does have is the sentence its owners typed when
+ * they described what they were building, and that sentence is already in the
+ * record because it started the legal work.
+ *
+ * WHAT IS DELIBERATELY NOT USED
+ *
+ * The company behind this also sells face analysis, skin analysis and face
+ * swapping. None of them appears in any tool list, none is reachable from
+ * anything the model can trigger, and no photograph of any person is ever sent.
+ * A business formation tool has no business touching anybody's face.
+ */
+export interface ImageryService {
+  /**
+   * Draw one picture from a description.
+   *
+   * `prompt` is the owners' own words about their business, not something a model
+   * wrote about them. What comes back is a picture and the exact words that
+   * produced it, so the record can show both.
+   */
+  draw(prompt: string, shape: string): Promise<DrawnPicture>
+}
+
+export interface DrawnPicture {
+  /** Where the picture is, once it exists. */
+  readonly url: string
+  /** How wide and tall, as the service returned it. */
+  readonly shape: string
+  /** The words that produced it, kept so the record can show them. */
+  readonly fromWords: string
+  /** Which company drew it. Recorded, never returned to the model. */
+  readonly drawnBy: string
+}
+
 /** Turns the finished documents into one file, and puts the website online. */
 export interface PublishingService {
   /**
@@ -150,6 +230,7 @@ export interface Services {
   readonly registrar: RegistrarService
   readonly identity: IdentityReader
   readonly publishing: PublishingService
+  readonly imagery: ImageryService
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -251,12 +332,55 @@ export function preparedPublishing(): PublishingService & {
   }
 }
 
+/**
+ * An imagery service that draws nothing and reaches nothing.
+ *
+ * It hands back a description of the picture that would have been drawn, together
+ * with the exact words that would have produced it. A run therefore shows what was
+ * asked for and what it would have cost, without an account and without a request.
+ */
+export function preparedImagery(): ImageryService & {
+  readonly asked: readonly { readonly prompt: string; readonly shape: string }[]
+} {
+  const asked: { prompt: string; shape: string }[] = []
+  return {
+    asked,
+    async draw(prompt: string, shape: string): Promise<DrawnPicture> {
+      asked.push({ prompt, shape })
+      return {
+        url: 'prepared:storefront',
+        shape,
+        fromWords: prompt,
+        drawnBy: 'a stand-in. No picture was drawn and nothing was sent anywhere',
+      }
+    },
+  }
+}
+
 export function preparedRegistrar(
   quotes: Readonly<Record<string, AddressQuote>>,
-): RegistrarService & { readonly registered: readonly AddressRegistration[] } {
+): RegistrarService & {
+  readonly registered: readonly AddressRegistration[]
+  /** What the registrar is holding, so a test can read it back the way a person would. */
+  readonly held: ReadonlyMap<string, readonly AddressRecord[]>
+} {
   const registered: AddressRegistration[] = []
+  const held = new Map<string, readonly AddressRecord[]>()
   return {
     registered,
+    held,
+    async setRecords(domain: string, records: readonly AddressRecord[]): Promise<void> {
+      if (!registered.some((one) => one.domain === domain)) {
+        throw new NoRecordedAnswer(
+          `${domain} has not been registered, so there is nothing to write records ` +
+            `against. Pointing a name nobody holds is pointing at somebody else's name.`,
+        )
+      }
+      held.set(domain, records)
+    },
+    async listRecords(domain: string): Promise<readonly AddressRecord[]> {
+      return held.get(domain) ?? []
+    },
     async quote(domain: string): Promise<AddressQuote> {
       const quote = quotes[domain]
       if (quote === undefined) {

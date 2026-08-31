@@ -51,6 +51,10 @@ const facts = {
   owners: [ana, ben],
   openQuestions: [],
   agreementChoices: { managedBy: 'the owners themselves', hasExitProcess: false },
+  identityChecks: [],
+  answers: [],
+  addressRecords: [],
+  addressRecordsHeld: [],
 } as unknown as CaseFacts
 
 const prepared = prepareAgreement(facts, '2026-09-03')

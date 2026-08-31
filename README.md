@@ -46,7 +46,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 1,017 tests
+npm test          # 1,039 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -233,6 +233,7 @@ answer is 658, which is what this one said on 30 August.
 | Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 40 tests** <!-- tests/pack.test.ts --> |
 | The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 25 tests** <!-- tests/document.test.ts --> |
 | The same agreement as an editable Word file, so the owners can take it to somebody they trust before anybody signs anything | **built, 23 tests** <!-- tests/docx.test.ts --> |
+| Pointing a registered name at the website, and reading the records back from the registrar to find out whether "accepted" meant "stored" | **built, 22 tests** <!-- tests/address-records.test.ts --> |
 | The real clients for the outside companies — search, the registrar, reading identity documents — and the rule that picks between each one and its stand-in | **built, 52 tests**, exercised end to end with no account, no key and nothing spent <!-- tests/vendors.test.ts --> |
 | The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document <!-- tests/seal.test.ts --> |
 | The checker a stranger runs against a finished pack | **built, 19 tests.** `npm run verify` <!-- tests/verify.test.ts --> |

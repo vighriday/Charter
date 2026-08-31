@@ -48,8 +48,10 @@ import {
   preparedRegistrar,
   preparedIdentity,
   preparedPublishing,
+  preparedImagery,
   type Services,
 } from '../src/tools/services.js'
+
 import {
   answerQuestion,
   grantSpendPermission,
@@ -124,6 +126,7 @@ beforeAll(async () => {
       'lucia-passport': passport('Lucia Rivera', 'fuzzy_match'),
     }),
     publishing: preparedPublishing(),
+    imagery: preparedImagery(),
     search: preparedSearch({
       'Rivera Sisters Bakery Texas': {
         answeredBy: 'the-first-search-service',
@@ -191,6 +194,12 @@ beforeAll(async () => {
       scripted([
         choosing('check_address', { domain: 'riverasistersbakery.com' }),
         choosing('register_address', { domain: 'riverasistersbakery.com' }),
+        // Registering a name and pointing it somewhere are two different acts,
+        // and a name with no records is a name nobody can reach.
+        choosing('set_address_records', { domain: 'riverasistersbakery.com' }),
+        // Writing returns success, and success means accepted rather than
+        // stored. Reading back is the only way to find out which.
+        choosing('list_address_records', { domain: 'riverasistersbakery.com' }),
       ]),
       'address',
     ),
@@ -266,7 +275,13 @@ beforeAll(async () => {
   await step('boundary')
 
   // ---- eight: publish --------------------------------------------------------
-  note('publish', await run(scripted([choosing('publish_site', {})]), 'publish'))
+  note(
+    'publish',
+    await run(
+      scripted([choosing('draw_storefront', {}), choosing('publish_site', {})]),
+      'publish',
+    ),
+  )
 
   facts = await readFacts(db, CASE)
 }, 120_000)

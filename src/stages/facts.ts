@@ -182,6 +182,28 @@ export interface AnsweredQuestion {
  * somebody there is work; the list tells them what the work is, and a person who
  * has to open a second screen to find out is a person who checks less carefully.
  */
+/**
+ * One address record, as it was sent to the registrar or read back from it.
+ *
+ * Both halves are kept. Without both, "the registrar has what we sent" is a claim
+ * rather than a comparison.
+ */
+export interface WrittenRecord {
+  readonly host: string
+  readonly kind: string
+  readonly answer: string
+  readonly ttl: string
+}
+
+/** The picture drawn for the new business's website, and the words that drew it. */
+export interface DrawnStorefront {
+  readonly url: string
+  readonly shape: string
+  /** The owners' own words, kept whole so the picture can be checked against them. */
+  readonly fromWords: string
+  readonly drawnBy: string
+}
+
 export interface IdentityCheck {
   readonly owner: string
   /** How many values were read off the document. */
@@ -277,6 +299,12 @@ export interface CaseFacts {
   readonly agreement?: DraftedAgreement
   /** What came of reading each owner's identity document. */
   readonly identityChecks: readonly IdentityCheck[]
+  /** The address records written for the registered address, exactly as sent. */
+  readonly addressRecords: readonly WrittenRecord[]
+  /** What the registrar handed back when those records were read back from it. */
+  readonly addressRecordsHeld: readonly WrittenRecord[]
+  /** The picture drawn for the new business's website, if one was drawn. */
+  readonly storefront?: DrawnStorefront
   /** The finished pack, once it has been sealed. */
   readonly pack?: SealedPackRecord
   /**
@@ -308,5 +336,13 @@ export interface CaseFacts {
 
 /** A case that has just begun: an identifier and nothing else. */
 export function emptyCase(caseId: string): CaseFacts {
-  return { caseId, owners: [], openQuestions: [], answers: [], identityChecks: [] }
+  return {
+    caseId,
+    owners: [],
+    openQuestions: [],
+    answers: [],
+    identityChecks: [],
+    addressRecords: [],
+    addressRecordsHeld: [],
+  }
 }

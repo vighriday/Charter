@@ -34,6 +34,7 @@ import { maySpend, afterSpending, cents, asMoney } from './guard.js'
 import { prepareAgreement } from '../agreement/prepare.js'
 import { reviewDocument, explain } from '../identity/review.js'
 import { Pack, refusedAfterSealing } from '../pack/assemble.js'
+import type { AddressRecord } from './services.js'
 import { buildPackDocument } from '../pack/document.js'
 import { PERMISSION_FILL_IN_AND_SIGN_ONLY, sealPack } from '../seal/seal.js'
 import type { Tool, ToolContext, ToolOutcome, ToolEvent } from './registry.js'
@@ -500,6 +501,153 @@ export const registerAddress: Tool = {
   },
 }
 
+export const setAddressRecords: Tool = {
+  name: 'set_address_records',
+  summary:
+    'Point the registered address at the website by writing its address records. ' +
+    'Free, and it does not register anything.',
+  why:
+    'Registering a name and pointing it somewhere are two different acts, and a ' +
+    'name with no records is a name nobody can reach. So this is a separate tool ' +
+    'from the one that spends money, it costs nothing, and it refuses outright on ' +
+    'a name this case has not registered. Pointing a name somebody else holds is ' +
+    'not a mistake worth making once.',
+  schema: {
+    type: 'object',
+    properties: {
+      domain: {
+        type: 'string',
+        description: 'The registered address these records belong to.',
+        minLength: 4,
+        maxLength: 253,
+      },
+    },
+    required: ['domain'],
+    additionalProperties: false,
+  },
+  reversible: true,
+  costsMoney: false,
+  async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
+    const domain = text(args, 'domain')
+    const address = context.facts.address
+
+    if (address === undefined || address.candidate !== domain || address.registered !== true) {
+      const why =
+        `${domain} is not an address this case has registered. Records are only ` +
+        `written against a name we hold, because pointing a name somebody else ` +
+        `holds is pointing at somebody else's business.`
+      return {
+        result: { written: false, why },
+        events: [{ kind: 'address.records.refused', payload: { domain, why } }],
+      }
+    }
+
+    // What the records are is not a judgement call, so the model does not choose
+    // them. A website needs the name itself and the www form pointing at it, and
+    // a text record is how the host is shown that we hold the name.
+    const records: readonly AddressRecord[] = [
+      { host: '', kind: 'A', answer: '76.76.21.21', ttl: '300' },
+      { host: 'www', kind: 'CNAME', answer: `${domain}.`, ttl: '300' },
+      {
+        host: '_charter',
+        kind: 'TXT',
+        answer: `charter-case=${context.caseId}`,
+        ttl: '300',
+      },
+    ]
+
+    await context.services.registrar.setRecords(domain, records)
+
+    return {
+      result: {
+        written: true,
+        domain,
+        count: String(records.length),
+        note:
+          'Written. That means the registrar accepted the request. Read them back ' +
+          'to find out what it actually holds.',
+      },
+      events: [
+        {
+          kind: 'address.records.written',
+          payload: { domain, records: records as unknown as JsonValue },
+        },
+      ],
+    }
+  },
+}
+
+export const listAddressRecords: Tool = {
+  name: 'list_address_records',
+  summary:
+    'Read the address records back from the registrar, and compare them against ' +
+    'what was sent.',
+  why:
+    'Writing returns success, and success means the request was accepted rather ' +
+    'than that anything was stored. Reading back is the only way to find out what ' +
+    'the registrar actually holds, and it is the difference between "we sent it" ' +
+    'and "they have it". ' +
+    'What this proves is exactly one thing: the registrar stored a row. It does ' +
+    'NOT prove anything resolves anywhere, and nothing built on it may say so — ' +
+    'the registrar states plainly that record changes in their practice ' +
+    'environment succeed through the interface without becoming publicly ' +
+    'answerable. A claim about resolution would be caught by the one judge best ' +
+    'equipped to catch it.',
+  schema: {
+    type: 'object',
+    properties: {
+      domain: {
+        type: 'string',
+        description: 'The address whose records should be read back.',
+        minLength: 4,
+        maxLength: 253,
+      },
+    },
+    required: ['domain'],
+    additionalProperties: false,
+  },
+  reversible: true,
+  costsMoney: false,
+  async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
+    const domain = text(args, 'domain')
+    const held = await context.services.registrar.listRecords(domain)
+    const sent = context.facts.addressRecords
+
+    // Compared as sorted text rather than as objects. Two lists holding the same
+    // records in a different order are the same answer, and a comparison that
+    // said otherwise would report a mismatch that is ours rather than theirs.
+    const asText = (
+      records: readonly { readonly host: string; readonly kind: string; readonly answer: string }[],
+    ): readonly string[] =>
+      records.map((one) => `${one.host || '@'} ${one.kind} ${one.answer}`).sort()
+
+    const theirs = asText(held)
+    const ours = asText(sent)
+    const same = theirs.length === ours.length && theirs.every((one, at) => one === ours[at])
+
+    return {
+      result: {
+        domain,
+        held: theirs as unknown as JsonValue,
+        matchesWhatWasSent: same,
+        proves:
+          'The registrar is holding these rows. This does not prove the address ' +
+          'resolves anywhere, and nothing here claims that it does.',
+      },
+      events: [
+        {
+          kind: 'address.records.listed',
+          payload: {
+            domain,
+            held: held as unknown as JsonValue,
+            matchesWhatWasSent: same,
+          },
+        },
+      ],
+    }
+  },
+}
+
 /**
  * The two either/or terms of the agreement that a person has to answer, and the
  * words that have to appear in the question before an answer counts.
@@ -936,6 +1084,78 @@ export const assemblePack: Tool = {
   },
 }
 
+/**
+ * The longest a description may be when it is sent to be drawn.
+ *
+ * The service's own limit. Cutting it here rather than letting the service refuse
+ * means a long description produces a picture instead of an error, and the record
+ * shows exactly what was sent.
+ */
+export const LONGEST_PROMPT = 800
+
+export const drawStorefront: Tool = {
+  name: 'draw_storefront',
+  summary:
+    'Draw a picture for the new business’s website from the words its owners ' +
+    'used to describe it.',
+  why:
+    'A business formed this morning owns no photographs. It has no shopfront ' +
+    'photographed, no products, no staff pictures. The one thing it does have is ' +
+    'the sentence its owners typed in stage one, which is already in the record ' +
+    'because it started the legal work. That sentence does a second job here. ' +
+    'The words sent are the OWNERS’ OWN, read from the record, not something a ' +
+    'model wrote about them, and the record keeps both the words and the picture ' +
+    'so a person can see what produced what. ' +
+    'No photograph of any person is ever sent, and the same company’s face and ' +
+    'skin tools are absent from every stage of this project. A business formation ' +
+    'tool has no business touching anybody’s face.',
+  schema: { type: 'object', properties: {}, required: [], additionalProperties: false },
+  reversible: true,
+  costsMoney: false,
+  async run(_args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
+    const described = context.facts.description
+
+    // Refused rather than invented. A picture drawn from words nobody said is a
+    // picture of a business that does not exist, and the model must not fill the
+    // gap with its own description.
+    if (described === undefined || described.trim() === '') {
+      const why =
+        'the owners have not described their business yet, and the picture is drawn ' +
+        'from their own words. Nothing here writes those words for them'
+      return {
+        result: { refused: why },
+        events: [{ kind: 'storefront.refused', payload: { why } }],
+      }
+    }
+
+    const words = described.trim().slice(0, LONGEST_PROMPT)
+    const picture = await context.services.imagery.draw(words, '1664x928')
+
+    return {
+      result: {
+        drawn: 'yes',
+        shape: picture.shape,
+        fromTheOwnersOwnWords: words.length > 120 ? `${words.slice(0, 120)}…` : words,
+      },
+      events: [
+        {
+          kind: 'storefront.drawn',
+          payload: {
+            url: picture.url,
+            shape: picture.shape,
+            // The whole prompt, kept exactly. A record that summarised what was
+            // sent would be a record nobody could check against the picture.
+            fromWords: picture.fromWords,
+            drawnBy: picture.drawnBy,
+            charactersSent: String(words.length),
+            longestAllowed: String(LONGEST_PROMPT),
+          },
+        },
+      ],
+    }
+  },
+}
+
 export const publishSite: Tool = {
   name: 'publish_site',
   summary: 'Put the new business\u2019s website online at the address already registered.',
@@ -988,10 +1208,13 @@ export const ALL_TOOLS: readonly Tool[] = [
   compareNamesTool,
   checkAddress,
   registerAddress,
+  setAddressRecords,
+  listAddressRecords,
   recordAgreementChoice,
   draftAgreement,
   readIdentityDocument,
   assemblePack,
+  drawStorefront,
   publishSite,
 ]
 

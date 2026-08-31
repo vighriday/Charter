@@ -54,6 +54,8 @@ const caseWith = (owners: readonly Owner[]): CaseFacts =>
     agreementChoices: { managedBy: 'the owners themselves', hasExitProcess: false },
     identityChecks: [],
     answers: [],
+    addressRecords: [],
+    addressRecordsHeld: [],
   }) as CaseFacts
 
 const { data } = prepareAgreement(caseWith([ana, ben]), '2026-09-03')

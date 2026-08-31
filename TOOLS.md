@@ -47,6 +47,10 @@ there — it does not exist there.
       Asks the registrar a question. Costs nothing, registers nothing, and can be run as often as needed. This is the tool that finds out the price the permission then has to cover.
    register_address  [spends money, cannot be undone]
       The one tool in the first three stages that changes something in the world and cannot be taken back. Before it runs, code reads the record for a permission a person granted and checks the price falls inside it. No permission, or a price above what is left, and nothing is called — the registrar is not contacted at all. The check is deliberately outside the registrar code, so that replacing the registrar cannot take the rule with it.
+   set_address_records
+      Registering a name and pointing it somewhere are two different acts, and a name with no records is a name nobody can reach. So this is a separate tool from the one that spends money, it costs nothing, and it refuses outright on a name this case has not registered. Pointing a name somebody else holds is not a mistake worth making once.
+   list_address_records
+      Writing returns success, and success means the request was accepted rather than that anything was stored. Reading back is the only way to find out what the registrar actually holds, and it is the difference between "we sent it" and "they have it". What this proves is exactly one thing: the registrar stored a row. It does NOT prove anything resolves anywhere, and nothing built on it may say so — the registrar states plainly that record changes in their practice environment succeed through the interface without becoming publicly answerable. A claim about resolution would be caught by the one judge best equipped to catch it.
    record_fact
       Adds one entry to the record. Nothing is stored anywhere else, so what Charter knows is always the record read forward — which is why a run survives a crash or a closed browser tab with nothing lost.
 
@@ -80,6 +84,8 @@ there — it does not exist there.
 
 8. Publish
    Build the website, draw its first picture from the owner's own words, put it online, and point the web address at it.
+   draw_storefront
+      A business formed this morning owns no photographs. It has no shopfront photographed, no products, no staff pictures. The one thing it does have is the sentence its owners typed in stage one, which is already in the record because it started the legal work. That sentence does a second job here. The words sent are the OWNERS’ OWN, read from the record, not something a model wrote about them, and the record keeps both the words and the picture so a person can see what produced what. No photograph of any person is ever sent, and the same company’s face and skin tools are absent from every stage of this project. A business formation tool has no business touching anybody’s face.
    publish_site
       The last thing a newly formed business needs is somewhere to be found. The address was registered in stage three under a permission a person gave, and this points a site at it. It will not publish to an address that was never registered, because a site at an address we do not hold is a site that belongs to somebody else.
 

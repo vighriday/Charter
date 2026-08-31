@@ -219,7 +219,13 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
     whatHappens:
       'Check whether the web address is free, and register it only if a person ' +
       'has already given permission covering the price.',
-    tools: ['check_address', 'register_address', 'record_fact'],
+    tools: [
+      'check_address',
+      'register_address',
+      'set_address_records',
+      'list_address_records',
+      'record_fact',
+    ],
     toolChoice: 'required',
     sensitivity: 'public',
     maxTurns: 12,
@@ -235,6 +241,27 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
       if (!address.available) {
         return notYet(`${address.candidate} is taken, so another address is needed`)
       }
+
+      // Registering a name and pointing it somewhere are two different acts, and a
+      // name with no records is a name nobody can reach. A run that registered and
+      // stopped would leave the owners holding something that does not work.
+      if (facts.addressRecords.length === 0) {
+        return notYet(
+          `${address.candidate} is registered but points nowhere. A name with no ` +
+            `address records is a name nobody can reach`,
+        )
+      }
+
+      // Writing returns success, and success means the request was accepted rather
+      // than that anything was stored. Reading back is the only way to find out
+      // what the registrar actually holds.
+      if (facts.addressRecordsHeld.length === 0) {
+        return notYet(
+          `the address records for ${address.candidate} were sent but have not been ` +
+            `read back from the registrar. Accepted is not the same as stored`,
+        )
+      }
+
       return ready
     },
   },
@@ -442,7 +469,7 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
     whatHappens:
       "Build the website, draw its first picture from the owner's own words, put " +
       'it online, and point the web address at it.',
-    tools: ['publish_site'],
+    tools: ['draw_storefront', 'publish_site'],
     toolChoice: 'required',
     sensitivity: 'public',
     maxTurns: 12,

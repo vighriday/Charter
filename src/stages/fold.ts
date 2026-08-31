@@ -50,8 +50,7 @@ import {
   type IdentityCheck,
   type Owner,
   type PossibleCollision,
-  type SearchPerformed,
-} from './facts.js'
+  type SearchPerformed, type WrittenRecord } from './facts.js'
 
 /** One entry as the fold sees it: what kind it is, and what it carried. */
 export interface RecordedEntry {
@@ -70,6 +69,34 @@ const asFlag = (payload: JsonObject, field: string): boolean | undefined => {
 }
 
 /** A list of plain text lines, skipping anything that is not text. */
+/**
+ * Read a list of address records out of an entry.
+ *
+ * Anything that is not shaped like a record is dropped rather than guessed at. A
+ * half-read record compared against a whole one would report a mismatch that is
+ * ours rather than the registrar's.
+ */
+const asRecords = (payload: JsonObject, field: string): readonly WrittenRecord[] => {
+  const value = payload[field]
+  if (!Array.isArray(value)) return []
+
+  const out: WrittenRecord[] = []
+  for (const row of value) {
+    if (typeof row !== 'object' || row === null || Array.isArray(row)) continue
+    const one = row as JsonObject
+    const kind = asText(one, 'kind')
+    const answer = asText(one, 'answer')
+    if (kind === undefined || answer === undefined) continue
+    out.push({
+      host: asText(one, 'host') ?? '',
+      kind,
+      answer,
+      ttl: asText(one, 'ttl') ?? '',
+    })
+  }
+  return out
+}
+
 const asTextList = (payload: JsonObject, field: string): readonly string[] => {
   const value = payload[field]
   return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
@@ -102,6 +129,8 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
   const openQuestions: string[] = []
   const answers: { question: string; answer: string }[] = []
   const identityChecks: IdentityCheck[] = []
+  let addressRecords: readonly WrittenRecord[] = []
+  let addressRecordsHeld: readonly WrittenRecord[] = []
 
   for (const entry of entries) {
     // A forgotten payload is a real state: personal details can be cleared from
@@ -434,6 +463,35 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         break
       }
 
+      case 'address.records.written': {
+        // What was SENT. Kept separately from what the registrar hands back,
+        // because comparing the two is the only way to find out whether the
+        // registrar stored what it accepted.
+        addressRecords = asRecords(payload, 'records')
+        break
+      }
+
+      case 'address.records.listed': {
+        addressRecordsHeld = asRecords(payload, 'held')
+        break
+      }
+
+      case 'storefront.drawn': {
+        const url = asText(payload, 'url')
+        const fromWords = asText(payload, 'fromWords')
+        if (url === undefined || fromWords === undefined) break
+        facts = {
+          ...facts,
+          storefront: {
+            url,
+            shape: asText(payload, 'shape') ?? '',
+            fromWords,
+            drawnBy: asText(payload, 'drawnBy') ?? '',
+          },
+        }
+        break
+      }
+
       default:
         // An entry kind this version has never heard of. Passed over on purpose.
         break
@@ -450,7 +508,15 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
     }
   }
 
-  return { ...facts, owners, openQuestions, answers, identityChecks }
+  return {
+    ...facts,
+    owners,
+    openQuestions,
+    answers,
+    identityChecks,
+    addressRecords,
+    addressRecordsHeld,
+  }
 }
 
 /**

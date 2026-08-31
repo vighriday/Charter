@@ -559,8 +559,8 @@ describe('reading the fields off a document', () => {
 // Choosing between the real thing and a stand-in
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('which of the four services are real', () => {
-  it('uses a stand-in for all four on the settings a fresh clone gets', () => {
+describe('which of the five services are real', () => {
+  it('uses a stand-in for all five on the settings a fresh clone gets', () => {
     const services = chooseServices({ settings: DEFAULT_SETTINGS, caseId: 'c', env: {} })
     expect(howManyAreReal(services)).toBe(0)
   })
@@ -619,11 +619,11 @@ describe('which of the four services are real', () => {
     expect(services.chosen.publishing.why).toMatch(/sealed by Charter/)
   })
 
-  it('gives a plain sentence for every one of the four', () => {
+  it('gives a plain sentence for every one of the five', () => {
     const lines = describeChoices(
       chooseServices({ settings: DEFAULT_SETTINGS, caseId: 'c', env: {} }),
     )
-    expect(lines).toHaveLength(4)
+    expect(lines).toHaveLength(5)
     for (const line of lines) expect(line.length).toBeGreaterThan(40)
   })
 

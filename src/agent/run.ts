@@ -333,6 +333,26 @@ export function describe(kind: string, payload: Record<string, unknown>): string
       return `refused to register ${String(payload['domain'])}`
     case 'address.registered':
       return `registered ${String(payload['domain'])}`
+    case 'address.records.written': {
+      const records = payload['records']
+      const count = Array.isArray(records) ? records.length : 0
+      return `${count} address record(s) sent for ${String(payload['domain'])}`
+    }
+    case 'address.records.listed': {
+      const held = payload['held']
+      const count = Array.isArray(held) ? held.length : 0
+      // "Accepted" and "stored" are different facts, so the line says which one
+      // this is. The registrar holding a row is not the address resolving.
+      return payload['matchesWhatWasSent'] === true
+        ? `read back ${count} record(s) from the registrar, and they match what was sent`
+        : `read back ${count} record(s), and they do NOT match what was sent`
+    }
+    case 'address.records.refused':
+      return `refused to write records for ${String(payload['domain'])}`
+    case 'storefront.drawn':
+      return `drew the storefront from ${String(payload['charactersSent'])} characters of the owners' own words`
+    case 'storefront.refused':
+      return `refused to draw the storefront`
     case 'spend.applied':
       return (
         `${String(payload['amountCents'])} cents spent, ` +

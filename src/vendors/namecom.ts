@@ -51,7 +51,12 @@
  */
 
 import { ask, basicAuth, describeReply, type Fetcher, type Reply } from './http.js'
-import type { AddressQuote, AddressRegistration, RegistrarService } from '../tools/services.js'
+import type {
+  AddressQuote,
+  AddressRecord,
+  AddressRegistration,
+  RegistrarService,
+} from '../tools/services.js'
 import { fingerprint } from '../record/canonical.js'
 
 /** The practice service. Nothing registered here is real and nothing is charged. */
@@ -283,6 +288,78 @@ export function namecomRegistrar(options: NamecomOptions): RegistrarService & {
         // telling us their own sandbox was real would be believed.
         sandbox: options.environment === 'test',
       }
+    },
+
+    /**
+     * Write address records, so the name points at the website.
+     *
+     * Free, and a different act from registering. A name with no records is a
+     * name nobody can reach, so a run that registered and stopped would leave the
+     * owners holding something that does not work.
+     *
+     * Each record is written separately because that is what the registrar's
+     * interface takes. A record that fails is an error rather than a partial
+     * success reported as a success: half a set of records is a website that
+     * loads for some people and not others, which is worse than none.
+     */
+    async setRecords(domain: string, records: readonly AddressRecord[]): Promise<void> {
+      for (const record of records) {
+        const reply = await call(`/domains/${encodeURIComponent(domain)}/records`, {
+          host: record.host,
+          type: record.kind,
+          answer: record.answer,
+          ttl: Number(record.ttl),
+        })
+
+        if (reply.kind !== 'ok') {
+          throw new RegistrarRefusal(
+            `The record ${record.host || '@'} ${record.kind} was not written for ` +
+              `${domain}: the registrar ${describeReply(reply)}. Some records may ` +
+              `already have been written, so read them back before trying again.`,
+          )
+        }
+      }
+    },
+
+    /**
+     * Read the records back from the registrar.
+     *
+     * WHAT THIS PROVES, EXACTLY
+     *
+     * That the registrar is holding these rows. It does NOT prove the address
+     * resolves anywhere, and nothing built on it may say so. The registrar's own
+     * testing guide states that record changes in their practice environment
+     * succeed through the interface without becoming publicly answerable.
+     *
+     * Saying otherwise, to a registrar, in their own category, would be caught by
+     * the one person best equipped to catch it.
+     */
+    async listRecords(domain: string): Promise<readonly AddressRecord[]> {
+      const reply = await call(`/domains/${encodeURIComponent(domain)}/records`)
+
+      if (reply.kind !== 'ok') {
+        throw new RegistrarRefusal(
+          `The records for ${domain} could not be read back: the registrar ` +
+            `${describeReply(reply)}. Whether they were stored is therefore unknown, ` +
+            `and unknown is not the same as written.`,
+        )
+      }
+
+      const body = (reply.body ?? {}) as Record<string, unknown>
+      const rows = Array.isArray(body['records']) ? (body['records'] as Record<string, unknown>[]) : []
+
+      return rows.flatMap((row) => {
+        const kind = String(row['type'] ?? '')
+        if (kind !== 'A' && kind !== 'CNAME' && kind !== 'TXT') return []
+        return [
+          {
+            host: String(row['host'] ?? ''),
+            kind,
+            answer: String(row['answer'] ?? ''),
+            ttl: String(row['ttl'] ?? ''),
+          },
+        ]
+      })
     },
   }
 }
