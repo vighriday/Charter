@@ -25,6 +25,7 @@
 import { readFileSync, existsSync } from 'node:fs'
 import type { ChainedEvent } from '../record/chain.js'
 import type { Attestation } from '../record/attestation.js'
+import type { Anchor } from '../record/anchor.js'
 import {
   describeVerification,
   packFingerprintFromRecord,
@@ -47,6 +48,16 @@ ${BOLD}Charter — check a pack without trusting us${OFF}
   attestation.json  optional. Vouches for the END of the record, which the
                     chain cannot do on its own — a shortened chain is still a
                     valid chain.
+
+  --anchor <file>   optional. An outside timestamp over the end of the record.
+
+                    This is the answer to the fairest criticism of everything
+                    else here: Charter holds the record AND the key that vouches
+                    for it. A timestamp authority is somebody who is not us. They
+                    are shown a fingerprint — never the record — and say they were
+                    shown it at a moment. It does not stop a record being
+                    rewritten. It means a rewritten record produces a different
+                    ending while the old statement still exists.
 
   --key <file>      optional. Check the attestation against this public key
                     instead of the one committed to this repository.
@@ -104,8 +115,14 @@ const chosenKey = ((): string | undefined => {
   return at === -1 ? undefined : argv[at + 1]
 })()
 
+/** An outside timestamp over the end of the record, when the pack came with one. */
+const anchorPath = ((): string | undefined => {
+  const at = argv.indexOf('--anchor')
+  return at === -1 ? undefined : argv[at + 1]
+})()
+
 const args = argv.filter(
-  (one, at) => !one.startsWith('-') && argv[at - 1] !== '--key',
+  (one, at) => !one.startsWith('-') && argv[at - 1] !== '--key' && argv[at - 1] !== '--anchor',
 )
 
 if (args.length < 2) {
@@ -146,9 +163,15 @@ if (!existsSync(publicKeyPath)) {
   process.exit(1)
 }
 
+const anchor: Anchor | undefined =
+  anchorPath !== undefined && existsSync(anchorPath)
+    ? (JSON.parse(readFileSync(anchorPath, 'utf8')) as Anchor)
+    : undefined
+
 const result = verifyEverything({
   pack,
   events,
+  ...(anchor === undefined ? {} : { anchor }),
   runId: events[0]?.runId ?? '',
   attestation,
   publicKeyPem: readFileSync(publicKeyPath, 'utf8'),
@@ -170,6 +193,13 @@ console.log(
       : 'you chose this key. It did not come from the pack'
   }${OFF}`,
 )
+if (anchorPath !== undefined) {
+  console.log(
+    `  anchor  ${anchorPath}   ${DIM}${
+      anchor === undefined ? 'there is no file there' : 'an outside timestamp, not made by Charter'
+    }${OFF}`,
+  )
+}
 console.log(`${DIM}${'─'.repeat(72)}${OFF}`)
 console.log('')
 console.log(describeVerification(result))

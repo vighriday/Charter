@@ -77,7 +77,8 @@ import { migrate } from '../db/migrate.js'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fixedClock, readEvents, readHead, readPayload, verifyRun } from '../record/log.js'
-import { attest, generateKeyPair } from '../record/attestation.js'
+import { attest, generateKeyPair, privateKeyFromEnv } from '../record/attestation.js'
+import { anchorHead } from '../record/anchor.js'
 
 import { describeCheck } from '../record/chain.js'
 import { buildRegistry, catalogue, type Tool } from '../tools/registry.js'
@@ -742,11 +743,18 @@ async function main(): Promise<void> {
   // removed from the end, which the chain cannot do on its own — a shortened chain
   // is still a valid chain.
   //
-  // Made with a fresh key here rather than with Charter's own, because the private
-  // half of Charter's key is not on most machines that will run this, and a
-  // demonstration that only worked for us would prove nothing to anybody else.
+  // Made with Charter's own key when this machine holds the private half, and with
+  // a key made here when it does not.
+  //
+  // Most machines running this will not hold Charter's private key — it lives in
+  // `.env` and is never committed, which is the whole point of it. A demonstration
+  // that only worked on our machine would prove nothing to anybody else, so the
+  // fallback exists and says so out loud rather than failing.
   const head = await readHead(db, CASE)
-  const keys = generateKeyPair()
+  const ours = privateKeyFromEnv()
+  const keys = ours === undefined ? generateKeyPair() : undefined
+  const privateKeyPem = ours ?? (keys as NonNullable<typeof keys>).privateKeyPem
+
   writeFileSync(
     join(OUT, 'attestation.json'),
     `${JSON.stringify(
@@ -757,26 +765,59 @@ async function main(): Promise<void> {
           count: head.count,
           attestedAt: clock().toISOString(),
         },
-        keys.privateKeyPem,
+        privateKeyPem,
       ),
       null,
       2,
     )}\n`,
     'utf8',
   )
-  writeFileSync(join(OUT, 'attestation.pub'), keys.publicKeyPem, 'utf8')
+  if (keys !== undefined) writeFileSync(join(OUT, 'attestation.pub'), keys.publicKeyPem, 'utf8')
+
+  // An outside timestamp over the end of the record — somebody who is not us
+  // saying they were shown this fingerprint at this moment.
+  //
+  // Only attempted when saved answers were turned off deliberately. These are free
+  // services run as a public good, and a demonstration that stamped a fingerprint
+  // on every rehearsal would be abusing something somebody pays for out of
+  // goodwill. When it is not attempted, that is said plainly rather than left to
+  // look like a failure.
+  let anchorNote =
+    'Not attempted, because REPLAY_MODE is true and this run reached no network at ' +
+    'all. Run with REPLAY_MODE=false to ask an authority to stamp the head of the record.'
+
+  if (!settings.replaying) {
+    const attempt = await anchorHead(head.head, { nonce: head.count })
+    anchorNote = attempt.why
+    if (attempt.anchor !== undefined) {
+      writeFileSync(join(OUT, 'anchor.json'), `${JSON.stringify(attempt.anchor, null, 2)}\n`, 'utf8')
+    }
+  }
 
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'pack.pdf')}          the sealed pack, as a real PDF`)
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'record.jsonl')}      every entry, in order`)
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'attestation.json')}  vouches for the end of it`)
   console.log('')
-  console.log(`  ${BOLD}npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json${OFF}`)
+  console.log(
+    `  ${BOLD}npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json` +
+      `${keys === undefined ? '' : ' --key out/attestation.pub'}${OFF}`,
+  )
   console.log('')
   console.log(
     `  ${DIM}That reads its key from keys/attestation.pub in this repository, never\n` +
       `  from the pack. A checker that took its key out of the thing it was checking\n` +
       `  would prove nothing at all: anybody could invent a key, vouch for anything\n` +
       `  with it, and ship both together.${OFF}`,
+  )
+  console.log('')
+  console.log(`  ${DIM}An outside timestamp: ${anchorNote}${OFF}`)
+  console.log(
+    `  ${DIM}Charter holds the record AND the key that vouches for it, so everything\n` +
+      `  else here is checked with things Charter made. An outside timestamp is\n` +
+      `  somebody who is not us saying they were shown this fingerprint at a moment.\n` +
+      `  It does not stop a record being rewritten. It means a rewritten record\n` +
+      `  produces a different ending while the old statement still exists — the past\n` +
+      `  can still be rewritten, but no longer quietly.${OFF}`,
   )
   if (keys === undefined) {
     console.log(

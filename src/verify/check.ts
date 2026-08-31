@@ -39,6 +39,7 @@ import { checkChain, type ChainedEvent } from '../record/chain.js'
 import { fingerprintBytes } from '../record/canonical.js'
 import { keyIdOf, verifyAttestation, type Attestation } from '../record/attestation.js'
 import { PERMISSION_FILL_IN_AND_SIGN_ONLY, readSeal } from '../seal/seal.js'
+import { anchorCovers, type Anchor } from '../record/anchor.js'
 
 /** One thing that was checked, and what came of it. */
 export interface Finding {
@@ -76,6 +77,22 @@ export interface WhatToCheck {
    * simply assert the answer.
    */
   readonly recordedPackFingerprint: string | undefined
+  /**
+   * An outside timestamp over the end of the record, if the pack came with one.
+   *
+   * This is the answer to the fairest criticism of everything above it. Charter
+   * holds the record AND the key that attests over it, so in principle we could
+   * produce a different record and attest over that instead. Nothing inside the
+   * record would show it.
+   *
+   * A timestamp authority is somebody who is not us. They are shown a fingerprint
+   * — never the record — and they say they were shown it at a moment. That does
+   * not stop the record being rewritten. It means a rewritten record produces a
+   * different ending, while an outside statement about the old ending still
+   * exists. The past can still be rewritten; it can no longer be rewritten
+   * quietly.
+   */
+  readonly anchor?: Anchor
 }
 
 /**
@@ -195,12 +212,43 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
     })
   }
 
+  // ---- 5. has anybody outside Charter said this record existed? --------------
+  const last = input.events[input.events.length - 1]
+
+  if (input.anchor === undefined) {
+    findings.push({
+      question: 'Has somebody who is not Charter said this record existed?',
+      answer: 'cannot say',
+      detail:
+        'No outside timestamp came with this pack. Charter holds the record and the ' +
+        'key that vouches for it, so everything above is checked with things Charter ' +
+        'made. Without an outside timestamp, nothing here rules out the whole record ' +
+        'having been produced later than it says.',
+    })
+  } else {
+    const covers = anchorCovers(input.anchor, last?.hash ?? '')
+    findings.push({
+      question: 'Has somebody who is not Charter said this record existed?',
+      answer: covers.ok ? 'yes' : 'no',
+      detail: covers.ok
+        ? `${covers.reason} They were shown a fingerprint and nothing else — never the record. This does not stop the record being rewritten; it means a rewritten record would produce a different ending, while this statement about the old ending would still exist.`
+        : covers.reason,
+    })
+  }
+
   const answered = findings.filter((one) => one.answer !== 'cannot say')
 
   return {
     findings,
     ok: answered.length > 0 && answered.every((one) => one.answer === 'yes'),
     cannotProve: [
+      ...(input.anchor === undefined
+        ? [
+            'That this record is as old as it says. Charter holds the record and the key that vouches for it, so a record produced later, in one go, would look exactly like this one. An outside timestamp is what closes that, and this pack did not come with one.',
+          ]
+        : [
+            "Whether the timestamp authority's own signature on that outside statement is valid. Checking it properly means validating their certificate against a trust store, which your machine already does well. Run: openssl ts -reply -in <the token> -text. What IS checked here is that the token is about this record's ending and no other, which is the part that would otherwise go unnoticed.",
+          ]),
       'Who sealed this. The certificate is issued by Charter to Charter, so no outside authority has checked that Charter is who it says it is. A PDF reader will report the same thing. What is proved above is that the file has not changed since it was sealed, which is a claim about the bytes rather than about identity.',
       'That the record is complete in the sense of nothing having been left out at the time of writing. It proves nothing was altered or removed afterwards, which is a different and smaller claim.',
       'Anything about whether the agreement is right for these people. This is not a review of the document, and nothing here is a legal opinion.',

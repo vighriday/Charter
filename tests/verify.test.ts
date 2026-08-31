@@ -267,3 +267,28 @@ describe('a pack that was never sealed', () => {
     expect(result.ok).toBe(false)
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The one thing Charter cannot vouch for about itself
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('whether somebody who is not Charter said this record existed', () => {
+  it('says it cannot tell, when no outside timestamp came with the pack', () => {
+    // The fairest criticism of everything else in this file: Charter holds the
+    // record AND the key that vouches for it. A record produced later, in one go,
+    // would look exactly like a real one. Saying so is the honest answer.
+    const finding = answerTo(check(), 'not Charter')
+    expect(finding?.answer).toBe('cannot say')
+    expect(finding?.detail ?? '').toMatch(/produced later/)
+  })
+
+  it('lists that as something the check cannot prove', () => {
+    expect(check().cannotProve.join(' ')).toMatch(/as old as it says/)
+  })
+
+  it('does not fail the whole check for the want of one', () => {
+    // These are free services and they are sometimes down. A pack without an
+    // outside timestamp is a weaker pack, not a broken one.
+    expect(check().ok).toBe(true)
+  })
+})

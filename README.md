@@ -46,7 +46,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 930 tests
+npm test          # 960 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -218,7 +218,8 @@ answer is 658, which is what this one said on 30 August.
 | The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 25 tests** <!-- tests/document.test.ts --> |
 | The real clients for the outside companies — search, the registrar, reading identity documents — and the rule that picks between each one and its stand-in | **built, 52 tests**, exercised end to end with no account, no key and nothing spent <!-- tests/vendors.test.ts --> |
 | The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document <!-- tests/seal.test.ts --> |
-| The checker a stranger runs against a finished pack | **built, 16 tests.** `npm run verify` <!-- tests/verify.test.ts --> |
+| The checker a stranger runs against a finished pack | **built, 19 tests.** `npm run verify` <!-- tests/verify.test.ts --> |
+| An outside timestamp over the end of the record, from an authority that is not us — and the refusal of one that is about somebody else's record | **built, 27 tests** <!-- tests/anchor.test.ts --> |
 | Classifying which vendor product each credential opens, by asking the vendor | **built, 29 tests** <!-- tests/credentials.test.ts --> |
 | Every setting, and the file that reads each one — with `.env.example` generated from the code so the two cannot drift | **built, 43 tests** <!-- tests/settings.test.ts --> |
 | Changing one line of `.env` and proving nothing else moved | **built, 24 tests** <!-- tests/env-file.test.ts --> |
