@@ -21,6 +21,7 @@
     "readme:check": "node scripts/check-readme-counts.mjs",
     "words:check": "node scripts/check-words.mjs",
     "settings": "node scripts/settings.mjs",
+    "site:data": "node scripts/site-data.mjs --fresh",
     "settings:check": "node scripts/settings.mjs --check",
     "catalogue": "node scripts/catalogue.mjs",
     "catalogue:check": "node scripts/catalogue.mjs --check",

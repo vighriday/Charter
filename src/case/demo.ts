@@ -889,6 +889,29 @@ async function main(): Promise<void> {
     'utf8',
   )
 
+  // The few facts about the run that are not in the record itself: which of the
+  // outside services were real, and whether anybody outside Charter vouched for
+  // when this record existed. The website is built from these together with the
+  // record, so nothing on it is typed in by hand.
+  writeFileSync(
+    join(OUT, 'run-meta.json'),
+    `${JSON.stringify(
+      {
+        caseId: CASE,
+        services: Object.entries(services.chosen).map(([name, one]) => ({
+          name,
+          kind: one.kind,
+          why: one.why,
+        })),
+        anchor: anchorNote,
+        generatedAt: clock().toISOString(),
+      },
+      null,
+      2,
+    )}\n`,
+    'utf8',
+  )
+
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'pack.pdf')}          the sealed pack, as a real PDF`)
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'record.jsonl')}      every entry, in order`)
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'attestation.json')}  vouches for the end of it`)

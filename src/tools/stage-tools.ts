@@ -804,6 +804,16 @@ export const draftAgreement: Tool = {
             dated: today,
             blocks: blocks as unknown as JsonValue,
             explanation: prepared.explanation as unknown as JsonValue,
+            // The voting rules go into the record as words and as numbers.
+            // Anything that shows this agreement later reads them from here
+            // rather than working them out again, because two places working
+            // out the same threshold is two places that can disagree about
+            // what the owners agreed to.
+            ordinaryVote: prepared.data.ordinaryVote,
+            ordinaryVotePoints: prepared.data.ordinaryVotePoints,
+            majorVote: prepared.data.majorVote,
+            majorVotePoints: prepared.data.majorVotePoints,
+            deadlockPossible: prepared.data.deadlockPossible,
           },
         },
       ],
