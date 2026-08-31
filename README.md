@@ -46,7 +46,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 994 tests
+npm test          # 1,017 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -216,6 +216,7 @@ answer is 658, which is what this one said on 30 August.
 | Reading identity documents, and routing a value to a person on whether it can be found in the document rather than on a confidence score | **built, 27 tests** <!-- tests/identity.test.ts --> |
 | Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 40 tests** <!-- tests/pack.test.ts --> |
 | The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 25 tests** <!-- tests/document.test.ts --> |
+| The same agreement as an editable Word file, so the owners can take it to somebody they trust before anybody signs anything | **built, 23 tests** <!-- tests/docx.test.ts --> |
 | The real clients for the outside companies — search, the registrar, reading identity documents — and the rule that picks between each one and its stand-in | **built, 52 tests**, exercised end to end with no account, no key and nothing spent <!-- tests/vendors.test.ts --> |
 | The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document <!-- tests/seal.test.ts --> |
 | The checker a stranger runs against a finished pack | **built, 19 tests.** `npm run verify` <!-- tests/verify.test.ts --> |
@@ -228,7 +229,7 @@ answer is 658, which is what this one said on 30 August.
 | The tool registry, and the catalogue generated from the code that runs | **built.** [TOOLS.md](TOOLS.md), regenerated and compared on every build |
 | Putting the finished website online | **not yet.** A stand-in today. The pack itself is Charter's own code and goes through no outside company |
 | Doctavian, Foxit and Perfect Corp | **not yet.** Named in the settings file, which says plainly that nothing reads them |
-| The ownership agreement as a Word file, and the screens | **not yet** |
+| Building a website for the new business, and putting it online | **not yet** |
 
 ---
 

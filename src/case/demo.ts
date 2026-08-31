@@ -93,6 +93,8 @@ import {
 import { STAGES, couldMoveOn, type StageName } from '../stages/stages.js'
 import { readFacts, runStage, advance, describe } from '../agent/run.js'
 import { renderReport, type FeedEntry } from '../screens/report.js'
+import { buildAgreementDocx } from '../pack/docx.js'
+import { prepareAgreement } from '../agreement/prepare.js'
 import type { TurnTaker } from '../agent/loop.js'
 import type { JsonObject } from '../record/canonical.js'
 import type { TurnResult } from '../model/types.js'
@@ -840,7 +842,14 @@ async function main(): Promise<void> {
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'pack.pdf')}          the sealed pack, as a real PDF`)
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'record.jsonl')}      every entry, in order`)
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'attestation.json')}  vouches for the end of it`)
+  // The same agreement again, editable. The sealed pack is what the owners sign
+  // and is sealed so nobody can change it; this is what they take to somebody they
+  // trust and argue about. Both are built from the same worked-out values, so they
+  // cannot disagree.
+  writeFileSync(join(OUT, 'agreement.docx'), buildAgreementDocx(prepareAgreement(facts, facts.agreement?.dated ?? '2026-09-03').data))
+
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'report.html')}       one page. Open it in a browser`)
+  console.log(`  ${GREEN}·${OFF} ${join(OUT, 'agreement.docx')}    the same agreement, editable`)
   console.log('')
   console.log(
     `  ${BOLD}npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json` +
