@@ -296,8 +296,14 @@ function actorFor(kind: string): Actor {
   return 'system'
 }
 
-/** One line for the watching feed. Short: this scrolls past while a run happens. */
-function describe(kind: string, payload: Record<string, unknown>): string {
+/**
+ * One line for the watching feed. Short: this scrolls past while a run happens.
+ *
+ * Exported because the page written at the end of a run needs the same sentence
+ * for the same entry. Two describers would drift, and the page would then say
+ * something the run never said.
+ */
+export function describe(kind: string, payload: Record<string, unknown>): string {
   switch (kind) {
     case 'turn.started':
       return `turn ${String(payload['turn'])}, offering ${String(payload['toolsOffered'])}`

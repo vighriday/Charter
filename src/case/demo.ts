@@ -74,7 +74,7 @@
 
 import { openBuiltIn } from '../db/driver.js'
 import { migrate } from '../db/migrate.js'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fixedClock, readEvents, readHead, readPayload, verifyRun } from '../record/log.js'
 import { attest, generateKeyPair, privateKeyFromEnv } from '../record/attestation.js'
@@ -91,7 +91,8 @@ import {
   checkIdentityField,
 } from './human.js'
 import { STAGES, couldMoveOn, type StageName } from '../stages/stages.js'
-import { readFacts, runStage, advance } from '../agent/run.js'
+import { readFacts, runStage, advance, describe } from '../agent/run.js'
+import { renderReport, type FeedEntry } from '../screens/report.js'
 import type { TurnTaker } from '../agent/loop.js'
 import type { JsonObject } from '../record/canonical.js'
 import type { TurnResult } from '../model/types.js'
@@ -772,7 +773,14 @@ async function main(): Promise<void> {
     )}\n`,
     'utf8',
   )
-  if (keys !== undefined) writeFileSync(join(OUT, 'attestation.pub'), keys.publicKeyPem, 'utf8')
+  if (keys === undefined) {
+    // Charter's own key was used, so the checker will find the matching public
+    // half in this repository. A leftover key file from an earlier run would be a
+    // key somebody might pass with --key, and it would not match — so it goes.
+    rmSync(join(OUT, 'attestation.pub'), { force: true })
+  } else {
+    writeFileSync(join(OUT, 'attestation.pub'), keys.publicKeyPem, 'utf8')
+  }
 
   // An outside timestamp over the end of the record — somebody who is not us
   // saying they were shown this fingerprint at this moment.
@@ -794,9 +802,45 @@ async function main(): Promise<void> {
     }
   }
 
+  // One page a person opens by double-clicking it. Everything on it is read out of
+  // the record that was just written, and nothing on it is fetched from anywhere —
+  // so it survives being emailed and cannot quietly disagree with the record beside
+  // it.
+  const feed: FeedEntry[] = []
+  for (const event of await readEvents(db, CASE)) {
+    const payload = await readPayload(db, CASE, event.seq)
+    feed.push({
+      seq: event.seq,
+      kind: event.kind,
+      actor: event.actor,
+      stage: event.stage,
+      at: event.ts,
+      detail: describe(event.kind, payload ?? {}),
+    })
+  }
+
+  writeFileSync(
+    join(OUT, 'report.html'),
+    renderReport({
+      caseId: CASE,
+      businessName: facts.proposedName ?? CASE,
+      state: facts.state ?? 'Texas',
+      owners: facts.owners.map((owner) => owner.name),
+      entries: feed,
+      ...(facts.pack === undefined
+        ? {}
+        : { pack: { fingerprint: facts.pack.fingerprint, sizeBytes: facts.pack.sizeBytes } }),
+      anchor: anchorNote,
+      services: describeChoices(services),
+      generatedAt: clock().toISOString(),
+    }),
+    'utf8',
+  )
+
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'pack.pdf')}          the sealed pack, as a real PDF`)
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'record.jsonl')}      every entry, in order`)
   console.log(`  ${GREEN}·${OFF} ${join(OUT, 'attestation.json')}  vouches for the end of it`)
+  console.log(`  ${GREEN}·${OFF} ${join(OUT, 'report.html')}       one page. Open it in a browser`)
   console.log('')
   console.log(
     `  ${BOLD}npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json` +
