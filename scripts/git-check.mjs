@@ -167,6 +167,22 @@ const EXPECTED = [
   /^src\//, /^tests?\//, /^scripts\//, /^public\//, /^migrations\//,
   /^\.github\//, /^keys\/[^/]+\.pub$/, /^keys\/README\.md$/, /^\.env\.example$/,
   /^fixtures\//, /^templates\//,
+
+  // The website, and the files it invites a reader to check it against.
+  //
+  // index.html, charter.css, demo.js and mark.svg are the page. run.js and
+  // run.json are the same run written twice, one for the page to read and one
+  // for a person to download. The four type files are committed on purpose, so
+  // the page needs nothing from anybody once it is open.
+  //
+  // record.jsonl, pack.pdf and attestation.json are copies of what the run left
+  // in out/. They are here because the page tells a reader to check it against
+  // them, and an invitation to check something that is not there is worse than
+  // no invitation. They are rewritten by npm run site:data, never edited.
+  /^site\/(index\.html|charter\.css|demo\.js|mark\.svg|llms\.txt)$/,
+  /^site\/run\.(js|json)$/,
+  /^site\/(record\.jsonl|pack\.pdf|attestation\.json)$/,
+  /^site\/fonts\/([a-z0-9-]+\.woff2|LICENSE\.md)$/,
 ]
 const unexpected = wouldPublish.filter(f => !EXPECTED.some(re => re.test(f)))
 if (unexpected.length) {
