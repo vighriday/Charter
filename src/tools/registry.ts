@@ -49,6 +49,7 @@ import type { ToolSpec } from '../model/types.js'
 import type { CaseFacts } from '../stages/facts.js'
 import { STAGES, type StageName } from '../stages/stages.js'
 import { assertSupported, asJsonSchema, type ArgumentSchema } from './schema.js'
+import { whatToolDoes } from './words.js'
 import type { Services } from './services.js'
 import type { Settings } from '../settings.js'
 import type { SealCertificate } from '../seal/certificate.js'
@@ -127,6 +128,42 @@ export interface Tool {
   readonly reversible: boolean
   /** True when running this spends real money. */
   readonly costsMoney: boolean
+  /**
+   * A reason this call must not run, in plain words, or null when it may.
+   *
+   * TWO KINDS OF REASON, AND THE SECOND ONE MATTERS MORE
+   *
+   * The first is that the call would change nothing: writing down something
+   * already written down, searching the same words twice, checking an address that
+   * has already been checked. Wasteful rather than wrong.
+   *
+   * The second is that the call is not the model's to make. What an owner's
+   * contribution is WORTH is a term of the deal that decides how profit is split
+   * for the life of the company. A model can no more invent that than it can
+   * invent who the owners are.
+   *
+   * WHY A TOOL CAN SAY THIS
+   *
+   * The model is never shown what a tool gave back. It is shown where things
+   * stand, worked out from the record, and it decides again from that. This is on
+   * purpose and it is what makes a run survive a crash: there is no conversation
+   * to lose, only a record to read forward.
+   *
+   * The cost is that a model which does not notice its own last move is already
+   * reflected in the summary will make the same move again. On the first real run
+   * with a real model that is exactly what happened: the business description was
+   * written down five times in a row, identically, and the step ran out of turns
+   * with nothing else done.
+   *
+   * So a tool may say that a call would change nothing, and be refused, and the
+   * model is told what is already true and asked to do something else. It costs
+   * one reply instead of the rest of the step. Returning a reason rather than
+   * throwing keeps it a normal answer: doing nothing twice is not an error, it is
+   * just not worth a turn.
+   *
+   * Returns the reason in plain words, or null when the call would do something.
+   */
+  whyThisMustNotRun?(args: JsonObject, facts: CaseFacts): string | null
   run(args: JsonObject, context: ToolContext): Promise<ToolOutcome>
 }
 
@@ -139,9 +176,9 @@ export class UnknownTool extends Error {
     readonly offered: readonly string[],
   ) {
     super(
-      `there is no tool called "${toolName}". This stage offers: ` +
-        `${offered.join(', ') || 'nothing'}. A tool that was never offered is never run, ` +
-        `whatever the model asked for.`,
+      `it asked for something called "${toolName}", which does not exist. In this step ` +
+        `it may: ${offered.map((one) => whatToolDoes(one)).join('; ') || 'do nothing at all'}. ` +
+        `Something it was never handed is never run, whatever it asks for.`,
     )
     this.name = 'UnknownTool'
   }
@@ -153,8 +190,9 @@ export class ToolNotInThisStage extends Error {
     readonly stage: StageName,
   ) {
     super(
-      `"${toolName}" exists, but not in stage "${stage}". Tools change only when the ` +
-        `stage changes, and the model was never shown this one.`,
+      `it tried to ${whatToolDoes(toolName)}, which it can do, but not during ` +
+        `"${STAGES[stage].title}". What Charter may do changes only when the step ` +
+        `changes, and this was never on the list for this one.`,
     )
     this.name = 'ToolNotInThisStage'
   }

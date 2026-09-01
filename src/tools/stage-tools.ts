@@ -38,6 +38,7 @@ import type { AddressRecord } from './services.js'
 import { buildPackDocument } from '../pack/document.js'
 import { PERMISSION_FILL_IN_AND_SIGN_ONLY, sealPack } from '../seal/seal.js'
 import type { Tool, ToolContext, ToolOutcome, ToolEvent } from './registry.js'
+import type { CaseFacts } from '../stages/facts.js'
 
 /** Read a required text argument. The shape was already checked before this ran. */
 const text = (args: JsonObject, field: string): string => {
@@ -95,6 +96,33 @@ export const askQuestion: Tool = {
   },
 }
 
+/**
+ * Whether an amount in whole cents appears in something a person actually said.
+ *
+ * Everything a person has said is searched: their answers, their description of
+ * the business, and the words each owner's contribution was written down in — which
+ * came from their answers too.
+ *
+ * Compared as digits with the punctuation taken out, so "$12,000" and "12000" are
+ * the same amount written twice. Whole dollars only: nobody says a contribution is
+ * worth twelve thousand dollars and forty-one cents, and matching on the cents
+ * would let 1200041 through on the strength of somebody having written 12000.
+ */
+export function saidByAPerson(cents: string, facts: CaseFacts): boolean {
+  const dollars = Math.round(Number(cents) / 100)
+  if (!Number.isFinite(dollars)) return false
+
+  const said = [
+    ...facts.answers.map((one) => one.answer),
+    facts.description ?? '',
+    ...facts.owners.map((one) => one.contribution),
+  ].join(' ')
+
+  // Every run of digits, with the separators people use inside numbers removed.
+  const numbers: readonly string[] = said.replace(/[,\u00a0]/g, '').match(/\d+/g) ?? []
+  return numbers.includes(String(dollars))
+}
+
 export const recordFact: Tool = {
   name: 'record_fact',
   summary:
@@ -147,6 +175,74 @@ export const recordFact: Tool = {
   },
   reversible: true,
   costsMoney: false,
+  whyThisMustNotRun(args: JsonObject, facts): string | null {
+    const about = text(args, 'about')
+    const value = text(args, 'value')
+    // Compared loosely on spacing and capitals, because "TX" and "tx " are the
+    // same fact written twice, and refusing only an exact match would let a model
+    // loop forever on the difference between them.
+    const same = (already: string | undefined): boolean =>
+      already !== undefined &&
+      already.replace(/\s+/g, ' ').trim().toLowerCase() ===
+        value.replace(/\s+/g, ' ').trim().toLowerCase()
+
+    // Any description at all, not only the same one. The description is the
+    // owners' account of their own business, in their own words. A model that
+    // rewrites it is not adding anything; on the first real run one did exactly
+    // that four times, each time shorter than the last, and spent the step. If it
+    // is wrong, the owners say so and their answer replaces it.
+    if (about === 'description' && facts.description !== undefined) {
+      return same(facts.description)
+        ? 'The business description is already written down, in those words.'
+        : 'A business description is already written down, in the owners own words.'
+    }
+    if (about === 'state' && same(facts.state)) {
+      return `The state is already written down as ${facts.state}.`
+    }
+    if (about === 'proposed_name' && same(facts.proposedName)) {
+      return `The proposed name is already written down as ${facts.proposedName}.`
+    }
+    // What a contribution is WORTH is a term of the deal, not an observation.
+    //
+    // Texas allocates profit by contribution value as stated in the company's
+    // records, and this agreement is that record. So this number decides how money
+    // is split for the life of the company, and it has to come from the people
+    // whose money it is.
+    //
+    // The test is deliberately simple and deliberately strict: the amount has to
+    // appear somewhere a person actually said it. Anything else — including a
+    // perfectly sensible number that makes the shares come out even — is the model
+    // deciding a term, and it is refused with the question it should have asked.
+    if (about === 'owner_contribution_value') {
+      const owner = text(args, 'owner')
+      if (!saidByAPerson(value, facts)) {
+        return (
+          `Nobody has said that ${owner}'s contribution is worth ${asMoney(value)}. What a ` +
+          `contribution is worth is a term of the agreement, not something to work out: ` +
+          `Texas splits profit by contribution value as recorded in the agreement, so this ` +
+          `number decides how money is divided for as long as the company exists. Ask the ` +
+          `owners what value they agree to credit it at, and write down what they say.`
+        )
+      }
+    }
+
+    if (about === 'owner') {
+      const contribution = text(args, 'contribution')
+      const already = facts.owners.find(
+        (one) => one.name.trim().toLowerCase() === value.trim().toLowerCase(),
+      )
+      // Only when the contribution adds nothing either. An owner written down
+      // with no contribution, and then again with one, is somebody being filled in
+      // rather than repeated.
+      if (
+        already !== undefined &&
+        (contribution.trim() === '' || already.contribution.trim() === contribution.trim())
+      ) {
+        return `${already.name} is already written down as an owner.`
+      }
+    }
+    return null
+  },
   async run(args: JsonObject): Promise<ToolOutcome> {
     const about = text(args, 'about')
     const value = text(args, 'value')
@@ -240,6 +336,23 @@ export const searchWeb: Tool = {
   },
   reversible: true,
   costsMoney: false,
+  whyThisMustNotRun(args: JsonObject, facts): string | null {
+    const query = text(args, 'query').replace(/\s+/g, ' ').trim().toLowerCase()
+    const already = (facts.nameResearch?.searches ?? []).find(
+      (one) => one.query.replace(/\s+/g, ' ').trim().toLowerCase() === query,
+    )
+    if (already === undefined) return null
+
+    // Not merely pointless: a repeated search SPENDS the allowance again. Two
+    // hundred and fifty searches a month, about twelve to a run, and on the first
+    // real run one step ran the same two queries twelve times between them.
+    return (
+      `That exact search has already been run and it found ` +
+      `${already.found.length === 0 ? 'nothing' : already.found.join('; ')}. ` +
+      `Running it again would cost another search from a monthly allowance and ` +
+      `return the same thing.`
+    )
+  },
   async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
     const query = text(args, 'query')
     const answer = await context.services.search.search(query)
@@ -368,6 +481,20 @@ export const checkAddress: Tool = {
   },
   reversible: true,
   costsMoney: false,
+  whyThisMustNotRun(args: JsonObject, facts): string | null {
+    const domain = text(args, 'domain').trim().toLowerCase()
+    const address = facts.address
+    if (address === undefined) return null
+    if (address.candidate.trim().toLowerCase() !== domain) return null
+    if (address.available === undefined) return null
+
+    return (
+      `${address.candidate} has already been checked and it is ` +
+      `${address.available ? 'free' : 'taken'}` +
+      `${address.priceCents === undefined ? '' : `, at ${asMoney(address.priceCents)} for the first year`}` +
+      `. Asking again gives the same answer.`
+    )
+  },
   async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
     const domain = text(args, 'domain')
     const quote = await context.services.registrar.quote(domain)
@@ -415,6 +542,28 @@ export const registerAddress: Tool = {
   // anything that cannot be undone.
   reversible: false,
   costsMoney: true,
+  whyThisMustNotRun(args: JsonObject, facts): string | null {
+    const domain = text(args, 'domain').trim().toLowerCase()
+    const address = facts.address
+    const permission = facts.spendAuthorisation
+
+    if (address === undefined || permission === undefined) return null
+    if (address.candidate.trim().toLowerCase() !== domain) return null
+    if (address.priceCents === undefined) return null
+
+    const left = Number(permission.limitCents) - Number(permission.spentCents)
+    if (Number(address.priceCents) <= left) return null
+
+    // Trying anyway is not harmful — the refusal downstream is real and holds —
+    // but it changes nothing and costs a turn. On a real run it cost ten of them
+    // and then the step. The way forward is to ask for a bigger limit, so say so.
+    return (
+      `${address.candidate} costs ${address.priceCents} cents and only ${left} cents ` +
+      `are left of what a person allowed. Registering it will be refused however ` +
+      `many times it is tried. Ask a person to allow at least ${address.priceCents} ` +
+      `cents, or find a cheaper address.`
+    )
+  },
   async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
     const domain = text(args, 'domain')
     const address = context.facts.address
@@ -436,7 +585,10 @@ export const registerAddress: Tool = {
       return {
         result: { registered: false, why: `${domain} is already taken.` },
         events: [
-          { kind: 'address.registration.refused', payload: { domain, why: 'not available' } },
+          {
+            kind: 'address.registration.refused',
+            payload: { domain, why: 'somebody else already has this address' },
+          },
         ],
       }
     }
@@ -608,6 +760,19 @@ export const listAddressRecords: Tool = {
   },
   reversible: true,
   costsMoney: false,
+  whyThisMustNotRun(_args: JsonObject, facts): string | null {
+    // Only once the read-back has actually happened and agreed with what was sent.
+    // A read-back that disagreed is worth doing again, because the registrar may
+    // simply not have caught up yet.
+    if (facts.addressRecordsHeld.length === 0) return null
+    if (facts.addressRecordsHeld.length !== facts.addressRecords.length) return null
+
+    return (
+      `The records have already been read back from the registrar, and it holds ` +
+      `${facts.addressRecordsHeld.length} of them, matching what was sent. Reading ` +
+      `them again tells you the same thing.`
+    )
+  },
   async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
     const domain = text(args, 'domain')
     const held = await context.services.registrar.listRecords(domain)
@@ -705,6 +870,23 @@ export const recordAgreementChoice: Tool = {
   },
   reversible: true,
   costsMoney: false,
+  whyThisMustNotRun(args: JsonObject, facts): string | null {
+    const which = text(args, 'which')
+    const value = text(args, 'value')
+    const chosen = facts.agreementChoices
+    if (chosen === undefined) return null
+
+    if (which === 'managed_by' && chosen.managedBy === value) {
+      return `Who manages the company is already written down as: ${chosen.managedBy}.`
+    }
+    if (which === 'exit_process' && chosen.hasExitProcess !== undefined) {
+      const already = chosen.hasExitProcess ? 'yes' : 'no'
+      if (already === value) {
+        return `Whether there is an agreed way out is already written down as: ${already}.`
+      }
+    }
+    return null
+  },
   async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
     const which = text(args, 'which')
     const value = text(args, 'value')
@@ -856,6 +1038,24 @@ export const readIdentityDocument: Tool = {
   },
   reversible: true,
   costsMoney: false,
+  whyThisMustNotRun(args: JsonObject, facts): string | null {
+    const owner = text(args, 'owner').trim().toLowerCase()
+    const done = facts.identityChecks.find(
+      (one) => one.owner.trim().toLowerCase() === owner,
+    )
+    if (done === undefined) return null
+
+    // Reading a document a second time costs credits from a monthly allowance and
+    // returns the same fields. If some of them still need a person, that is a
+    // thing only a person can clear, and reading the page again will not do it.
+    return (
+      `${done.owner}'s document has already been read.` +
+      (done.toReview.length === 0
+        ? ' Every field matched what was already known.'
+        : ` ${done.toReview.length} value(s) still need a person to look at them, which ` +
+          `reading the document again cannot change.`)
+    )
+  },
   async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
     const owner = text(args, 'owner')
     const documentRef = text(args, 'document')
