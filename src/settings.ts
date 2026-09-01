@@ -145,6 +145,50 @@ const NOT_BUILT_STORAGE =
   'the file store and the publishing client. The finished pack is held in memory ' +
   'and the website is published by a stand-in today.'
 
+/**
+ * What each Doctavian setting is for, in plain words.
+ *
+ * Three of the six are read by the client in src/vendors/doctavian.ts. The other
+ * three are the pieces of a sign-in that has to be done by a person in a browser,
+ * and nothing here can do it for them — which is worth saying out loud rather than
+ * leaving somebody to set four values and wonder why nothing happens.
+ */
+const DOCTAVIAN_NOTES: Readonly<Record<string, readonly string[]>> = {
+  DOCTAVIAN_BASE_URL: [
+    'Where their service lives. The demonstration environment is a separate',
+    'address from the live one, and a key is scoped to one environment, so these',
+    'two go together or neither works.',
+  ],
+  DOCTAVIAN_API_KEY: [
+    'Sent in an x-api-key header. It says which product, which version and which',
+    'environment is being asked for. On its own it is not enough: their team',
+    'confirmed on 27 August 2026 that the demonstration environment also needs a',
+    'bearer token, which is the setting below.',
+  ],
+  DOCTAVIAN_REFRESH_TOKEN: [
+    'The bearer token, sent in an authorization header alongside the key.',
+    '',
+    'This one cannot be issued by anything in this project. It comes from signing',
+    'in with a Microsoft account through their own sign-in page, which is a thing',
+    'a person does in a browser. Without it the ownership agreement is written by',
+    "Charter's own code instead, from the same data, and the run says so.",
+  ],
+  DOCTAVIAN_AUTH_PROVIDER: [
+    'Which sign-in the token above came from. Recorded so that a token that stops',
+    'working can be traced back to where it was obtained.',
+  ],
+  DOCTAVIAN_OAUTH_CLIENT_ID: [
+    'Part of obtaining the bearer token by hand. Nothing in this project performs',
+    'that sign-in, so nothing here reads this.',
+  ],
+  DOCTAVIAN_OAUTH_SCOPE: [
+    'Part of obtaining the bearer token by hand. Nothing in this project performs',
+    'that sign-in, so nothing here reads this.',
+  ],
+}
+
+const DOCTAVIAN_READ_BY = 'src/vendors/doctavian.ts'
+
 const doctavian = (
   [
     ['DOCTAVIAN_BASE_URL', 'text'],
@@ -154,20 +198,21 @@ const doctavian = (
     ['DOCTAVIAN_OAUTH_CLIENT_ID', 'text'],
     ['DOCTAVIAN_OAUTH_SCOPE', 'text'],
   ] as const
-).map(
-  ([name, kind]): Setting => ({
+).map(([name, kind]): Setting => {
+  const isRead =
+    name === 'DOCTAVIAN_BASE_URL' ||
+    name === 'DOCTAVIAN_API_KEY' ||
+    name === 'DOCTAVIAN_REFRESH_TOKEN'
+
+  return {
     name,
     section: 'DOCTAVIAN — writes the ownership agreement from one adaptive template',
-    what:
-      name === 'DOCTAVIAN_BASE_URL'
-        ? ['doctavian.com — access is granted per account.']
-        : [],
+    what: DOCTAVIAN_NOTES[name] ?? [],
     kind,
     example: '',
-    readBy: null,
-    notYetBuilt: NOT_BUILT_VENDOR,
-  }),
-)
+    ...(isRead ? { readBy: DOCTAVIAN_READ_BY } : { readBy: null, notYetBuilt: NOT_BUILT_VENDOR }),
+  }
+})
 
 const foxit = (
   [

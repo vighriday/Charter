@@ -2,7 +2,7 @@
 
 **From idea to legally alive.**
 
-![tests](https://img.shields.io/badge/tests-1%2C093%20passing-2f6f4e)
+![tests](https://img.shields.io/badge/tests-1%2C113%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
 ![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
@@ -180,7 +180,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,093 tests
+npm test          # 1,113 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -383,7 +383,8 @@ answer is 658, which is what this one said on 30 August.
 | The readme's own numbers, checked against the code | **built, 19 tests** <!-- tests/readme.test.ts --> |
 | The tool registry, and the catalogue generated from the code that runs | **built.** [TOOLS.md](TOOLS.md), regenerated and compared on every build |
 | Putting the finished website online | **not yet.** A stand-in today. The pack itself is Charter's own code and goes through no outside company |
-| Doctavian, Foxit and Perfect Corp | **not yet.** Named in the settings file, which says plainly that nothing reads them |
+| The client for the document service that writes the agreement from a Word template, built to the four answers their own team gave us about where their documentation and their shipped example disagree | **built, 20 tests.** Waiting on one thing only: their demonstration environment needs a bearer token obtained through a Microsoft sign-in done by a person in a browser, and until there is one the agreement is written by Charter's own code from the same data <!-- tests/doctavian.test.ts --> |
+| Foxit and Perfect Corp | **not yet.** Named in the settings file, which says plainly that nothing reads them |
 | Building a website for the new business, and putting it online | **not yet** |
 
 ---
