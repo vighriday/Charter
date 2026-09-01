@@ -16,6 +16,7 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "record:demo": "tsx src/record/demo.ts",
     "check": "npm run git:check && npm run words:check && npm run typecheck && npm run test && npm run catalogue:check && npm run readme:check && npm run settings:check && npm run site:check",
+    "start": "tsx src/case/live.ts",
     "agent:demo": "tsx src/case/demo.ts",
     "keys:classify": "tsx src/checks/classify.ts",
     "readme:check": "node scripts/check-readme-counts.mjs",
@@ -27,7 +28,8 @@
     "catalogue:check": "node scripts/catalogue.mjs --check",
     "verify": "tsx src/verify/cli.ts",
     "site:check": "node scripts/check-site.mjs",
-    "fonts": "node scripts/fonts.mjs"
+    "fonts": "node scripts/fonts.mjs",
+    "serve": "tsx src/serve/server.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",
