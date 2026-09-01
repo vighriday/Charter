@@ -455,14 +455,16 @@ Nine things in it are worth watching for:
    person approves sending the pack, naming it by its fingerprint, and only then
    does the last stage run.
 
-At the end it prints the record — 122 entries, who caused each one, and whether the
+At the end it prints the record — 154 entries, who caused each one, and whether the
 chain holds — and then the complete list of everything the agent can do, generated
 from the code that runs rather than written alongside it.
 
-**Six entries in that record were caused by a person, of four kinds, and none of
+**Seven entries in that record were caused by a person, of four kinds, and none of
 the four kinds has a tool:** answering a question, granting permission to spend,
 checking a value against the document it was read from, and approving that the pack
-be sent. There are six because two questions were asked and answered.
+be sent. There are seven because four of them are questions, including the one
+asking what value the owners agree to credit each contribution at — a term Charter
+refuses to choose, because Texas divides profit by that number.
 
 **What is real and what is stood in for, plainly.** The demonstration prints this
 itself, before it runs anything, rather than leaving it to be discovered — and it
