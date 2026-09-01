@@ -36,6 +36,83 @@ import type { JsonObject, JsonValue } from '../record/canonical.js'
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta'
 
+/**
+ * What Google's servers accept inside a tool's argument description.
+ *
+ * WHY THIS LIST EXISTS
+ *
+ * Google does not take a whole JSON Schema. It takes a small named subset, and it
+ * refuses the entire request — with a 400 and no partial success — when it meets a
+ * single field it has not heard of. It does not ignore the field. It does not warn.
+ * The whole call fails.
+ *
+ * That is exactly what happened on the first real run of this project. Every tool
+ * Charter has is described with `additionalProperties: false`, which is how a
+ * schema says "no arguments beyond these ones". Google has no such field, so every
+ * request to every Gemini model was refused, on every turn, from the first one. The
+ * router did what it is built to do and fell through to the fallback provider, the
+ * fallback ran the whole thing on its own, and about five turns later it hit its
+ * own limit and the run stopped. Nothing in the output said the word Google.
+ *
+ * WHAT IS LOST BY DROPPING THOSE FIELDS, AND WHY IT IS NOTHING
+ *
+ * `additionalProperties: false` is a rule about what the model may send. Charter
+ * checks every set of arguments against the full schema itself, before a tool runs,
+ * and refuses anything extra. So the rule is kept where it has to be kept — on our
+ * side, where a refusal can be recorded — and is simply not repeated to a server
+ * that has no word for it.
+ *
+ * The list is from Google's own published Schema type. Anything not named here is
+ * left out of what is sent, and left untouched everywhere else.
+ */
+const GOOGLE_UNDERSTANDS: ReadonlySet<string> = new Set([
+  'type',
+  'format',
+  'title',
+  'description',
+  'nullable',
+  'enum',
+  'items',
+  'properties',
+  'required',
+  'minItems',
+  'maxItems',
+  'minLength',
+  'maxLength',
+  'minimum',
+  'maximum',
+  'pattern',
+  'anyOf',
+  'default',
+  'example',
+])
+
+/**
+ * The same argument description, with anything Google has no word for left out.
+ *
+ * Recursive, because a schema nests: the offending field was on the top level of
+ * every tool and would also appear inside any nested object.
+ */
+export function asGoogleSchema(schema: JsonValue): JsonValue {
+  if (Array.isArray(schema)) return schema.map((one) => asGoogleSchema(one)) as JsonValue
+
+  if (schema === null || typeof schema !== 'object') return schema
+
+  const kept: Record<string, JsonValue> = {}
+  for (const [key, value] of Object.entries(schema as JsonObject)) {
+    if (!GOOGLE_UNDERSTANDS.has(key)) continue
+    // `properties` is a map of names to schemas, not a schema itself, so its
+    // values are converted and its keys are left exactly as they are.
+    kept[key] =
+      key === 'properties' && value !== null && typeof value === 'object' && !Array.isArray(value)
+        ? (Object.fromEntries(
+            Object.entries(value as JsonObject).map(([name, one]) => [name, asGoogleSchema(one)]),
+          ) as JsonValue)
+        : asGoogleSchema(value as JsonValue)
+  }
+  return kept as JsonValue
+}
+
 /** How the network is reached. Passed in so tests never touch it. */
 export type Fetcher = (url: string, init: RequestInit) => Promise<Response>
 
@@ -157,7 +234,9 @@ export function geminiProvider(options: GeminiOptions): ModelProvider {
             functionDeclarations: request.tools.map((tool) => ({
               name: tool.name,
               description: tool.description,
-              parameters: tool.parameters,
+              // Not the schema as written. See asGoogleSchema above: one field
+              // Google has never heard of fails the whole request.
+              parameters: asGoogleSchema(tool.parameters as JsonValue),
             })),
           },
         ],
@@ -165,11 +244,22 @@ export function geminiProvider(options: GeminiOptions): ModelProvider {
           functionCallingConfig: {
             // ANY forces a tool call. AUTO lets the model decline, which only the
             // stage that must be able to say "nothing left to do" ever needs.
-            mode: request.toolChoice === 'required' ? 'ANY' : 'AUTO',
-            // Their servers enforce this list, per request. It is what turns
-            // "never invent a tool we did not offer" into somebody else's promise
-            // rather than our hope.
-            allowedFunctionNames: request.tools.map((t) => t.name),
+            //
+            // The list of allowed names is sent ONLY with ANY, because Google
+            // refuses the whole request otherwise: "Please set
+            // allowed_function_names only when function calling mode is ANY." That
+            // is a 400 on every turn of every stage that lets the model decline,
+            // and it is how the first real run of this project spent its whole
+            // first step on the fallback provider without ever saying why.
+            //
+            // So on the stages that force a call, their servers enforce the list
+            // and the promise is theirs. On the one stage that does not, the
+            // promise is ours alone: a tool the stage was never given is refused
+            // before it runs, in src/tools/registry.ts, and the refusal is
+            // recorded. Worth being exact about which of those two is happening.
+            ...(request.toolChoice === 'required'
+              ? { mode: 'ANY', allowedFunctionNames: request.tools.map((t) => t.name) }
+              : { mode: 'AUTO' }),
           },
         },
       }
@@ -200,7 +290,9 @@ export function geminiProvider(options: GeminiOptions): ModelProvider {
         contents: [{ role: 'user', parts: [{ text: `${request.instruction}\n\n${request.text}` }] }],
         generationConfig: {
           responseMimeType: 'application/json',
-          responseSchema: request.schema,
+          // Same subset, same reason. A shape Google cannot read fails the whole
+          // request, and this is the call whose entire point is a forced shape.
+          responseSchema: asGoogleSchema(request.schema as JsonValue),
         },
       }
 
