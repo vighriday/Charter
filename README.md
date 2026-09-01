@@ -2,6 +2,13 @@
 
 **From idea to legally alive.**
 
+![tests](https://img.shields.io/badge/tests-1%2C087%20passing-2f6f4e)
+![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
+![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
+![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
+![network](https://img.shields.io/badge/works%20with-no%20keys%2C%20no%20network-777)
+![signing](https://img.shields.io/badge/signs%20for%20you-never-8a3324)
+
 You describe your business in plain English. Charter prepares everything around the
 government filing — it researches the name, secures a web address, drafts the
 ownership agreement, checks each owner's identity documents, assembles one signable
@@ -14,11 +21,110 @@ already solved and already free. Everything hard lives in the second owner — b
 the difficulty was never the paperwork, it is writing down an agreement between
 people who trust each other completely today and might not in three years.
 
+**Topics:** `ai-agent` · `llm-tools` · `legal-tech` · `llc-formation` ·
+`operating-agreement` · `tamper-evident` · `append-only-log` · `hash-chain` ·
+`ed25519` · `human-in-the-loop` · `agent-safety` · `pdf-generation` · `pdf-signing` ·
+`postgresql` · `pglite` · `typescript` · `gemini` · `groq` · `no-dependencies` ·
+`ueta` · `esign-act`
+
 ---
 
-## Try it in thirty seconds
+## What it actually does
 
-No account. No key. No database to install. No network.
+```mermaid
+flowchart LR
+  A["a paragraph<br/>a person typed"] --> B{{"Charter<br/>eight steps"}}
+  B --> C["the packet<br/>unsigned"]
+  B --> D["the record<br/>every step, chained"]
+  B --> E["the attestation<br/>over the end of it"]
+  C --> F(["the owners sign it<br/>themselves"])
+
+  style F fill:#e8eef6,stroke:#2f5d8a,stroke-width:2px
+  style B fill:#f7f5f1,stroke:#8a8378
+```
+
+The blue box is the one thing this software will not do for you, and cannot be
+configured to do. Everything else is the software's job.
+
+### The eight steps
+
+```mermaid
+flowchart TD
+  S1["1 · Understand the business<br/><i>ask, and write down what you said</i>"]
+  S2["2 · Check the name is free<br/><i>search the live web, compare in plain code</i>"]
+  S3["3 · Get the web address<br/><i>check the price, register only within a limit</i>"]
+  S4["4 · Write the contract<br/><i>every article number worked out in code</i>"]
+  S5["5 · Check the owners' identity documents<br/><i>read the fields, send the doubtful ones to a person</i>"]
+  S6["6 · Assemble and seal the packet<br/><i>one PDF, sealed so it can be filled in and signed</i>"]
+  S7["7 · The boundary<br/><b>no tools at all</b>"]
+  S8["8 · Put the website online<br/><i>after, and only after, a person approved</i>"]
+
+  S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
+
+  style S7 fill:#e8eef6,stroke:#2f5d8a,stroke-width:2px
+```
+
+**Step seven has no tools.** Not "tools it is discouraged from using" — the list is
+empty, so there is nothing for the model to call and nothing to argue with. The run
+stops there and waits for a person to approve the packet, naming it by its own
+fingerprint. That step exists to be empty.
+
+### Where a person is needed, and why each one
+
+```mermaid
+flowchart LR
+  subgraph M["what the software decides"]
+    M1["what to do next"]
+    M2["what the search results say"]
+    M3["which articles the contract needs"]
+  end
+
+  subgraph P["what only a person decides"]
+    P1["answering a question<br/>about their own business"]
+    P2["permission to spend,<br/>up to a stated amount"]
+    P3["whether a close name<br/>is close enough to matter"]
+    P4["a value read off an ID<br/>that could not be matched"]
+    P5["approving the finished packet,<br/>by name, against its fingerprint"]
+    P6["signing it"]
+  end
+
+  M --> P
+
+  style P fill:#e8eef6,stroke:#2f5d8a,stroke-width:2px
+```
+
+The first five stop the run: it waits, and does not guess while it waits. The sixth
+never comes back to the software at all.
+
+### How the record is put together
+
+```mermaid
+flowchart LR
+  G["genesis<br/><i>from the run's own name</i>"] --> E1["entry 1"] --> E2["entry 2"] --> E3["entry 3"] --> EN["entry n"]
+  EN --> AT["attestation<br/><i>signed over the END</i>"]
+
+  style AT fill:#e8eef6,stroke:#2f5d8a,stroke-width:2px
+```
+
+Each entry carries the fingerprint of the one before it, so changing anything in the
+middle breaks every link after it and the checker names the exact entry. The one
+thing a chain cannot catch on its own is entries removed from the **end**, because a
+shortened chain is still a valid chain — which is what the attestation is for, and
+why it is drawn separately.
+
+---
+
+## Try it
+
+There are three ways in, and they need different things.
+
+| | What it needs | What you get |
+| --- | --- | --- |
+| `npm run agent:demo` | nothing at all | one business through all eight steps, recorded |
+| `npm run serve` | nothing, or a free key | the website, including a tab where you run **your own** idea |
+| `npm start` | a free model key | your own idea, in a terminal |
+
+### 1. The recorded walkthrough — no account, no key, no network
 
 ```bash
 npm install
@@ -26,7 +132,35 @@ npm run record:demo     # the record, and what it can and cannot prove
 npm run agent:demo      # one business through all eight stages, start to finish
 ```
 
-That runs a real PostgreSQL engine inside the Node process and shows five things:
+### 2. The website, and running your own idea in it
+
+```bash
+npm run serve           # then open the address it prints
+```
+
+Six tabs replay the run above and need nothing. The seventh is different: you type
+what your business is, and Charter works on it for real, stopping to ask you at
+every one of the five places above.
+
+It is open to anybody, so it counts: six runs a day for everybody together, two per
+person, one at a time. Those numbers are what the free allowances behind it can
+carry — one run uses about twelve web searches and the search allowance is 250 a
+**month**. Every refusal says which limit, why it is there, and when it lifts.
+
+### 3. Your own idea, in a terminal
+
+```bash
+npm start
+```
+
+Needs a free model key from `aistudio.google.com/apikey` in `.env` as
+`GEMINI_API_KEY`, and `REPLAY_MODE=false`. Without one it stops and says so, rather
+than quietly replaying the bakery and calling it your run.
+
+### What the recorded walkthrough shows
+
+`npm run record:demo` runs a real PostgreSQL engine inside the Node process and
+shows five things:
 
 1. A record being written — five entries, each carrying the fingerprint of the one
    before it.
@@ -46,7 +180,7 @@ That runs a real PostgreSQL engine inside the Node process and shows five things
 Everything else:
 
 ```bash
-npm test          # 1,039 tests
+npm test          # 1,087 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -227,11 +361,15 @@ answer is 658, which is what this one said on 30 August.
 | Every tool, including the rule that nothing costs money without a person's permission covering it | **built, 46 tests**, the spending rule proved by nothing being charged rather than by an error <!-- tests/tools.test.ts --> |
 | One whole case through all eight stages, as a test rather than only as a demonstration | **built, 12 tests** <!-- tests/whole-run.test.ts --> |
 | Whether two business names collide, decided in plain code | **built, 24 tests** <!-- tests/names.test.ts --> |
-| The ownership agreement — every number, article number and cross-reference worked out in code, including a check that the voting rule and the deadlock article do not contradict each other | **built, 70 tests** <!-- tests/agreement.test.ts --> |
+| The ownership agreement — every number, article number and cross-reference worked out in code, including a check that the voting rule and the deadlock article do not contradict each other | **built, 75 tests** <!-- tests/agreement.test.ts --> |
 | Whether a written date is a day that actually happened, in one place both callers use | **built, 20 tests** <!-- tests/dates.test.ts --> |
 | Reading identity documents, and routing a value to a person on whether it can be found in the document rather than on a confidence score | **built, 27 tests** <!-- tests/identity.test.ts --> |
 | Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 40 tests** <!-- tests/pack.test.ts --> |
+| The live run: bringing your own idea, and the five places it stops and waits for you | **built, 6 tests** <!-- tests/live.test.ts --> |
+| Reading typed answers without losing any of them, so the whole run can be driven from a written-out list rather than only by hand | **built, 7 tests** <!-- tests/keyboard.test.ts --> |
+| The run panel on the website: anybody runs their own idea with our keys, and the limits that let it be open to everybody rather than to nobody | **built, 17 tests**, and the shipped number was wrong until the test did the arithmetic <!-- tests/limits.test.ts --> |
 | The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 25 tests** <!-- tests/document.test.ts --> |
+| Reading the words back out of the sealed file, so the website shows the document rather than its own copy of the document | **built, 12 tests** <!-- tests/pack-read.test.ts --> |
 | The same agreement as an editable Word file, so the owners can take it to somebody they trust before anybody signs anything | **built, 23 tests** <!-- tests/docx.test.ts --> |
 | Pointing a registered name at the website, and reading the records back from the registrar to find out whether "accepted" meant "stored" | **built, 22 tests** <!-- tests/address-records.test.ts --> |
 | The real clients for the outside companies — search, the registrar, reading identity documents — and the rule that picks between each one and its stand-in | **built, 52 tests**, exercised end to end with no account, no key and nothing spent <!-- tests/vendors.test.ts --> |
@@ -242,7 +380,7 @@ answer is 658, which is what this one said on 30 August.
 | Classifying which vendor product each credential opens, by asking the vendor | **built, 29 tests** <!-- tests/credentials.test.ts --> |
 | Every setting, and the file that reads each one — with `.env.example` generated from the code so the two cannot drift | **built, 43 tests** <!-- tests/settings.test.ts --> |
 | Changing one line of `.env` and proving nothing else moved | **built, 24 tests** <!-- tests/env-file.test.ts --> |
-| The readme's own numbers, checked against the code | **built, 18 tests** <!-- tests/readme.test.ts --> |
+| The readme's own numbers, checked against the code | **built, 19 tests** <!-- tests/readme.test.ts --> |
 | The tool registry, and the catalogue generated from the code that runs | **built.** [TOOLS.md](TOOLS.md), regenerated and compared on every build |
 | Putting the finished website online | **not yet.** A stand-in today. The pack itself is Charter's own code and goes through no outside company |
 | Doctavian, Foxit and Perfect Corp | **not yet.** Named in the settings file, which says plainly that nothing reads them |
