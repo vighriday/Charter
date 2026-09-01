@@ -223,6 +223,36 @@ PostgreSQL.
 
 ---
 
+## Putting it somewhere people can reach
+
+The six replay tabs are a folder of files and can sit on any static host. The
+seventh tab cannot: running somebody's idea takes minutes, holds the run in
+memory while it waits for them to answer, and needs the model keys. That is a
+long-lived process, not a function that wakes up per request.
+
+So it wants a host that runs a program and leaves it running: **Railway, Render,
+Fly.io** — any of them. Serverless hosting is the wrong shape for it, and would
+turn every question into a lost run.
+
+```
+build    npm install
+start    npm run serve
+```
+
+It reads `PORT` from the host and answers on every network the container has.
+Started by hand, with no `PORT` set, it answers only to your own machine. `HOST`
+overrides both.
+
+Set `GEMINI_API_KEY`, `GROQ_API_KEY`, `SERPAPI_KEY`, the registrar's practice
+credentials, and `REPLAY_MODE=false`. With no keys at all it still runs end to
+end on answers recorded in advance, which is a perfectly good thing to leave
+published.
+
+The limits in `src/serve/limits.ts` are what make it safe to leave open: six runs
+a day between everybody, two per person, one at a time. Those numbers come from
+the smallest allowance behind it — 250 web searches a month — and the page says
+so when it turns somebody away.
+
 ## The line this software will not cross
 
 **Charter never signs anything on a human's behalf.**

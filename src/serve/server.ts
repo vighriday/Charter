@@ -380,14 +380,31 @@ export async function start(options: ServerOptions = {}): Promise<{ readonly por
   }
 
   const port = options.port ?? Number(process.env['PORT'] ?? 4321)
-  const host = options.host ?? '127.0.0.1'
+
+  /**
+   * Which network to answer on.
+   *
+   * On your own machine: 127.0.0.1, which means nothing outside the machine can
+   * reach it. That is the right default for something started while working, and
+   * it is the safe one.
+   *
+   * On a hosting service: 0.0.0.0, meaning every network the container has,
+   * because the service routes traffic in from outside and a program listening
+   * only to itself is one the service reports as dead.
+   *
+   * Told apart by whether the service set PORT, which every one of them does and
+   * nobody does by hand. HOST overrides both, for whoever has a reason to.
+   */
+  const host = options.host ?? process.env['HOST'] ?? (process.env['PORT'] === undefined ? '127.0.0.1' : '0.0.0.0')
 
   await new Promise<void>((ready) => server.listen(port, host, ready))
 
   const actual = (server.address() as { port: number }).port
 
   console.log('')
-  console.log(`  Charter is at  http://${host}:${actual}`)
+  console.log(
+    `  Charter is at  ${host === '0.0.0.0' ? `port ${actual}, on every network this has` : `http://${host}:${actual}`}`,
+  )
   console.log('')
   console.log(`  Anybody can start a run there. ${DEFAULT_ALLOWANCE.perDay} a day for`)
   console.log(`  everybody together, ${DEFAULT_ALLOWANCE.perVisitorPerDay} per person,`)
