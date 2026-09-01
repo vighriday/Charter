@@ -50,7 +50,10 @@ import {
   type IdentityCheck,
   type Owner,
   type PossibleCollision,
-  type SearchPerformed, type WrittenRecord } from './facts.js'
+  type SearchPerformed,
+  type WrittenRecord,
+  type AddressWork,
+} from './facts.js'
 
 /** One entry as the fold sees it: what kind it is, and what it carried. */
 export interface RecordedEntry {
@@ -123,6 +126,7 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
   // Built up as we go, then attached once, so the returned value has no partly
   // filled sections.
   const searches: SearchPerformed[] = []
+  let addressesTried: readonly AddressWork[] = []
   let collisions: readonly PossibleCollision[] = []
   let verdict: 'clear' | 'collides' | 'needs-a-person' | undefined
   const owners: Owner[] = []
@@ -465,14 +469,21 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         if (domain === undefined) break
         const available = asFlag(payload, 'available')
         const priceCents = asText(payload, 'priceCents')
-        facts = {
-          ...facts,
-          address: {
-            candidate: domain,
-            ...(available === undefined ? {} : { available }),
-            ...(priceCents === undefined ? {} : { priceCents }),
-          },
+        const checked = {
+          candidate: domain,
+          ...(available === undefined ? {} : { available }),
+          ...(priceCents === undefined ? {} : { priceCents }),
         }
+        facts = { ...facts, address: checked }
+        // And keep it among the names already asked about, replacing any earlier
+        // answer for the same one rather than piling up duplicates. Without this a
+        // step hunting for a free name has no memory of what it has ruled out.
+        addressesTried = [
+          ...addressesTried.filter(
+            (one) => one.candidate.toLowerCase() !== domain.toLowerCase(),
+          ),
+          checked,
+        ]
         break
       }
 
@@ -543,6 +554,7 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
     identityChecks,
     addressRecords,
     addressRecordsHeld,
+    addressesTried,
   }
 }
 
@@ -702,6 +714,19 @@ export function describeSituation(facts: CaseFacts): string {
     // The exact thing that stopped a real run: a price above the limit, and no
     // way for the model to see that was the problem. It could see the limit and it
     // could see the address; it was never shown the two side by side.
+    // Every name already asked about. Without this the model cannot tell which it
+    // has ruled out, and asks the registrar the same question again.
+    const others = facts.addressesTried.filter(
+      (one) => one.candidate.toLowerCase() !== address.candidate.toLowerCase(),
+    )
+    if (others.length > 0) {
+      lines.push(
+        `Already checked, do not check again: ${others
+          .map((one) => `${one.candidate} (${one.available === true ? 'free' : 'taken'})`)
+          .join(', ')}.`,
+      )
+    }
+
     const permission = facts.spendAuthorisation
     if (
       permission !== undefined &&

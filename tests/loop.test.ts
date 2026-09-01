@@ -101,6 +101,7 @@ describe('folding the record into what is known', () => {
       owners: [],
       addressRecords: [],
       addressRecordsHeld: [],
+      addressesTried: [],
       openQuestions: [],
       answers: [],
       identityChecks: [],

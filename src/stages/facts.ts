@@ -330,6 +330,19 @@ export interface CaseFacts {
   readonly spendAuthorisation?: SpendAuthorisation
   readonly nameResearch?: NameResearch
   readonly address?: AddressWork
+  /**
+   * Every address that has been checked, newest last, one entry per name.
+   *
+   * `address` above is the one currently being considered, and it is replaced each
+   * time a different name is checked. That is right for "what are we buying" and
+   * useless for "what have we already asked about", and the second question is the
+   * one that matters when the obvious name is taken.
+   *
+   * Without this, a step looking for a free name has no memory: it checks a name,
+   * tries another, comes back to the first, and asks the registrar the same
+   * question again. On a real run that used the whole step.
+   */
+  readonly addressesTried: readonly AddressWork[]
   /** The two either/or terms of the agreement that a person has to answer. */
   readonly agreementChoices?: AgreementChoices
   /** The agreement, once it has been prepared. */
@@ -378,6 +391,7 @@ export function emptyCase(caseId: string): CaseFacts {
     owners: [],
     openQuestions: [],
     answers: [],
+    addressesTried: [],
     identityChecks: [],
     addressRecords: [],
     addressRecordsHeld: [],
