@@ -119,6 +119,30 @@ export function webSearch(options: SearchOptions): SearchService {
     )
   }
 
+/**
+ * How long a search is given to come back, in milliseconds.
+ *
+ * Every other call in this project waits twenty seconds. A search waits four and a
+ * half times as long, and the reason is measured rather than guessed.
+ *
+ * Charter asks for a search that is not served from the search company's own store
+ * of recent answers, because a demonstration should be a real call all the way to
+ * the far end. That request is slow in a very particular way: measured repeatedly
+ * on 1 September 2026, the same query came back in 0.7 seconds from their store and
+ * in 30.0 seconds without it. Not thirty-ish. Thirty, to within a hundredth of a
+ * second, every time — which is the shape of a limit inside their own system rather
+ * than of a slow network.
+ *
+ * Twenty seconds therefore failed every single time, and it failed as a timeout,
+ * which reads like the network being down. Two whole runs of this project stopped
+ * on it before anybody timed the two calls side by side.
+ *
+ * Ninety seconds leaves room for that thirty to be worse under load, without ever
+ * letting a genuinely dead connection hang a run for long. Waiting is cheap. A run
+ * that stops on the second of eight steps is not.
+ */
+const SEARCH_PATIENCE = 90_000
+
   const trySerpapi = async (query: string): Promise<Reply | undefined> => {
     if (serpapi === '') return undefined
     const base = options.serpapiBaseUrl ?? SERPAPI_HOST
@@ -126,7 +150,14 @@ export function webSearch(options: SearchOptions): SearchService {
       `${base}/search.json?engine=google&q=${encodeURIComponent(query)}` +
       `&num=${HITS_WANTED}&api_key=${encodeURIComponent(serpapi)}` +
       (options.freshOnly === true ? '&no_cache=true' : '')
-    return ask(url, options.fetcher === undefined ? {} : { fetcher: options.fetcher })
+    return ask(url, {
+      // Longer than the twenty seconds everything else waits. A search goes out to
+      // Google and comes back through a middleman, and on the first real run of
+      // this project one of them took longer than twenty seconds and the whole run
+      // stopped over it. Waiting is cheap; a stopped run is not.
+      patience: SEARCH_PATIENCE,
+      ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
+    })
   }
 
   const tryTavily = async (query: string): Promise<Reply | undefined> => {
@@ -136,6 +167,7 @@ export function webSearch(options: SearchOptions): SearchService {
       method: 'POST',
       headers: { authorization: `Bearer ${tavily}` },
       body: { query, max_results: HITS_WANTED },
+      patience: SEARCH_PATIENCE,
       ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
     })
   }
