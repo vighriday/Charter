@@ -29,9 +29,9 @@ THE RUN, COUNTED
        8  stages
        0  tools in the boundary stage
       15  articles in the agreement
-   18091  bytes in the sealed packet
+   18452  bytes in the sealed packet
        2  PDF permission level
-    1087  tests
+    1113  tests
 
 ----------------------------------------------------------------------
 

@@ -50,6 +50,15 @@ import { refusedAfterSealing } from './assemble.js'
 const PAGE = { width: 612, height: 792 } as const
 
 const MARGIN = 64
+
+/**
+ * How far up the page the footer sits, and how small it is.
+ *
+ * Below the margin, in the band the body text never reaches, so adding it cannot
+ * push anything onto another page or overlap a signature line.
+ */
+const FOOT = 34
+const SMALL = 8
 const LINE = 15
 
 const INK = rgb(0.1, 0.1, 0.12)
@@ -238,6 +247,54 @@ export class PackBuilder {
 
   get pageCount(): number {
     return this.sheets.length
+  }
+
+  /**
+   * Write the foot of every page, once the number of pages is finally known.
+   *
+   * WHY THIS EXISTS
+   *
+   * Everything else in this project is about being able to tell whether something
+   * is whole. The record catches an entry altered in the middle. The attestation
+   * catches entries taken off the end. The seal catches a byte changed after
+   * sealing.
+   *
+   * And then the document itself — the part a person prints, holds and signs — had
+   * nothing on it at all. Remove the middle sheet from a printed copy and nothing
+   * in what is left says a thing is missing. "Page 2 of 3" is the oldest
+   * tamper-evidence there is and it is the only one that survives a printer.
+   *
+   * WHY IT RUNS AT THE END
+   *
+   * The total cannot be known until the last page exists. Written as each page is
+   * started, every page would have to guess, and a document that says "Page 1 of 1"
+   * on the first of three is worse than one that says nothing.
+   *
+   * The company's name goes beside it for the same reason: a loose sheet found on
+   * its own should say which document it fell out of.
+   */
+  footEveryPage(companyName: string): void {
+    const total = this.sheets.length
+
+    this.sheets.forEach((sheet, at) => {
+      const left = `${companyName} — Formation Pack`
+      const right = `Page ${at + 1} of ${total}`
+
+      sheet.page.drawText(left, {
+        x: MARGIN,
+        y: FOOT,
+        size: SMALL,
+        font: this.pens.body,
+        color: QUIET,
+      })
+      sheet.page.drawText(right, {
+        x: PAGE.width - MARGIN - this.pens.body.widthOfTextAtSize(right, SMALL),
+        y: FOOT,
+        size: SMALL,
+        font: this.pens.body,
+        color: QUIET,
+      })
+    })
   }
 }
 
@@ -443,6 +500,11 @@ export async function buildPackDocument(contents: PackContents): Promise<Uint8Ar
     pack.gap(LINE * 2)
     pack.row(owner.fullName, '________________________________     Date: ______________')
   }
+
+  // Last, because the total cannot be known until the last page exists. A document
+  // that says "Page 1 of 1" on the first of three is worse than one that says
+  // nothing at all.
+  pack.footEveryPage(data.companyName)
 
   return document.save()
 }
