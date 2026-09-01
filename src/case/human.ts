@@ -101,7 +101,7 @@ async function refuse(act: HumanAct, what: string, detail: Record<string, string
       actor: 'system',
       stage: null,
       // The token itself is never written down, only the fact that it was wrong.
-      payload: { what, why: 'the case token did not match', ...detail },
+      payload: { what, why: 'this answer named a different job', ...detail },
     },
     act.clock,
   )
@@ -130,6 +130,118 @@ export async function answerQuestion(
       actor: 'human',
       stage: null,
       payload: { question, answer, answeredAt: act.clock().toISOString() },
+    },
+    act.clock,
+  )
+}
+
+/**
+ * Something a person said about their own business, written down as they said it.
+ *
+ * WHY A PERSON CAN WRITE A FACT DOWN AND WHY THAT IS NOT A LOOPHOLE
+ *
+ * The model has a tool for writing facts down, and everywhere else in Charter the
+ * model is the one that uses it: it listens, works out that a sentence contains a
+ * name or a state, and records that. That is the agent doing its job.
+ *
+ * Two facts are not like that. When somebody is asked "describe your business" and
+ * types a paragraph, the paragraph IS the description. Nothing has to be worked
+ * out. Passing it through a model to be retyped adds one thing only: the chance
+ * that it comes back different.
+ *
+ * That is not a worry, it is what happened. On the first real run a model retyped
+ * the owners paragraph and cut the last sentence off, and the last sentence was
+ * the name they wanted to trade under. The run then had no name, and spent the
+ * rest of the step trying to write down things it already knew.
+ *
+ * So what a person typed is written down as what they typed, marked as coming
+ * from a person, and the model reads it like any other fact.
+ *
+ * WHAT THIS DOES NOT OPEN
+ *
+ * Only what a person actually typed, in the same breath as typing it. It cannot
+ * grant a permission, it cannot clear a name, it cannot approve anything, and it
+ * is checked against the same job token as every other act by a person here. It
+ * writes down words. Nothing follows from it that would not follow from the same
+ * words arriving through the model.
+ */
+export async function writeDownWhatTheySaid(
+  act: HumanAct,
+  about: 'description' | 'state' | 'proposed_name',
+  value: string,
+): Promise<void> {
+  if (!sameToken(act.token, act.expectedToken)) {
+    await refuse(act, 'writing down something a person said', { about })
+  }
+  await append(
+    act.db,
+    {
+      runId: act.caseId,
+      kind: 'fact.recorded',
+      // Not "model". Reading this record back, the difference between a fact the
+      // owners stated and a fact an agent worked out is the difference between
+      // evidence and inference, and it must be visible.
+      actor: 'human',
+      stage: null,
+      payload: { about, value },
+    },
+    act.clock,
+  )
+}
+
+/**
+ * A person deciding whether a name that came out close is close enough to matter.
+ *
+ * WHY THIS IS A PERSON'S JOB AND NOT THE COMPARISON'S
+ *
+ * Whether two business names collide is decided in plain code: fold the accents,
+ * lowercase it, drop the company ending and the punctuation, join up initials, and
+ * compare. That is reproducible on anybody's machine and it is free, and for most
+ * pairs it gives an answer nobody would argue with.
+ *
+ * It has a middle. "Rowan Cycle Works" against "PRO CYCLE WORKS" is not the same
+ * name and is not obviously a different one either. Whether that matters depends on
+ * what the two businesses actually do, where they do it, and how much risk these
+ * particular owners want to carry. None of that is in a string comparison.
+ *
+ * So the code says "close" and stops, and a person says which it is.
+ *
+ * WHY IT IS ITS OWN ENTRY IN THE RECORD
+ *
+ * It was written down as an answer to a question first, and that failed in a way
+ * worth remembering: the answer was recorded, correctly and permanently, and
+ * nothing read it. The comparison still said "close", the step still could not
+ * finish, and the same question came back for ever. A person had decided and the
+ * program did not notice.
+ *
+ * An answer is something a person said. This is something a person DECIDED, and the
+ * difference is that a decision changes what the program does next. Making it its
+ * own kind of entry is what lets the rest of the code read it.
+ */
+export async function decideAboutACloseName(
+  act: HumanAct,
+  clear: boolean,
+  aboutWhat: readonly string[],
+): Promise<void> {
+  if (!sameToken(act.token, act.expectedToken)) {
+    await refuse(act, 'deciding about a close name', { clear: String(clear) })
+  }
+  await append(
+    act.db,
+    {
+      runId: act.caseId,
+      kind: 'name.decided',
+      actor: 'human',
+      stage: null,
+      payload: {
+        // 'clear' and 'collides' are the same two words the comparison itself uses,
+        // so a reader of the record does not have to hold two vocabularies at once.
+        verdict: clear ? 'clear' : 'collides',
+        // What they were actually looking at when they decided. A decision with no
+        // record of what it was about cannot be checked by anybody later.
+        about: aboutWhat.join('; '),
+        decidedAt: act.clock().toISOString(),
+      },
     },
     act.clock,
   )

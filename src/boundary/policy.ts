@@ -117,7 +117,57 @@ export const BOUNDARIES: readonly Boundary[] = [
       "the agent's folder, and it was moved out of it because this check refused " +
       'the build while it was there.',
     guards: ['src/case/human.ts'],
-    mayReach: ['src/case/demo.ts'],
+    mayReach: [
+      'src/case/demo.ts',
+      // The live run: somebody brings their own business idea and answers at a
+      // keyboard. It reaches this module for the same reason the demonstration
+      // does, and more honestly: here there really is a person typing.
+      //
+      // Allowed deliberately, in the open, because that is the only way anything
+      // gets past this rule. The rule's purpose is untouched. Nothing the model can
+      // trigger reaches this file: it is a command a person types, it does the
+      // asking itself, and the agent has no tool that could cause any of it.
+      'src/case/live.ts',
+      // The run itself, which is now one piece of code rather than one per way in.
+      // It is the file that decides when Charter stops and waits for a person, and
+      // it therefore has to be able to write down what the person said.
+      //
+      // This is the file the rule is really about, and it is worth being exact
+      // about why letting it through does not weaken anything. It never answers
+      // anything itself: every one of the six places it stops calls out through a
+      // function it was handed, waits, and writes down whatever came back. It has
+      // no model, no tools, and no way to reach either. What it can do is record
+      // that a person said something, which is the same power the terminal and the
+      // browser already have and the whole reason both of them exist.
+      'src/case/drive.ts',
+      // The website's run panel, and the small server behind it.
+      //
+      // This is the largest thing this rule has ever been asked to let through,
+      // and it is worth setting out exactly what it is and is not, because
+      // "anybody on the internet can reach the consent path" sounds alarming and
+      // the truthful version is narrower.
+      //
+      // What actually happens: a visitor starts a run, and is given a secret made
+      // for that run alone. The run reaches one of the six things only a person may
+      // decide and stops. The page shows the question. The visitor answers, and the
+      // answer comes back with that secret. The server checks the secret and writes
+      // down what they said. That is the whole of it.
+      //
+      // What is unchanged: the model still cannot cause any of it. There is no tool
+      // that posts an answer, no tool that can reach this file, and no path from a
+      // model turn to a consent entry. What arrives here arrived from outside, from
+      // a person, over a connection that had to carry a secret only that person was
+      // given. That is the same shape as the terminal, where the secret is that you
+      // are the one at the keyboard.
+      //
+      // What this DOES widen, honestly stated: before this, being at the machine
+      // was the proof. Now the proof is holding the run's secret. Somebody who
+      // could read that secret in transit could answer somebody else's questions.
+      // That is the reason the secret is per run, is never in a page address, is
+      // never written to disk, and dies with the run.
+      'src/serve/runs.ts',
+      'src/serve/server.ts',
+    ],
   },
   {
     name: 'the attestation key',
@@ -150,6 +200,21 @@ export const BOUNDARIES: readonly Boundary[] = [
       // for a record the model wrote — is untouched, and this file is already
       // guarded separately as the code that stands in for a person's browser.
       'src/case/demo.ts',
+      // The live run, for the same reason: it attests over the record it just
+      // produced so the person who ran it can check their own packet immediately.
+      // A command somebody types, never anything the model sets in motion.
+      'src/case/live.ts',
+      // The website's run panel, for exactly the same reason as the two above: a
+      // visitor who has just watched a run needs to be able to download its record
+      // and its attestation and check them on their own machine. Without the
+      // attestation the record is a text file with no claim attached to it, which
+      // is the one thing this whole project argues against.
+      //
+      // The rule's purpose is that nothing the model can set in motion may vouch
+      // for a record the model wrote. That is untouched. This signs over a finished
+      // record, once, at the end, in code no tool can reach.
+      'src/serve/runs.ts',
+      'src/serve/server.ts',
     ],
   },
   {
