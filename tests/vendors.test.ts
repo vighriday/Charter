@@ -579,7 +579,7 @@ describe('which of the five services are real', () => {
       },
     })
     expect(howManyAreReal(services)).toBe(0)
-    expect(services.chosen.search.why).toMatch(/REPLAY_MODE is true/)
+    expect(services.chosen.search.why).toMatch(/recorded in advance, because this is a replay/)
   })
 
   it('uses the real one only when replay is off AND the key is there', () => {
@@ -616,7 +616,7 @@ describe('which of the five services are real', () => {
     // Worth stating plainly. The part that matters — assembling and sealing the
     // pack — is Charter's own code and is not waiting on anybody.
     const services = chooseServices({ settings: DEFAULT_SETTINGS, caseId: 'c', env: {} })
-    expect(services.chosen.publishing.why).toMatch(/sealed by Charter/)
+    expect(services.chosen.publishing.why).toMatch(/stamped by Charter/)
   })
 
   it('gives a plain sentence for every one of the five', () => {
@@ -655,7 +655,7 @@ describe('which of the five services are real', () => {
       env: { NAMECOM_USERNAME_TEST: 'u-test', NAMECOM_TOKEN_TEST: 't' },
     })
     expect(services.chosen.registrar.kind).toBe('real')
-    expect(services.chosen.registrar.why).toMatch(/PRACTICE account/)
+    expect(services.chosen.registrar.why).toMatch(/practice account/)
   })
 
   it('will not use the live registrar on the practice credentials', () => {

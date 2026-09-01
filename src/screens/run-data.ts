@@ -28,6 +28,7 @@
 
 import { genesisHash, hashEvent, type ChainedEvent } from '../record/chain.js'
 import { fingerprint } from '../record/canonical.js'
+import { WHAT_TOOLS_DO } from '../tools/words.js'
 
 /** One entry of the record, as the website shows it. */
 export interface RunEntry {
@@ -123,6 +124,18 @@ export interface RunArticle {
   readonly fullHeading: string
   /** Why this article exists, in plain words. The document's own sentence. */
   readonly why: string
+  /**
+   * Whether this article is in the document because of something a person said,
+   * rather than being in every agreement. Comes from the rule that decided it, so
+   * the page never has to keep its own list of which articles those are.
+   */
+  readonly becauseOfAnAnswer: boolean
+  /**
+   * Whether this is one of the articles a person opens the document to read. Kept
+   * with the articles, because it is a judgement about this document rather than
+   * about how a screen happens to be laid out.
+   */
+  readonly readFirst: boolean
 }
 
 /** One question the checker asked, and what it answered. */
@@ -139,6 +152,12 @@ export interface RunData {
   readonly owners: readonly string[]
   readonly entries: readonly RunEntry[]
   readonly stages: readonly RunStage[]
+  /**
+   * What each tool does, in words, so the page never has to show a reader a name
+   * written for a program. Carried in the data rather than written again in the
+   * page, because a second copy is a copy that can drift.
+   */
+  readonly toolWords: Readonly<Record<string, string>>
   readonly counts: Readonly<Record<string, number>>
   readonly totalEntries: number
   /** Every refusal in the run, with its reason. */
@@ -538,6 +557,7 @@ export function readRun(input: {
     owners: input.owners,
     entries,
     stages: input.stages,
+    toolWords: WHAT_TOOLS_DO,
     counts,
     totalEntries: entries.length,
     refusals,

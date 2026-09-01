@@ -23,8 +23,8 @@ Generated from the code that runs. Each stage sends the model exactly the tools
 listed under it and nothing else, so a tool absent from a stage is not forbidden
 there — it does not exist there.
 
-1. Understand
-   The person describes their business. Charter asks about anything it still needs, including permission to spend a stated amount on the web address.
+1. Understand the business
+   You describe the business in your own words. Charter asks about anything it still needs, including permission to spend a set amount on the web address.
    ask_question
       Puts a question on the screen for the owners to answer. Changes nothing, costs nothing, and reaches no outside service. The stage cannot finish while any question is still unanswered, so the agent cannot decide it has heard enough while somebody is still typing.
    record_fact
@@ -32,8 +32,8 @@ there — it does not exist there.
    request_spend_permission
       Puts a request on the screen. It cannot give permission — there is no tool for that anywhere in Charter. A permission is written to the record only when a person grants it in their browser, along a path the model is not on. So a model that decided to authorise itself has nothing to call.
 
-2. Research the name
-   Search for businesses already using this name, and decide whether the proposed one is clear. Whether two names collide is decided in plain code, not by the model.
+2. Check the name is free
+   Look for businesses already trading under this name, and work out whether the new one is clear of them. Whether two names are too close is decided by fixed rules, not by guesswork.
    search_web
       One tool with two search companies behind it. Which one answered goes into the record but is never returned here, because a model that can see which service replied starts reasoning about the services instead of the business. Results are cached by the exact query text, because the main service allows 250 searches a month and one run uses several.
    compare_names
@@ -41,8 +41,8 @@ there — it does not exist there.
    record_fact
       Adds one entry to the record. Nothing is stored anywhere else, so what Charter knows is always the record read forward — which is why a run survives a crash or a closed browser tab with nothing lost.
 
-3. Secure the address
-   Check whether the web address is free, and register it only if a person has already given permission covering the price.
+3. Get the web address
+   See whether the web address is available, and buy it only if a person has already agreed to a price that covers it.
    check_address
       Asks the registrar a question. Costs nothing, registers nothing, and can be run as often as needed. This is the tool that finds out the price the permission then has to cover.
    register_address  [spends money, cannot be undone]
@@ -54,8 +54,8 @@ there — it does not exist there.
    record_fact
       Adds one entry to the record. Nothing is stored anywhere else, so what Charter knows is always the record read forward — which is why a run survives a crash or a closed browser tab with nothing lost.
 
-4. Draft the agreement
-   Ask the owners the few things the agreement cannot be written without, then prepare it. Every number, every article number and every cross-reference is worked out in plain code. The model chooses when, never what.
+4. Write the contract
+   Ask the owners the handful of things the contract cannot be written without, then write it. Every number, every section number and every reference between sections is worked out by fixed rules, so none of it is invented.
    ask_question
       Puts a question on the screen for the owners to answer. Changes nothing, costs nothing, and reaches no outside service. The stage cannot finish while any question is still unanswered, so the agent cannot decide it has heard enough while somebody is still typing.
    record_fact
@@ -65,25 +65,25 @@ there — it does not exist there.
    draft_agreement
       Builds every number, every article number and every cross-reference in plain code, then hands a finished set of values to the document template. The model chooses WHEN this happens and contributes nothing to WHAT the document says: the words come from a template a person wrote and can read, and the numbers come from arithmetic anybody can check. It refuses rather than filling a gap, because a term a program chose is a term nobody agreed to.
 
-5. Verify identity
-   Read each owner's identity document, score every field, and send the doubtful ones to a person. No model takes part in that decision.
+5. Check the owners are who they say
+   Read each owner's ID, compare every value on it, and pass anything that is not a clean match to a person to decide. Nothing guesses here.
    read_identity_document
       The document is read by a document service. It is never shown to a model, at any stage, and no model takes any part in deciding which values need a person. That decision is a fixed comparison in code: first whether each value can actually be found in the document, then whether the required fields are there, then format and consistency, and only last the service’s own confidence score — which the service itself says is uncalibrated and not a probability. The rule may always send MORE to a person. It can never send fewer, and this tool cannot clear anything.
    record_fact
       Adds one entry to the record. Nothing is stored anywhere else, so what Charter knows is always the record read forward — which is why a run survives a crash or a closed browser tab with nothing lost.
 
-6. Assemble the pack
-   Merge everything into one file, add structure, then seal it and take the fingerprint of exactly what was sealed. After the seal, anything that would rewrite the file is refused and the refusal is recorded.
+6. Put it all in one file
+   Join everything into a single document, stamp it, and take the fingerprint of exactly what was stamped. From then on, anything that would change the words is turned down, and the refusal is written down.
    assemble_pack
       The order is the point. Merge, then seal, then fingerprint the sealed bytes, and nothing that rewrites the file may run afterwards. A document service with no signing operation can still take a signed contract and make its signature unverifiable — flattening destroys the signature field, a watermark rewrites the page, deleting pages can remove the signed page outright. Stopping an agent making a promise is not the same as stopping it unmaking one. After the seal every rewriting operation is refused and the refusal is recorded, so the finished pack can print what Charter was asked to do and would not.
 
-7. The boundary
-   The agent stops. A person approves, and ordinary code — not the agent — carries the pack to them to sign.
+7. Hand it to a person
+   Charter stops here. A person says yes, and separate code that Charter cannot reach carries the file to them to sign.
    No tools. The model is asked for nothing in this stage.
    This is the stage where a person signs. Its emptiness is the design.
 
-8. Publish
-   Build the website, draw its first picture from the owner's own words, put it online, and point the web address at it.
+8. Put the website online
+   Build the business a website, draw its first picture from the owners' own words, put it online, and point the web address at it.
    draw_storefront
       A business formed this morning owns no photographs. It has no shopfront photographed, no products, no staff pictures. The one thing it does have is the sentence its owners typed in stage one, which is already in the record because it started the legal work. That sentence does a second job here. The words sent are the OWNERS’ OWN, read from the record, not something a model wrote about them, and the record keeps both the words and the picture so a person can see what produced what. No photograph of any person is ever sent, and the same company’s face and skin tools are absent from every stage of this project. A business formation tool has no business touching anybody’s face.
    publish_site

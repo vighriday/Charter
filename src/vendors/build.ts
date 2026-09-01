@@ -96,8 +96,8 @@ export interface ChooseOptions {
 }
 
 const STANDING_IN =
-  'It holds answers recorded in advance and has no path to the network at all, so a ' +
-  'missing answer is an error rather than a quiet real call.'
+  'It gives back answers recorded in advance and has no way of reaching the internet ' +
+  'at all, so a missing answer stops the run rather than quietly becoming a real call.'
 
 /**
  * Pick the four services, and say which is which.
@@ -122,7 +122,7 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
           service: preparedSearch(prepared.searches ?? {}),
           kind: 'stand-in',
           why: replaying
-            ? `Saved answers, because REPLAY_MODE is true. ${STANDING_IN}`
+            ? `Answers recorded in advance, because this is a replay. ${STANDING_IN}`
             : `No SERPAPI_KEY or TAVILY_API_KEY is set. ${STANDING_IN}`,
         }
       : {
@@ -137,9 +137,9 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
           }),
           kind: 'real',
           why:
-            'The live web, through the search service. Two companies answer the same ' +
-            'question and the second takes over if the first cannot; which one ' +
-            'answered goes into the record and is never shown to the model.',
+            'The real web. Two companies answer the same question and the second ' +
+            'takes over if the first cannot. Which one answered is written down, and ' +
+            'Charter is never told which.',
         }
 
   // ---- the registrar -------------------------------------------------------
@@ -157,8 +157,8 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
           service: preparedRegistrar(prepared.quotes ?? {}),
           kind: 'stand-in',
           why: replaying
-            ? `Saved answers, because REPLAY_MODE is true. Nothing is registered and ` +
-              `nothing is charged. ${STANDING_IN}`
+            ? `Answers recorded in advance, because this is a replay. Nothing is ` +
+              `registered and nobody is charged. ${STANDING_IN}`
             : `The ${settings.registrarEnv} username and token are not both set. ` +
               `Nothing is registered and nothing is charged. ${STANDING_IN}`,
         }
@@ -177,11 +177,12 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
           kind: 'real',
           why:
             settings.registrarEnv === 'test'
-              ? 'The registrar’s PRACTICE account, which is a separate account at a ' +
-                'separate address. Identical paths and identical validation, and ' +
-                'nothing registered there is real.'
-              : 'The registrar’s LIVE account. Registering spends real money and ' +
-                'cannot be undone, and it needed two settings to get here.',
+              ? 'The registrar’s practice account, which is a separate account at a ' +
+                'separate address. Same steps, same checks, and nothing registered ' +
+                'there is real.'
+              : 'The registrar’s real account. Registering here spends real money ' +
+                'and cannot be undone, and two separate settings had to be turned on ' +
+                'to reach it.',
         }
 
   // ---- reading identity documents ------------------------------------------
@@ -194,8 +195,8 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
           service: preparedIdentity(prepared.documents ?? {}),
           kind: 'stand-in',
           why: replaying
-            ? `Documents recorded in advance, because REPLAY_MODE is true. No real ` +
-              `person’s identity document is involved. ${STANDING_IN}`
+            ? `Documents recorded in advance, because this is a replay. No real ` +
+              `person’s ID is involved. ${STANDING_IN}`
             : identityKey === ''
               ? `NUTRIENT_EXTRACTION_KEY is not set. ${STANDING_IN}`
               : `No way to fetch a document was provided, so there is nothing to send. ` +
@@ -223,9 +224,9 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
     service: preparedPublishing(),
     kind: 'stand-in',
     why:
-      'Publishing the website is not built yet. The pack itself is assembled and ' +
-      'sealed by Charter’s own code and does not go through any outside company, ' +
-      'so what is standing in here is putting the finished site online.',
+      'Putting the website online is not built yet. The file itself is put ' +
+      'together and stamped by Charter’s own code and never goes through anybody ' +
+      'else, so the only thing standing in here is the website going live.',
   }
 
   // ---- drawing the storefront ------------------------------------------------
@@ -237,11 +238,10 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
     service: preparedImagery(),
     kind: 'stand-in',
     why:
-      'Drawing the storefront picture is not wired to the real service yet. The ' +
-      'words it would send are the owners\' own, read from the record, so a run ' +
-      'shows exactly what would have been drawn. No photograph of any person is ' +
-      'ever sent, and that company\'s face and skin tools are absent from every ' +
-      'stage of this project.',
+      'Drawing the shop picture is not connected to the real service yet. The words ' +
+      'it would send are the owners\' own, taken from the diary, so you can see ' +
+      'exactly what would have been drawn. No photograph of anybody is ever sent, ' +
+      'and that company\'s face and skin tools are not used anywhere in this project.',
   }
 
   return {

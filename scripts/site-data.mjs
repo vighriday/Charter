@@ -184,6 +184,8 @@ const program = `
     heading: one.heading,
     fullHeading: one.fullHeading,
     why: one.why,
+    becauseOfAnAnswer: one.becauseOfAnAnswer,
+    readFirst: one.readFirst,
   }))
 
   // ---- the checker, run over the same files a visitor can download ----------

@@ -232,6 +232,62 @@ const withExit: AgreementShape = {
 
 const withoutExit: AgreementShape = { ...withExit, hasExitProcess: false }
 
+describe('which articles are there because somebody answered a question', () => {
+  // The website marks the sections of the contract that exist because of what the
+  // owners said, so a reader can see which parts of the document are theirs. That
+  // marking used to come from a list of headings written into the website, which
+  // was right for one run and would have been wrong for the next: a run where the
+  // owners DO have a way out gets a different article, and the page would have
+  // marked nothing while still telling the reader two of them were theirs.
+  //
+  // So the answer travels with the article. These tests are what stop it drifting
+  // back into a list somewhere else.
+
+  it('marks the article that only exists because there is no way out', () => {
+    const numbered = numberArticles(withoutExit)
+    const noExit = numbered.find((one) => one.id === 'no-exit')
+
+    expect(noExit?.becauseOfAnAnswer, 'no-exit is in because of an answer').toBe(true)
+  })
+
+  it('marks the other half of that pair the same way, when the answer goes the other way', () => {
+    const numbered = numberArticles(withExit)
+
+    expect(numbered.find((one) => one.id === 'exit-process')?.becauseOfAnAnswer).toBe(true)
+    expect(numbered.some((one) => one.id === 'no-exit'), 'only one of the pair').toBe(false)
+  })
+
+  it('marks the deadlock article, which is there only when a tie is possible', () => {
+    const tie = numberArticles({ ...withExit, shares: [share('50'), share('50')] })
+
+    expect(tie.find((one) => one.id === 'deadlock')?.becauseOfAnAnswer).toBe(true)
+  })
+
+  it('does not mark the articles that are in every agreement', () => {
+    for (const shape of [withExit, withoutExit]) {
+      const numbered = numberArticles(shape)
+      const always = numbered.filter(
+        (one) => !['no-exit', 'exit-process', 'deadlock'].includes(one.id),
+      )
+
+      expect(always.length, 'there are articles in every agreement').toBeGreaterThan(0)
+      for (const article of always) {
+        expect(article.becauseOfAnAnswer, `${article.heading} is in every agreement`).toBe(false)
+      }
+    }
+  })
+
+  it('always marks at least one, because the exit pair is never both and never neither', () => {
+    // A reader told that some sections are theirs, on a page that marks none, has
+    // been told something false. Whichever way the answer went, one of the pair is
+    // in the document and it is there because of that answer.
+    for (const shape of [withExit, withoutExit]) {
+      const marked = numberArticles(shape).filter((one) => one.becauseOfAnAnswer)
+      expect(marked.length, 'something is always there because of an answer').toBeGreaterThan(0)
+    }
+  })
+})
+
 describe('numbering the articles, and keeping every reference pointing at the right one', () => {
   it('numbers from one with no gaps, whatever was left out', () => {
     for (const shape of [withExit, withoutExit]) {

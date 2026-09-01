@@ -120,6 +120,18 @@ export interface ArticleDefinition {
   readonly refersTo?: readonly ArticleId[]
   /** Why this article exists, in plain words. Printed in the pack, not the agreement. */
   readonly why: string
+  /**
+   * Whether this is one of the articles a person opens the document to read.
+   *
+   * Most of a company agreement is machinery. Two articles are not: the one saying
+   * who owns what, and the one saying who runs it. Anywhere the document is shown
+   * a few articles at a time, these are the ones worth showing first.
+   *
+   * Kept here, with the articles, because it is a judgement about this document. A
+   * screen that decided it for itself would be a second opinion about a document it
+   * did not write, and would go quietly wrong the moment the articles changed.
+   */
+  readonly readFirst?: boolean
 }
 
 const always = (): boolean => true
@@ -145,6 +157,7 @@ export const ARTICLES: readonly ArticleDefinition[] = [
     id: 'members',
     heading: 'Members and Ownership Interests',
     include: always,
+    readFirst: true,
     refersTo: ['contributions'],
     why: 'The list of owners and what share each one holds. This is the article people open the document to read.',
   },
@@ -172,6 +185,7 @@ export const ARTICLES: readonly ArticleDefinition[] = [
     id: 'management',
     heading: 'Management',
     include: always,
+    readFirst: true,
     refersTo: ['voting'],
     why: 'Who runs the company day to day: the owners themselves, or somebody they appoint.',
   },
@@ -270,6 +284,20 @@ export interface NumberedArticle {
   /** The heading as it is printed, number and all. */
   readonly fullHeading: string
   readonly why: string
+  /**
+   * Whether this article is in the document because of something the owners said.
+   *
+   * Most articles are in every agreement. A few are not: one pair of them is a
+   * choice between two, decided by whether the owners have an agreed way for
+   * somebody to leave, and one appears only when the shares make a tie possible.
+   *
+   * Carried here so that anything showing a reader which articles are theirs works
+   * it out from the rule that decided it. A list of headings written down a second
+   * time somewhere else is a list that can name the wrong articles, and be believed.
+   */
+  readonly becauseOfAnAnswer: boolean
+  /** Whether this is one of the articles a person opens the document to read. */
+  readonly readFirst: boolean
 }
 
 /** Thrown when the articles cannot be assembled into a document that reads correctly. */
@@ -319,6 +347,12 @@ export function numberArticles(shape: AgreementShape): readonly NumberedArticle[
       heading: article.heading,
       fullHeading: `ARTICLE ${number} — ${article.heading.toUpperCase()}`,
       why: article.why,
+      // Whether this article is in every agreement, or in this one because of
+      // something the owners actually said. Worked out from the rule that decides
+      // it rather than from a list written somewhere else, so nothing that shows a
+      // reader which articles are theirs can ever name the wrong ones.
+      becauseOfAnAnswer: article.include !== always,
+      readFirst: article.readFirst === true,
     }
   })
 }

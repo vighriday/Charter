@@ -125,7 +125,7 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
   const seal = readSeal(input.pack)
 
   findings.push({
-    question: 'Is the pack a PDF that carries a seal?',
+    question: 'Is the file a real PDF with a stamp on it?',
     answer: seal.isPdf && seal.hasSeal ? 'yes' : 'no',
     detail: !seal.isPdf
       ? 'The file is not a PDF at all.'
@@ -135,7 +135,7 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
   })
 
   findings.push({
-    question: 'Does the seal say only filling in and signing are allowed?',
+    question: 'Does the stamp allow only filling in and signing?',
     answer: seal.permissionLevel === PERMISSION_FILL_IN_AND_SIGN_ONLY ? 'yes' : 'no',
     detail:
       seal.permissionLevel === undefined
@@ -146,7 +146,7 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
   })
 
   findings.push({
-    question: 'Does the seal cover the whole file?',
+    question: 'Does the stamp cover the whole file?',
     answer: seal.coversWholeFile ? 'yes' : 'no',
     detail: seal.coversWholeFile
       ? `All ${seal.sizeBytes} bytes are inside the sealed range.`
@@ -157,7 +157,7 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
   const actual = fingerprintBytes(input.pack)
 
   findings.push({
-    question: 'Is this the same pack the record describes?',
+    question: 'Is this the same file the diary describes?',
     answer:
       input.recordedPackFingerprint === undefined
         ? 'cannot say'
@@ -176,7 +176,7 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
   const chain = checkChain(input.events, input.runId)
 
   findings.push({
-    question: 'Is the record unbroken from the first entry to the last?',
+    question: 'Does every step in the diary match the one before it?',
     answer: chain.ok ? 'yes' : 'no',
     detail: chain.ok
       ? `${input.events.length} entries, each carrying the fingerprint of the one before it.`
@@ -186,7 +186,7 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
   // ---- 4. does the attestation vouch for the end of it? ----------------------
   if (input.attestation === undefined) {
     findings.push({
-      question: 'Does an attestation vouch for the end of the record?',
+      question: 'Is there a sealed note saying how the diary ended?',
       answer: 'cannot say',
       detail:
         'No attestation came with this pack. Without one, entries removed from the END of the record cannot be detected, because a shortened chain is still a valid chain.',
@@ -196,7 +196,7 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
     const check = verifyAttestation(input.attestation, input.publicKeyPem)
 
     findings.push({
-      question: 'Does the attestation match, against the key that came from outside the pack?',
+      question: 'Does that note check out, using a key from outside the file?',
       answer: check.ok ? 'yes' : 'no',
       detail: check.ok
         ? `Made with key ${keyIdOf(publicKey).slice(0, 16)}…, which is the key this check was given. This is what catches entries removed from the end.`
@@ -204,11 +204,11 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
     })
 
     findings.push({
-      question: 'Does the attestation cover the record that was handed over?',
+      question: 'Does that note describe the diary that was handed over?',
       answer: coversTheseEvents(input) ? 'yes' : 'no',
       detail: coversTheseEvents(input)
-        ? `It vouches for ${input.attestation.count} entries, and ${input.events.length} were handed over.`
-        : `It vouches for ${input.attestation.count} entries and ${input.events.length} were handed over. Entries have been added or removed since it was made.`,
+        ? `The note says there were ${input.attestation.count} steps, and ${input.events.length} were handed over.`
+        : `The note says there were ${input.attestation.count} steps and ${input.events.length} were handed over. Steps have been added or taken away since it was stamped.`,
     })
   }
 
@@ -217,21 +217,21 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
 
   if (input.anchor === undefined) {
     findings.push({
-      question: 'Has somebody who is not Charter said this record existed?',
+      question: 'Has anybody outside Charter confirmed this diary existed?',
       answer: 'cannot say',
       detail:
-        'No outside timestamp came with this pack. Charter holds the record and the ' +
-        'key that vouches for it, so everything above is checked with things Charter ' +
-        'made. Without an outside timestamp, nothing here rules out the whole record ' +
-        'having been produced later than it says.',
+        'No outside timestamp came with this file. Charter holds both the diary and ' +
+        'the key that stamps it, so everything above is checked using things Charter ' +
+        'made itself. Without somebody outside, nothing here rules out the whole ' +
+        'diary having been written later than it says.',
     })
   } else {
     const covers = anchorCovers(input.anchor, last?.hash ?? '')
     findings.push({
-      question: 'Has somebody who is not Charter said this record existed?',
+      question: 'Has anybody outside Charter confirmed this diary existed?',
       answer: covers.ok ? 'yes' : 'no',
       detail: covers.ok
-        ? `${covers.reason} They were shown a fingerprint and nothing else — never the record. This does not stop the record being rewritten; it means a rewritten record would produce a different ending, while this statement about the old ending would still exist.`
+        ? `${covers.reason} They were shown a fingerprint and nothing else, never the diary itself. This does not stop the diary being rewritten. It means a rewritten diary would end differently, while their statement about the old ending would still be out there.`
         : covers.reason,
     })
   }
@@ -244,14 +244,14 @@ export function verifyEverything(input: WhatToCheck): VerificationResult {
     cannotProve: [
       ...(input.anchor === undefined
         ? [
-            'That this record is as old as it says. Charter holds the record and the key that vouches for it, so a record produced later, in one go, would look exactly like this one. An outside timestamp is what closes that, and this pack did not come with one.',
+            'That this diary is as old as it says. Charter holds both the diary and the key that stamps it, so a diary written later, all in one go, would look exactly like this one. A timestamp from an outside authority would settle it, and this file did not come with one.',
           ]
         : [
-            "Whether the timestamp authority's own signature on that outside statement is valid. Checking it properly means validating their certificate against a trust store, which your machine already does well. Run: openssl ts -reply -in <the token> -text. What IS checked here is that the token is about this record's ending and no other, which is the part that would otherwise go unnoticed.",
+            "Whether the outside authority's own signature on their timestamp is valid. Checking that properly means testing their certificate against the list of authorities your computer already trusts, which your computer does better than we could. Run: openssl ts -reply -in <the token> -text. What is checked here is that their timestamp is about this diary's ending and no other, which is the part that would otherwise slip by.",
           ]),
-      'Who sealed this. The certificate is issued by Charter to Charter, so no outside authority has checked that Charter is who it says it is. A PDF reader will report the same thing. What is proved above is that the file has not changed since it was sealed, which is a claim about the bytes rather than about identity.',
-      'That the record is complete in the sense of nothing having been left out at the time of writing. It proves nothing was altered or removed afterwards, which is a different and smaller claim.',
-      'Anything about whether the agreement is right for these people. This is not a review of the document, and nothing here is a legal opinion.',
+      'Who stamped this. The certificate is Charter vouching for Charter, so nobody outside has checked that Charter is who it says it is. Any PDF reader will tell you the same. What is proved above is that the file has not changed since it was finished, which is about the file and not about identity.',
+      'That nothing was left out in the first place. It proves nothing was changed or removed afterwards, which is a smaller thing.',
+      'Whether this contract is right for these two people. Nobody here has reviewed it, and nothing here is legal advice.',
     ],
   }
 }

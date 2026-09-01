@@ -233,6 +233,110 @@ for (const shape of BUILDS_MARKUP) {
   }
 }
 
+/* ───────────────────────── the record's own names have to fit ── */
+
+// Every row of the diary is one line: what happened on the left, the detail
+// beside it. The diary stores each kind of step under a short dotted name, and
+// the page shows a plain phrase in its place, so the column has to fit the
+// phrase rather than the name.
+//
+// The column is a fixed width, because the rows have to line up with each other,
+// and a fixed width is a guess about the longest thing that will ever go in it.
+// So the guess is checked here rather than trusted, against the phrases the page
+// really renders, read out of the page's own table. If a later run records a step
+// whose phrase is too long, this fails and says by how much, instead of the
+// website quietly breaking "filled it in wrongly" across two lines, where it
+// reads as two separate things happening.
+
+const columnWidth = /--kind-col:\s*(\d+)ch/.exec(style)
+const wordsBlock = /var PLAIN_WORDS = \{([\s\S]*?)\n  \}/.exec(replay)
+
+if (columnWidth === null) {
+  complaints.push(
+    `${STYLE} no longer sets --kind-col in characters, so there is no way to check that what ` +
+      `the rows say fits the column that holds it.`,
+  )
+} else if (wordsBlock === null) {
+  complaints.push(
+    `${REPLAY} no longer holds a PLAIN_WORDS table, so there is no way to know what the rows ` +
+      `actually say, and no way to check that it fits.`,
+  )
+} else {
+  const inWords = new Map(
+    [...wordsBlock[1].matchAll(/'([^']+)':\s*'([^']*)'/g)].map((one) => [one[1], one[2]]),
+  )
+
+  const fits = Number(columnWidth[1])
+  const shown = run.entries.map((entry) => inWords.get(entry.kind) ?? entry.kind)
+  const longest = shown.reduce((one, other) => (other.length > one.length ? other : one), '')
+
+  if (longest.length > fits) {
+    complaints.push(
+      `${PAGE} would show "${longest}" in the column that says what happened, which is ` +
+        `${longest.length} characters, and ${STYLE} gives that column ${fits}. It would wrap ` +
+        `onto a second line and read as two things happening. Widen --kind-col to at least ` +
+        `${longest.length}ch.`,
+    )
+  }
+
+  // A step the table has no phrase for falls back to its dotted name, which is
+  // the diary talking to itself in the middle of a page written for everybody.
+  const unnamed = [...new Set(run.entries.map((one) => one.kind))].filter(
+    (kind) => !inWords.has(kind),
+  )
+
+  if (unnamed.length > 0) {
+    complaints.push(
+      `${REPLAY} has no plain words for ${unnamed.join(', ')}, so ${unnamed.length === 1 ? 'that step' : 'those steps'} ` +
+        `would appear on the page under the name the diary uses for ${unnamed.length === 1 ? 'it' : 'them'} ` +
+        `internally. Add ${unnamed.length === 1 ? 'a phrase' : 'phrases'} to PLAIN_WORDS.`,
+    )
+  }
+}
+
+/* ────────────────────── the page keeps no list of its own ── */
+
+// The contract is not the same every time. Most of its sections are in every
+// one Charter writes, and a few are there because of something the owners
+// actually decided. The page marks that second group, so a reader can see
+// which parts of the document exist because of their own answers.
+//
+// Which sections those are is decided by the code that assembles the contract,
+// and the answer travels with the data. The page once carried its own copy of
+// the headings instead. That copy was right for this run and would have been
+// wrong for the next one: a run where the owners DO have a way out gets a
+// different section, and the page would have marked nothing while still saying
+// two of them were theirs.
+//
+// So the page is not allowed to name a section heading at all. If it needs to
+// know something about a section, the data has to say it.
+
+const headings = run.agreement?.articles?.map((one) => one.heading) ?? []
+
+for (const heading of headings) {
+  if (replay.includes(`'${heading}'`) || replay.includes(`"${heading}"`)) {
+    complaints.push(
+      `${REPLAY} has the section heading "${heading}" written into it. Which sections are ` +
+        `in a contract, and why, is decided when the contract is written, and a copy of ` +
+        `that decision kept in the page is a copy that will be wrong for the next run. ` +
+        `Read it from the data instead.`,
+    )
+  }
+}
+
+// And the fact the page needs has to actually be there.
+const unmarked = (run.agreement?.articles ?? []).filter(
+  (one) => typeof one.becauseOfAnAnswer !== 'boolean',
+)
+
+if (unmarked.length > 0) {
+  complaints.push(
+    `${DATA} has ${unmarked.length} contract section(s) that do not say whether they are ` +
+      `there because of an answer, so the page cannot tell a reader which parts of the ` +
+      `document exist because of what they said. Run npm run site:data.`,
+  )
+}
+
 /* ─────────────────────────────────────────────────────────────────── report ── */
 
 console.log('')

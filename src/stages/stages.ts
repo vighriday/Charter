@@ -138,10 +138,10 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
   understand: {
     name: 'understand',
     position: 1,
-    title: 'Understand',
+    title: 'Understand the business',
     whatHappens:
-      'The person describes their business. Charter asks about anything it still ' +
-      'needs, including permission to spend a stated amount on the web address.',
+      'You describe the business in your own words. Charter asks about anything ' +
+      'it still needs, including permission to spend a set amount on the web address.',
     tools: ['ask_question', 'record_fact', 'request_spend_permission'],
     // The one stage that must be able to say "nothing left to ask".
     toolChoice: 'auto',
@@ -183,11 +183,11 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
   research: {
     name: 'research',
     position: 2,
-    title: 'Research the name',
+    title: 'Check the name is free',
     whatHappens:
-      'Search for businesses already using this name, and decide whether the ' +
-      'proposed one is clear. Whether two names collide is decided in plain code, ' +
-      'not by the model.',
+      'Look for businesses already trading under this name, and work out whether ' +
+      'the new one is clear of them. Whether two names are too close is decided by ' +
+      'fixed rules, not by guesswork.',
     tools: ['search_web', 'compare_names', 'record_fact'],
     toolChoice: 'required',
     sensitivity: 'public',
@@ -215,10 +215,10 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
   address: {
     name: 'address',
     position: 3,
-    title: 'Secure the address',
+    title: 'Get the web address',
     whatHappens:
-      'Check whether the web address is free, and register it only if a person ' +
-      'has already given permission covering the price.',
+      'See whether the web address is available, and buy it only if a person has ' +
+      'already agreed to a price that covers it.',
     tools: [
       'check_address',
       'register_address',
@@ -269,11 +269,12 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
   draft: {
     name: 'draft',
     position: 4,
-    title: 'Draft the agreement',
+    title: 'Write the contract',
     whatHappens:
-      'Ask the owners the few things the agreement cannot be written without, then ' +
-      'prepare it. Every number, every article number and every cross-reference is ' +
-      'worked out in plain code. The model chooses when, never what.',
+      'Ask the owners the handful of things the contract cannot be written ' +
+      'without, then write it. Every number, every section number and every ' +
+      'reference between sections is worked out by fixed rules, so none of it is ' +
+      'invented.',
     tools: ['ask_question', 'record_fact', 'record_agreement_choice', 'draft_agreement'],
     toolChoice: 'required',
     // No owner's identity details are in this stage. Names and shares are terms of
@@ -329,10 +330,10 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
   verify: {
     name: 'verify',
     position: 5,
-    title: 'Verify identity',
+    title: 'Check the owners are who they say',
     whatHappens:
-      "Read each owner's identity document, score every field, and send the " +
-      'doubtful ones to a person. No model takes part in that decision.',
+      "Read each owner's ID, compare every value on it, and pass anything that is " +
+      'not a clean match to a person to decide. Nothing guesses here.',
     tools: ['read_identity_document', 'record_fact'],
     toolChoice: 'required',
     // Deliberately public, and it is worth being precise about why. The identity
@@ -394,11 +395,11 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
   assemble: {
     name: 'assemble',
     position: 6,
-    title: 'Assemble the pack',
+    title: 'Put it all in one file',
     whatHappens:
-      'Merge everything into one file, add structure, then seal it and take the ' +
-      'fingerprint of exactly what was sealed. After the seal, anything that would ' +
-      'rewrite the file is refused and the refusal is recorded.',
+      'Join everything into a single document, stamp it, and take the fingerprint ' +
+      'of exactly what was stamped. From then on, anything that would change the ' +
+      'words is turned down, and the refusal is written down.',
     tools: ['assemble_pack'],
     toolChoice: 'required',
     sensitivity: 'public',
@@ -417,10 +418,10 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
   boundary: {
     name: 'boundary',
     position: 7,
-    title: 'The boundary',
+    title: 'Hand it to a person',
     whatHappens:
-      'The agent stops. A person approves, and ordinary code — not the agent — ' +
-      'carries the pack to them to sign.',
+      'Charter stops here. A person says yes, and separate code that Charter ' +
+      'cannot reach carries the file to them to sign.',
     // Empty on purpose, and permanently. This is the stage where a human signs,
     // and there is nothing here for a model to do. A test fails the build if any
     // signature-related tool ever appears in any stage's list, this one included.
@@ -465,10 +466,10 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
   publish: {
     name: 'publish',
     position: 8,
-    title: 'Publish',
+    title: 'Put the website online',
     whatHappens:
-      "Build the website, draw its first picture from the owner's own words, put " +
-      'it online, and point the web address at it.',
+      "Build the business a website, draw its first picture from the owners' own " +
+      'words, put it online, and point the web address at it.',
     tools: ['draw_storefront', 'publish_site'],
     toolChoice: 'required',
     sensitivity: 'public',

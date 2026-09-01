@@ -119,10 +119,41 @@ function drawnIn(text: string): string[] {
     })
   }
 
-  return said
-    .sort((one, other) => one.at - other.at)
-    .map((one) => one.text)
-    .filter((one) => one.trim() !== '')
+  return joinMarkers(
+    said
+      .sort((one, other) => one.at - other.at)
+      .map((one) => one.text)
+      .filter((one) => one.trim() !== ''),
+  )
+}
+
+/**
+ * A bullet belongs to the line it marks, not to a line of its own.
+ *
+ * A PDF places a list marker and the words beside it as two separate drawing
+ * instructions, because they sit at two different places on the page. Read back
+ * in the order they were drawn, that comes out as a line holding nothing but a
+ * bullet, followed by the line it was pointing at. On the page that reads as an
+ * empty item followed by an unmarked one, thirty-one times in this packet.
+ *
+ * So a drawn string that is only a marker is put back in front of the string
+ * that followed it. A marker with nothing after it is dropped, because a bullet
+ * pointing at nothing is not something the document said.
+ */
+function joinMarkers(lines: readonly string[]): string[] {
+  const joined: string[] = []
+  let marker = ''
+
+  for (const line of lines) {
+    if (/^[•·–—-]$/.test(line.trim())) {
+      marker = line.trim()
+      continue
+    }
+    joined.push(marker === '' ? line : `${marker} ${line}`)
+    marker = ''
+  }
+
+  return joined
 }
 
 /**

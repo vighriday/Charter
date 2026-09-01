@@ -132,3 +132,8 @@ desktop.ini
 # time, so a picture of it goes stale the moment anything changes.
 /shots/
 /.playwright-mcp/
+
+# Scratch space used while working: throwaway scripts that drive a run, transcripts
+# of what happened, and probes written to answer one question and then thrown away.
+# None of it is part of the project and none of it should ever be published.
+.tmp/

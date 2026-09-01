@@ -87,6 +87,33 @@ export function asMoney(value: string): string {
   return `$${whole}.${part.toString().padStart(2, '0')}`
 }
 
+/**
+ * A day written the way a person says it, for messages only.
+ *
+ * Permissions are stored with the full moment they were given, down to the
+ * millisecond, because two permissions given in the same minute have to be told
+ * apart. That is the right thing to store and the wrong thing to show. Somebody
+ * reading a refusal wants to know which day they agreed to something, and should
+ * not have to decode "2026-08-28T09:00:43.000Z" to find out.
+ *
+ * Anything that is not a plain date at the front is handed back untouched, because
+ * a message that quietly drops the only time information it had is worse than an
+ * ugly one.
+ */
+export function plainDay(moment: string): string {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(moment)
+  if (parts === null) return moment
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ]
+  const month = months[Number(parts[2]) - 1]
+  if (month === undefined) return moment
+
+  return `${Number(parts[3])} ${month} ${parts[1]}`
+}
+
 /** What is left under a permission, in whole cents, as text. */
 export function remainingUnder(authorisation: SpendAuthorisation): string {
   const limit = cents(authorisation.limitCents, 'the permitted limit')
@@ -131,11 +158,11 @@ export function maySpend(facts: CaseFacts, costCents: string, forWhat: string): 
       allowed: false,
       reason:
         `"${forWhat}" costs ${asMoney(costCents)}, and only ` +
-        `${asMoney(remainingUnder(authorisation))} is left under the permission ` +
-        `given on ${authorisation.grantedAt} (${asMoney(authorisation.limitCents)} in ` +
-        `total, ${asMoney(authorisation.spentCents)} already spent). A person has to ` +
-        `raise the limit before this can run. Charter does not spend past a bound ` +
-        `somebody set, even by a cent.`,
+        `${asMoney(remainingUnder(authorisation))} is left of the ` +
+        `${asMoney(authorisation.limitCents)} a person allowed on ` +
+        `${plainDay(authorisation.grantedAt)} (${asMoney(authorisation.spentCents)} of ` +
+        `it already spent). Somebody has to raise the limit before this can go ahead. ` +
+        `Charter does not spend a cent past a limit a person set.`,
     }
   }
 

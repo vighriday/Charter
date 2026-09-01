@@ -142,15 +142,15 @@ describe('a good pack, with its record', () => {
   })
 
   it('confirms this is the pack the record describes', () => {
-    expect(answerTo(check(), 'same pack the record describes')?.answer).toBe('yes')
+    expect(answerTo(check(), 'same file the diary describes')?.answer).toBe('yes')
   })
 
   it('confirms the record is unbroken', () => {
-    expect(answerTo(check(), 'unbroken')?.answer).toBe('yes')
+    expect(answerTo(check(), 'match the one before it')?.answer).toBe('yes')
   })
 
   it('confirms the attestation vouches for the end of it', () => {
-    expect(answerTo(check(), 'attestation match')?.answer).toBe('yes')
+    expect(answerTo(check(), 'note check out')?.answer).toBe('yes')
   })
 })
 
@@ -163,8 +163,8 @@ describe('one byte changed by hand', () => {
     const result = check({ pack: tampered })
 
     expect(result.ok).toBe(false)
-    expect(answerTo(result, 'same pack the record describes')?.answer).toBe('no')
-    expect(answerTo(result, 'same pack the record describes')?.detail ?? '').toMatch(
+    expect(answerTo(result, 'same file the diary describes')?.answer).toBe('no')
+    expect(answerTo(result, 'same file the diary describes')?.detail ?? '').toMatch(
       /different files/,
     )
   })
@@ -175,7 +175,7 @@ describe('one byte changed by hand', () => {
     const tampered = Uint8Array.from(pack)
     tampered[0] = (tampered[0] as number) ^ 0xff
 
-    expect(answerTo(check({ pack: tampered }), 'unbroken')?.answer).toBe('yes')
+    expect(answerTo(check({ pack: tampered }), 'match the one before it')?.answer).toBe('yes')
   })
 })
 
@@ -188,7 +188,7 @@ describe('an altered record', () => {
     const result = check({ events: altered })
 
     expect(result.ok).toBe(false)
-    const finding = answerTo(result, 'unbroken')
+    const finding = answerTo(result, 'match the one before it')
     expect(finding?.answer).toBe('no')
     expect(finding?.detail ?? '').toMatch(/breaks at entry/)
   })
@@ -201,8 +201,8 @@ describe('an altered record', () => {
 
     const result = check({ events: shortened })
 
-    expect(answerTo(result, 'unbroken')?.answer, 'the chain should still be happy').toBe('yes')
-    expect(answerTo(result, 'cover the record that was handed over')?.answer).toBe('no')
+    expect(answerTo(result, 'match the one before it')?.answer, 'the chain should still be happy').toBe('yes')
+    expect(answerTo(result, 'describe the diary that was handed over')?.answer).toBe('no')
     expect(result.ok).toBe(false)
   })
 })
@@ -225,7 +225,7 @@ describe('the key comes from outside the pack', () => {
 
     const result = check({ attestation: forged })
 
-    expect(answerTo(result, 'attestation match')?.answer).toBe('no')
+    expect(answerTo(result, 'note check out')?.answer).toBe('no')
     expect(result.ok).toBe(false)
   })
 
@@ -242,11 +242,11 @@ describe('what it says it cannot prove', () => {
     // A PDF reader will report the same thing. A project that says it first is in
     // a much better position than one caught by it.
     const said = check().cannotProve.join(' ')
-    expect(said).toMatch(/issued by Charter to Charter/)
+    expect(said).toMatch(/Charter vouching for Charter/)
   })
 
   it('says it is not a review of the document and not a legal opinion', () => {
-    expect(check().cannotProve.join(' ')).toMatch(/not a review of the document/)
+    expect(check().cannotProve.join(' ')).toMatch(/Nobody here has reviewed it/)
   })
 
   it('prints those limits in what a person reads, not only in the data', () => {
@@ -262,8 +262,8 @@ describe('a pack that was never sealed', () => {
 
     const result = check({ pack: plain, recordedPackFingerprint: fingerprintBytes(plain) })
 
-    expect(answerTo(result, 'carries a seal')?.answer).toBe('no')
-    expect(answerTo(result, 'carries a seal')?.detail ?? '').toMatch(/nothing has sealed it/)
+    expect(answerTo(result, 'with a stamp on it')?.answer).toBe('no')
+    expect(answerTo(result, 'with a stamp on it')?.detail ?? '').toMatch(/nothing has sealed it/)
     expect(result.ok).toBe(false)
   })
 })
@@ -277,9 +277,9 @@ describe('whether somebody who is not Charter said this record existed', () => {
     // The fairest criticism of everything else in this file: Charter holds the
     // record AND the key that vouches for it. A record produced later, in one go,
     // would look exactly like a real one. Saying so is the honest answer.
-    const finding = answerTo(check(), 'not Charter')
+    const finding = answerTo(check(), 'outside Charter confirmed')
     expect(finding?.answer).toBe('cannot say')
-    expect(finding?.detail ?? '').toMatch(/produced later/)
+    expect(finding?.detail ?? '').toMatch(/written later than it says/)
   })
 
   it('lists that as something the check cannot prove', () => {

@@ -135,7 +135,7 @@ describe('the rule about spending', () => {
     if (verdict.allowed) return
     expect(verdict.reason).toContain('$25.01')
     expect(verdict.reason).toContain('$25.00')
-    expect(verdict.reason).toContain('even by a cent')
+    expect(verdict.reason).toContain('not spend a cent past a limit')
   })
 
   it('allows a spend of exactly what is left', () => {
