@@ -176,7 +176,10 @@ export const recordFact: Tool = {
         type: 'string',
         description:
           'The thing itself. For an owner, their name. For the state, its two ' +
-          'letters as the state writes them, such as TX.',
+          'letters as the state writes them, such as TX. For a contribution value, ' +
+          'whole cents written as digits and nothing else, so $12,000.00 is 1200000 ' +
+          '— and where somebody contributed cash, the value IS the cash, so there is ' +
+          'nothing to ask them about.',
         minLength: 1,
         maxLength: 2000,
       },
@@ -240,6 +243,21 @@ export const recordFact: Tool = {
     // deciding a term, and it is refused with the question it should have asked.
     if (about === 'owner_contribution_value') {
       const owner = text(args, 'owner')
+
+      // The shape first, and never through the money formatter, which refuses
+      // anything that is not whole cents by throwing. An earlier version built its
+      // complaint about "$12,000" by asking the formatter to print "$12,000", and
+      // a run four steps in stopped with an exception raised by its own error
+      // message.
+      if (!/^\d+$/.test(value.trim())) {
+        return (
+          `"${value}" is not an amount this can use. Amounts are whole cents written as ` +
+          `digits and nothing else, so $12,000.00 is 1200000. Money is never held as a ` +
+          `decimal number here, because most decimal fractions cannot be held exactly and ` +
+          `a limit checked in fractions is eventually wrong in whichever direction is worse.`
+        )
+      }
+
       if (!saidByAPerson(value, facts, owner)) {
         return (
           `Nobody has said that ${owner}'s contribution is worth ${asMoney(value)}. What a ` +

@@ -281,7 +281,12 @@ export const STAGES: Readonly<Record<StageName, StageDefinition>> = {
     // a business agreement, not personal identifiers, and the identity documents
     // themselves never reach a model at any stage.
     sensitivity: 'public',
-    maxTurns: 12,
+    // More than any other step, because this one has the most to do and half of it
+    // has to be asked. Two shares, two contribution values, and two terms that have
+    // no safe default: each of those four questions costs a turn to ask and another
+    // to act on the answer. A real run ran out on the twelfth turn with one thing
+    // left to write down.
+    maxTurns: 20,
     readyToLeave: (facts) => {
       const missingShares = facts.owners.filter((owner) => owner.sharePercent === undefined)
       if (missingShares.length > 0) {
