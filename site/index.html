@@ -35,7 +35,7 @@
       grid with the same 1.6 stroke, so the set reads as one hand. No library,
       no request to anybody, and nothing decorative.
     -->
-    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <svg class="sprite" aria-hidden="true">
       <defs>
         <g id="i-mark" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
           <path d="M4 6h16M4 11h12M4 16h8" />
@@ -113,18 +113,18 @@
 
         <span class="bar-status">
           <i class="bar-dot"></i>
-          run <span data-run="caseId"></span> &middot; <span data-run="totalEntries"></span> entries
-          &middot; stopped at <span data-run="here"></span>
+          example: a bakery in Texas &middot; <span data-run="totalEntries"></span> steps
+          &middot; waiting at step <span data-run="here"></span>
         </span>
 
         <span class="bar-actions">
           <a class="bar-action" href="record.jsonl" download>
             <svg viewBox="0 0 24 24"><use href="#i-down" /></svg>
-            the record
+            <span class="says">its diary</span>
           </a>
           <a class="bar-action" href="pack.pdf" download>
             <svg viewBox="0 0 24 24"><use href="#i-down" /></svg>
-            the packet
+            <span class="says">the file</span>
           </a>
         </span>
       </div>
@@ -135,30 +135,34 @@
       <div class="wrap tabs-inner" role="tablist" data-tabs>
         <button class="tab" role="tab" data-tab="overview" aria-selected="true">
           <svg viewBox="0 0 24 24"><use href="#i-mark" /></svg>
-          Overview
+          What this is
         </button>
         <button class="tab" role="tab" data-tab="run" aria-selected="false">
           <svg viewBox="0 0 24 24"><use href="#i-record" /></svg>
-          The run
+          Watch it work
           <span class="tab-count" data-run="totalEntries"></span>
         </button>
         <button class="tab" role="tab" data-tab="agreement" aria-selected="false">
           <svg viewBox="0 0 24 24"><use href="#i-doc" /></svg>
-          The agreement
+          The contract
           <span class="tab-count" data-run="agreement.articleCount"></span>
         </button>
         <button class="tab" role="tab" data-tab="packet" aria-selected="false">
           <svg viewBox="0 0 24 24"><use href="#i-seal" /></svg>
-          The packet
+          The paperwork
         </button>
         <button class="tab" role="tab" data-tab="checks" aria-selected="false">
           <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
-          The checks
+          Is it real
           <span class="tab-count" data-run="verify.findingCount"></span>
+        </button>
+        <button class="tab" role="tab" data-tab="yours" aria-selected="false">
+          <svg viewBox="0 0 24 24"><use href="#i-person" /></svg>
+          Run yours
         </button>
         <button class="tab" role="tab" data-tab="limits" aria-selected="false">
           <svg viewBox="0 0 24 24"><use href="#i-stop" /></svg>
-          The limits
+          What it won't do
           <span class="tab-count" data-run="refusalCount"></span>
         </button>
       </div>
@@ -173,19 +177,19 @@
         <div class="wrap">
           <div class="hero">
             <div>
-              <h1 class="t-h1 hero-claim">It prepares the whole packet. It signs nothing.</h1>
+              <h1 class="t-h1 hero-claim">It does the paperwork. You do the signing.</h1>
 
               <p class="lede hero-lede quiet">
-                Charter turns a plain description of a business into a prepared packet for a United
-                States company with more than one owner. It researches the name, secures a web
-                address, drafts the ownership agreement, reads the owners' identity documents, and
-                seals one file. Then it stops.
+                Two friends want to start a company together. Tell Charter about the business in
+                ordinary words and it gets the paperwork ready: checks the name is free, gets the
+                web address, writes the contract between the owners, checks their ID, and puts it
+                all in one file. Every time a real decision comes up, it stops and asks a person.
               </p>
 
               <div class="hero-acts">
                 <button class="button" data-go="run">
                   <svg viewBox="0 0 24 24"><use href="#i-play" /></svg>
-                  Replay the run
+                  See it happen
                 </button>
                 <button class="button" data-kind="quiet" data-go="checks">
                   <svg viewBox="0 0 24 24"><use href="#i-chain" /></svg>
@@ -199,14 +203,18 @@
                  rather than something written about the record. -->
             <div class="panel">
               <div class="panel-head">
-                <span>every entry, as its own fingerprint</span>
-                <span data-run="totalEntries"></span>
+                <span>each square is one step</span>
+                <span data-mural-count></span>
               </div>
               <canvas class="mural" data-mural></canvas>
               <div class="mural-key">
-                <span><i></i> the software</span>
-                <span><i class="is-human"></i> a person</span>
+                <span><i></i> done by the software</span>
+                <span><i class="is-human"></i> needed a person</span>
               </div>
+              <p class="panel-note">
+                The pattern in each square is made from that step's own fingerprint. Change
+                anything about a step and its square turns into a different shape.
+              </p>
             </div>
           </div>
 
@@ -216,49 +224,72 @@
             <div class="card">
               <div class="card-head">
                 <svg viewBox="0 0 24 24"><use href="#i-record" /></svg>
-                entries
+                steps taken
               </div>
-              <div class="card-value" data-run="totalEntries"></div>
-              <p class="card-note">Everything that happened, in order, each one carrying the fingerprint of the one before it.</p>
+              <div class="card-value">
+                <span
+                  data-run="totalEntries"
+                  data-explain="Counted from the diary beside this page: one line for every single thing that happened during the run, from the first question to the finished file."
+                  tabindex="0"
+                ></span>
+              </div>
+              <p class="card-note">Everything it did, in order. Each step is locked to the one before it.</p>
             </div>
 
             <div class="card" data-human="true">
               <div class="card-head">
                 <svg viewBox="0 0 24 24"><use href="#i-person" /></svg>
-                a person had to act
+                times it stopped to ask
               </div>
-              <div class="card-value" data-run="counts.human"></div>
-              <p class="card-note">The run stops dead at each one. There is no timeout anywhere, and no way to skip past.</p>
+              <div class="card-value">
+                <span
+                  data-run="counts.human"
+                  data-explain="The number of steps in the diary whose actor is a person rather than the software. Each one is a place the run stopped and could not go on by itself."
+                  tabindex="0"
+                ></span>
+              </div>
+              <p class="card-note">It waits for an answer. There is no time limit and no way to skip past.</p>
             </div>
 
             <div class="card">
               <div class="card-head">
                 <svg viewBox="0 0 24 24"><use href="#i-refuse" /></svg>
-                refusals
+                times it said no
               </div>
-              <div class="card-value" data-run="refusalCount"></div>
-              <p class="card-note">One of them is Charter refusing a person, because the token identifying the case did not match.</p>
+              <div class="card-value">
+                <span
+                  data-run="refusalCount"
+                  data-explain="The number of steps in the diary marked as a refusal: something was asked for and Charter would not do it. Every one is listed under &quot;what it won't do&quot;, with its reason."
+                  tabindex="0"
+                ></span>
+              </div>
+              <p class="card-note">Once it even said no to a person, because the job they asked about was not the job it was doing.</p>
             </div>
 
             <div class="card">
               <div class="card-head">
                 <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
-                tests
+                tests it passes
               </div>
-              <div class="card-value" data-run="tests"></div>
-              <p class="card-note">Counted by running them. This page is not built at all when one of them fails.</p>
+              <div class="card-value">
+                <span
+                  data-run="tests"
+                  data-explain="The whole test suite was run while this page was being built, and this is how many passed. If any had failed, the build would have stopped and this page would not exist."
+                  tabindex="0"
+                ></span>
+              </div>
+              <p class="card-note">Counted by running them. If a single one fails, this page does not get built.</p>
             </div>
           </div>
 
           <div class="gap"></div>
 
-          <h2 class="t-head">Eight stages. The seventh has no tools at all.</h2>
+          <h2 class="t-head">Eight steps. In step seven it can do nothing at all.</h2>
           <div class="gap-s"></div>
           <p class="t-body quiet">
-            The model is shown different tools in each stage. A tool that exists but does not belong
-            to the stage the run is in cannot be called: it is not offered, and asking for it is
-            refused and written down. The seventh stage offers nothing, because the only thing that
-            happens there is a person deciding.
+            Charter is only handed the tools that belong to the step it is on. If it asks for
+            anything else it gets a no, and the no is written down. Step seven hands it nothing,
+            because the only thing that happens there is a person making up their mind.
           </p>
 
           <div class="gap-m"></div>
@@ -268,47 +299,47 @@
 
           <div class="grid grid-2">
             <div>
-              <h2 class="t-head">The hard part was never the paperwork.</h2>
+              <h2 class="t-head">The forms are the easy part.</h2>
               <div class="gap-s"></div>
               <p class="t-body">
-                Forming a business on your own is already solved and it is free. What is not solved
-                is writing down an agreement between two people who trust each other completely
-                today and might not in three years.
+                You can register a company yourself, online, for very little. What nobody helps
+                with is the contract between the owners: who owns what, who gets to decide what,
+                and what happens if one of them wants out. That is the piece people wish they had
+                written down, three years later.
               </p>
               <div class="gap-s"></div>
               <p class="t-body quiet">
-                In this run the two owners hold half each, and said there is no agreed way for one
-                of them to leave. Charter did not invent one. It wrote down that there is no way
-                out, wrote down why, and included the article that decides what happens when the two
-                of them cannot agree.
+                Here the two owners hold half each, and they said there is no agreed way for one of
+                them to leave. Charter did not make one up. It wrote down that there is no way out,
+                said why, and added the section that settles things when the two of them cannot
+                agree.
               </p>
               <div class="gap-s"></div>
               <button class="button" data-kind="quiet" data-go="agreement">
                 <svg viewBox="0 0 24 24"><use href="#i-doc" /></svg>
-                Read the agreement it wrote
+                Read the contract
               </button>
             </div>
 
             <div>
-              <h2 class="t-head">A limit nobody can check is not a limit.</h2>
+              <h2 class="t-head">It cannot sign for you, even if you ask.</h2>
               <div class="gap-s"></div>
               <p class="t-body">
-                The software seals documents it made and signs its own record. It never signs for a
-                person. That is not a setting: there is no chain of imports from anything the model
-                can trigger to the module that carries a document to somebody to sign, and a test
-                walks every import on every build and fails if that ever changes.
+                Charter stamps documents it made itself, and it signs its own diary of what it did.
+                It never signs for a person. This is not a setting anybody can switch off. The part
+                of the code that hands a document to a person is walled off from everything Charter
+                can reach, and a test checks that wall on every single build.
               </p>
               <div class="gap-s"></div>
               <p class="t-body quiet">
-                It was armed on 28 August while that module did not exist. On 30 August the first
-                file was written into that folder and the build failed, exactly as designed, and it
-                stayed failing until somebody wrote down in the open which single file is allowed to
-                reach it.
+                The wall went up before there was anything behind it. The first time a file was put
+                in that folder the build broke, exactly as intended, and stayed broken until
+                somebody wrote down in the open which one file is allowed through.
               </p>
               <div class="gap-s"></div>
               <button class="button" data-kind="quiet" data-go="limits">
                 <svg viewBox="0 0 24 24"><use href="#i-stop" /></svg>
-                See what it would not do
+                See what it refused
               </button>
             </div>
           </div>
@@ -321,16 +352,37 @@
           <div class="view-head">
             <div class="eyebrow">
               <svg viewBox="0 0 24 24"><use href="#i-record" /></svg>
-              the record
+              step by step
             </div>
-            <h2 class="t-h1">Watch it, and get stopped.</h2>
+            <h2 class="t-h1">Watch it work, and watch it stop.</h2>
             <div class="gap-s"></div>
             <p class="lede quiet">
-              One real run from <span data-run="ranOnLong"></span>. Two sisters opening a bakery in
-              Texas. All <span data-run="totalEntries"></span> entries are already on this page
-              before you press anything, and you can drag the rail on the left backwards.
-              <span data-run="counts.human"></span> of them are things the software could not do for
-              itself. It is stopped at the first of those now.
+              Two sisters opening a bakery in Texas, on
+              <span data-run="ranOnLong"></span>. All <span data-run="totalEntries"></span> steps
+              are already on this page before you press anything, and you can drag the bar on the
+              left to go back. <span data-run="counts.human"></span> of them are things the
+              software could not do on its own. It is waiting at the first of those now.
+            </p>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <div class="card">
+            <div class="card-head">
+              <svg viewBox="0 0 24 24"><use href="#i-eye" /></svg>
+              how to read a line
+            </div>
+            <p class="t-note">
+              Every line below is one thing that happened, in the order it happened. Reading
+              across: the number of the step, who did it, what they did, and the detail.
+            </p>
+            <div class="gap-s"></div>
+            <p class="t-note quiet">
+              The short codes at each end are fingerprints. A fingerprint is a short code worked
+              out from the contents of a step, so any change to that step produces a different
+              code. Each step also carries the fingerprint of the step before it, which is what
+              links them into an order nobody can quietly rearrange. The code on the left of a
+              line is the end of the line above it. That is the join.
             </p>
           </div>
 
@@ -346,11 +398,11 @@
           <div class="controls">
             <button type="button" class="control" data-do="resume">
               <svg viewBox="0 0 24 24"><use href="#i-play" /></svg>
-              resume
+              play
             </button>
             <button type="button" class="control" data-do="hold">
               <svg viewBox="0 0 24 24"><use href="#i-pause" /></svg>
-              hold
+              pause
             </button>
             <button type="button" class="control" data-do="back">
               <svg viewBox="0 0 24 24"><use href="#i-back" /></svg>
@@ -358,20 +410,20 @@
             </button>
             <button type="button" class="control" data-do="next-person">
               <svg viewBox="0 0 24 24"><use href="#i-person" /></svg>
-              to the next person
+              skip to the next question
             </button>
             <button type="button" class="control" data-do="show-everything">
               <svg viewBox="0 0 24 24"><use href="#i-eye" /></svg>
-              show the whole record
+              show every step
             </button>
             <span class="controls-count">
-              entry <span data-run="here"></span> of <span data-run="totalEntries"></span>
+              step <span data-run="here"></span> of <span data-run="totalEntries"></span>
             </span>
           </div>
 
           <div class="gap"></div>
 
-          <h3 class="t-sub">Where the entries went</h3>
+          <h3 class="t-sub">What happened in each step</h3>
           <div class="gap-s"></div>
           <ul class="list" data-stages></ul>
           <div class="gap-s"></div>
@@ -392,12 +444,12 @@
         <div class="card">
           <div class="card-head">
             <svg viewBox="0 0 24 24"><use href="#i-doc" /></svg>
-            the agreement was written here
+            the contract was written here
           </div>
           <p class="t-note">
-            <span data-run="agreement.articleCount"></span> articles, dated
-            <span data-run="agreement.dated"></span>. Two of them are in the document because of
-            what a person answered at entry <span data-run="exitQuestionEntry"></span>.
+            <span data-run="agreement.articleCount"></span> sections, dated
+            <span data-run="agreement.dated"></span>. Two of them are only in there because of what
+            a person answered back at step <span data-run="exitQuestionEntry"></span>.
           </p>
           <div class="gap-s"></div>
           <button class="button" data-kind="quiet" data-go="agreement">
@@ -413,27 +465,38 @@
         <div class="card">
           <div class="card-head">
             <svg viewBox="0 0 24 24"><use href="#i-seal" /></svg>
-            the packet was sealed here
+            the file was finished here
           </div>
           <ul class="spec">
             <li>
-              <span class="spec-key">Sealed</span>
-              <span class="spec-value" data-run="pack.sizeBytes"></span>
+              <span class="spec-key">Pages</span>
+              <span
+                class="spec-value"
+                data-run="packPageCount"
+                data-explain="Counted by reading the finished file itself and finding the pages that have words on them."
+                data-explain-side="right"
+                tabindex="0"
+              ></span>
             </li>
             <li>
-              <span class="spec-key">PDF permission level</span>
-              <span class="spec-value" data-run="pack.permissionLevel"></span>
+              <span class="spec-key">Anyone may</span>
+              <span class="spec-value">fill in and sign</span>
             </li>
             <li>
               <span class="spec-key">Fingerprint</span>
-              <span class="spec-value" data-run="pack.short"></span>
+              <span
+                class="spec-value"
+                data-run="pack.short"
+                data-explain="A short code worked out from every byte of the finished file. Change one character anywhere in it and this code changes completely. The first twelve characters are shown."
+                data-explain-side="right"
+                tabindex="0"
+              ></span>
             </li>
           </ul>
           <div class="gap-s"></div>
           <p class="t-note quiet">
-            Permission level <span data-run="pack.permissionLevel"></span> means filling in and
-            signing, and nothing else. After the seal, anything that would rewrite the file is
-            refused, and the refusal is written into the record.
+            The file is locked. Filling in the blanks and signing is allowed. Changing the words is
+            not, and every attempt gets turned down and written into the diary.
           </p>
         </div>
         <div class="gap-m"></div>
@@ -444,16 +507,16 @@
         <div class="card">
           <div class="card-head">
             <svg viewBox="0 0 24 24"><use href="#i-stop" /></svg>
-            stage <span data-run="boundaryPosition"></span>, the boundary
+            step <span data-run="boundaryPosition"></span>, where it hands over
           </div>
-          <div class="tools-label">Tools</div>
+          <div class="tools-label">Tools it can use here</div>
           <div class="tools-empty" data-empty-tools></div>
           <div class="gap-s"></div>
-          <p class="t-body t-reserved">Its emptiness is the design.</p>
+          <p class="t-body t-reserved">Empty on purpose.</p>
           <div class="gap-s"></div>
           <p class="t-note quiet">
-            The model is asked for nothing here. Ordinary code, which is not the agent and cannot be
-            reached by it, carries the packet to a person.
+            Charter is not asked to do anything at this step. Plain code, which Charter cannot
+            reach or influence, carries the file to a person.
           </p>
         </div>
         <div class="gap-m"></div>
@@ -468,16 +531,19 @@
               what the owners would sign
             </div>
             <h2 class="t-h1">
-              <span data-run="agreement.articleCount"></span> articles. Two are there because of
-              what you answered.
+              <span
+                data-run="agreement.articleCount"
+                data-explain="Counted from the contract itself. Charter puts in the sections this particular company needs, so another company with different answers gets a different number."
+                tabindex="0"
+              ></span>
+              sections. Two are only there because of what you said.
             </h2>
             <div class="gap-s"></div>
             <p class="lede quiet">
-              Every article below is the real one, from the same code that wrote the file this run
-              left on disk. At entry <span data-run="exitQuestionEntry"></span> a person was asked
-              whether there is a written way for an owner to leave and be bought out. The answer was
-              no. So Charter did not invent one. It wrote down that there is no way out, and it
-              wrote down why.
+              This is the real contract, not a sample. At step
+              <span data-run="exitQuestionEntry"></span> a person was asked whether the owners have
+              an agreed way for one of them to leave and be bought out. The answer was no. Charter
+              did not make one up. It wrote down that there is no way out, and why.
             </p>
           </div>
 
@@ -485,18 +551,18 @@
 
           <div class="grid grid-3">
             <div class="card">
-              <div class="card-head">shares</div>
+              <div class="card-head">who owns what</div>
               <p class="t-note">
                 <span data-run="ownerOne"></span> holds half. <span data-run="ownerTwo"></span>
                 holds half.
               </p>
             </div>
             <div class="card">
-              <div class="card-head">an ordinary decision</div>
+              <div class="card-head">a normal decision needs</div>
               <p class="t-note" data-run="agreement.ordinaryVote"></p>
             </div>
             <div class="card">
-              <div class="card-head">changing this agreement</div>
+              <div class="card-head">changing the contract needs</div>
               <p class="t-note" data-run="agreement.majorVote"></p>
             </div>
           </div>
@@ -509,27 +575,61 @@
 
           <div class="gap-m"></div>
 
-          <h3 class="t-sub">The articles</h3>
+          <h3 class="t-sub">Where these came from</h3>
+          <div class="gap-s"></div>
+          <p class="t-body">
+            Charter did not make these up as it went. There is one fixed list of sections, in one
+            fixed order, written down in the code before any run starts. Most of them are in every
+            contract Charter writes. A few are not, and those are the ones that record something
+            the owners actually decided.
+          </p>
+          <div class="gap-s"></div>
+          <p class="t-body quiet">
+            A note on the word. The document itself calls them articles and numbers them that way,
+            which is how contracts are normally written, so each one below is labelled the way it
+            is labelled in the file. This page says sections, because that is the plainer word.
+            They are the same thing.
+          </p>
+          <div class="gap-s"></div>
+          <p class="t-body quiet">
+            Two of the sections are a matched pair, and exactly one of them is always used. If the
+            owners have an agreed way for somebody to leave and be bought out, the contract gets
+            the section that describes it. If they have not, it gets the section that says so
+            plainly instead. There is no third option where the question goes unanswered. One more
+            section, the one about deadlock, is added only when the shares make an exact tie
+            possible, because a deadlock rule in a company that cannot deadlock is just noise.
+          </p>
+          <div class="gap-s"></div>
+          <p class="t-body quiet">
+            Sections refer to each other by number. If a section that is left out is named by one
+            that is kept, the whole thing stops rather than printing a contract that points at
+            something not in it. That failure is the point: a document that reads perfectly and
+            refers to a clause nobody agreed to is worse than no document.
+          </p>
+
+          <div class="gap-m"></div>
+
+          <h3 class="t-sub">The sections</h3>
           <div data-articles></div>
 
           <div class="gap-s"></div>
           <button type="button" class="control" data-do="all-articles">
             <svg viewBox="0 0 24 24"><use href="#i-eye" /></svg>
-            show all <span data-run="agreement.articleCount"></span> articles
+            show all <span data-run="agreement.articleCount"></span> sections
           </button>
 
           <div class="gap"></div>
 
           <p class="t-body">
-            Neither owner can outvote the other, and under Texas law neither can walk out. Charter
-            did not choose that. It wrote down what the two of them said, and named the consequence
-            in the document instead of leaving it to be found in year three.
+            Neither owner can outvote the other, and Texas law says neither of them can simply walk
+            away. Charter did not choose that. It wrote down what the two of them said, and put the
+            consequence in the contract instead of letting them find it in year three.
           </p>
           <div class="gap-s"></div>
           <p class="t-body quiet">
-            This is a working copy. Nothing in it has been signed, and the software that prepared it
-            cannot sign it. Charter does not give legal advice, and nothing on this page is a view
-            about whether this agreement is right for these two people.
+            Nothing here has been signed, and the software that wrote it cannot sign it. This is
+            not legal advice, and nothing on this page is a view on whether this contract is right
+            for these two people.
           </p>
         </div>
       </section>
@@ -542,12 +642,12 @@
               <svg viewBox="0 0 24 24"><use href="#i-seal" /></svg>
               what it actually made
             </div>
-            <h2 class="t-h1">One file, sealed, and it ends on a line nobody has signed.</h2>
+            <h2 class="t-h1">One file, finished, ending on a blank line.</h2>
             <div class="gap-s"></div>
             <p class="lede quiet">
-              This is the document. The words below were read back out of the sealed bytes rather
-              than written again, so what you are looking at is what is in the file. The file itself
-              is beside this page, and its fingerprint is printed under it.
+              This is the real document. The words below were read straight out of the finished
+              file, so what you see here is what is in it. You can download the file itself below
+              and check it yourself.
             </p>
           </div>
 
@@ -574,41 +674,52 @@
               <div class="gap-s"></div>
               <ul class="spec">
                 <li>
-                  <span class="spec-key">Bytes</span>
-                  <span class="spec-value" data-run="pack.sizeBytes"></span>
+                  <span class="spec-key">Pages</span>
+                  <span
+                    class="spec-value"
+                    data-run="packPageCount"
+                    data-explain="Counted by reading the finished file itself and finding the pages that have words on them."
+                    data-explain-side="right"
+                    tabindex="0"
+                  ></span>
                 </li>
                 <li>
-                  <span class="spec-key">PDF permission level</span>
-                  <span class="spec-value" data-run="pack.permissionLevel"></span>
+                  <span class="spec-key">Anyone may</span>
+                  <span class="spec-value">fill in and sign</span>
                 </li>
                 <li>
                   <span class="spec-key">Fingerprint</span>
-                  <span class="spec-value" data-run="pack.short"></span>
+                  <span
+                    class="spec-value"
+                    data-run="pack.short"
+                    data-explain="A short code worked out from every byte of the finished file. Change one character anywhere in it and this code changes completely. The first twelve characters are shown."
+                    data-explain-side="right"
+                    tabindex="0"
+                  ></span>
                 </li>
               </ul>
               <div class="gap-s"></div>
               <a class="button" href="pack.pdf" download>
                 <svg viewBox="0 0 24 24"><use href="#i-down" /></svg>
-                Take the sealed file
+                Download the file
               </a>
             </div>
 
             <div>
-              <h3 class="t-sub">What is inside it</h3>
+              <h3 class="t-sub">What is in it</h3>
               <div class="gap-s"></div>
               <ul class="list" data-pack-parts></ul>
 
               <div class="gap-m"></div>
 
-              <h3 class="t-sub">The two identity documents</h3>
+              <h3 class="t-sub">The two ID documents</h3>
               <div class="gap-s"></div>
               <div data-documents></div>
               <div class="gap-s"></div>
               <p class="t-small quiet">
-                Field names only. Not one value read off either document is on this page, in the
-                data behind it, or anywhere a website could reach. The record was built that way
-                from the start, and a check refuses to write this page's data if anything shaped
-                like one turns up in it.
+                Only the names of the boxes are shown here. Nothing actually read off either ID is
+                on this page, in the data behind it, or anywhere a website could reach. A check
+                refuses to build this page if anything shaped like an ID number turns up in it.
               </p>
 
               <div class="gap-m"></div>
@@ -626,28 +737,27 @@
                   <div class="signature-blank">Date</div>
                 </div>
               </div>
-              <p class="t-note">These lines are empty because the software cannot put anything on them.</p>
+              <p class="t-note">These lines are blank because the software cannot put anything on them.</p>
             </div>
           </div>
 
           <div class="gap"></div>
 
-          <h2 class="t-head">The picture this run did not draw.</h2>
+          <h2 class="t-head">The picture it did not draw.</h2>
           <div class="gap-s"></div>
           <p class="t-body quiet">
-            The last stage draws the new business its first storefront picture. The tool that does
-            it takes no arguments at all, so the model cannot write its own description of somebody
-            else's business: the words come out of the record, and they are the ones a person typed
-            in the first minute of the run. In this run the service was standing in, so nothing was
-            drawn. Rather than show a picture that was never made, here is the frame and the exact
-            words that would have gone to it.
+            The last step draws the new business its first shop picture. Charter gets no say in
+            what that picture shows: the words below are the ones a person typed in the first
+            minute, taken straight from the diary. In this example the drawing service was a
+            stand-in, so no picture was made. Rather than show you one that never existed, here is
+            the empty frame and the exact words that would have been sent.
           </p>
 
           <div class="gap-m"></div>
           <div class="frame"><p data-storefront-words></p></div>
           <div class="sheet-foot">
-            <span><span data-run="storefront.shape"></span></span>
-            <span>not drawn, because the service was standing in</span>
+            <span>the picture would have been <span data-run="storefront.shape"></span></span>
+            <span>not drawn, because the service was a stand-in</span>
           </div>
         </div>
       </section>
@@ -663,9 +773,9 @@
             <h2 class="t-h1">Do not believe any of this. Break it.</h2>
             <div class="gap-s"></div>
             <p class="lede quiet">
-              Everything below runs in your browser, on the real fingerprints, with no network. The
-              same check runs on your own machine over the file itself, and this page prints its
-              questions in its own words rather than a friendlier copy of them.
+              Everything below runs inside your own browser. Nothing is sent anywhere. These are
+              the questions the checker asks, in its own words, and you can run the same check on
+              your own computer.
             </p>
           </div>
 
@@ -674,15 +784,29 @@
           <div class="card">
             <div class="card-head">
               <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
-              npm run verify
+              the eight questions it asks
             </div>
             <div data-findings></div>
             <div class="gap-s"></div>
             <p class="t-note quiet">
-              <span data-run="verify.findingCount"></span> questions.
-              <span data-run="verify.yesCount"></span> answered yes.
-              <span data-run="verify.unsureCount"></span> it cannot answer, and it says so rather
-              than leaving it out.
+              <span
+                data-run="verify.findingCount"
+                data-explain="Every question the checker asked about this file and this diary. The list above is the full set, not a selection."
+                tabindex="0"
+              ></span>
+              questions.
+              <span
+                data-run="verify.yesCount"
+                data-explain="Questions the checker answered yes to, by working it out from the file itself rather than from anything this page says."
+                tabindex="0"
+              ></span>
+              came back yes.
+              <span
+                data-run="verify.unsureCount"
+                data-explain="Questions the checker has no way to answer. It says so rather than leaving them off the list, because a check that hides its blind spots is worth nothing."
+                tabindex="0"
+              ></span>
+              it cannot answer, and it says so instead of quietly leaving it out.
             </p>
             <div class="gap-s"></div>
             <button type="button" class="control" data-do="copy-verify">
@@ -693,7 +817,7 @@
 
           <div class="gap-m"></div>
 
-          <h3 class="t-sub">What this check cannot prove</h3>
+          <h3 class="t-sub">What this check still cannot tell you</h3>
           <div class="gap-s"></div>
           <div data-cannot></div>
 
@@ -702,24 +826,22 @@
           <h2 class="t-head">The past can still be rewritten. It can no longer be rewritten quietly.</h2>
           <div class="gap-s"></div>
           <p class="t-body quiet">
-            Below is the real detail of entry <span data-run="tamperEntry"></span>, one of the two
-            places this run wrote down how much of the company each owner holds. Change the
-            <code>50</code> to <code>60</code>. Your browser takes the fingerprint of what you
-            typed, rebuilds that entry's own fingerprint from it, and walks every link from the
-            first entry to the last.
+            Below is a real step from the run: one of the two places it wrote down how much of the
+            company each owner holds. Change the <code>50</code> to <code>60</code> and see what
+            happens. Every step is locked to the one before it, so changing one breaks the rest.
           </p>
 
           <div class="gap-m"></div>
 
           <div class="panel">
             <div class="panel-head">
-              <span>every entry, as its own fingerprint</span>
-              <span data-run="totalEntries"></span>
+              <span>each square is one step</span>
+              <span data-mural-count></span>
             </div>
             <canvas class="mural" data-mural-2></canvas>
             <div class="mural-key">
-              <span><i></i> the software</span>
-              <span><i class="is-human"></i> a person</span>
+              <span><i></i> done by the software</span>
+              <span><i class="is-human"></i> needed a person</span>
               <span><i class="is-broken"></i> changed since it was written</span>
             </div>
           </div>
@@ -729,22 +851,22 @@
           <div class="card">
             <div class="card-head">
               <svg viewBox="0 0 24 24"><use href="#i-chain" /></svg>
-              entry <span data-run="tamperEntry"></span> &middot; its detail
+              step <span data-run="tamperEntry"></span> &middot; what it says
             </div>
             <textarea class="tamper-field" rows="2" spellcheck="false" data-tamper-field></textarea>
 
             <div class="tamper-controls">
               <button type="button" class="control" data-do="rechain">
                 <svg viewBox="0 0 24 24"><use href="#i-chain" /></svg>
-                now rewrite the rest so it fits
+                now cover it up
               </button>
               <button type="button" class="control" data-do="drop-two">
                 <svg viewBox="0 0 24 24"><use href="#i-refuse" /></svg>
-                or drop the last two entries
+                or delete the last two steps
               </button>
               <button type="button" class="control" data-do="tamper-reset">
                 <svg viewBox="0 0 24 24"><use href="#i-back" /></svg>
-                put it back
+                undo
               </button>
             </div>
 
@@ -754,8 +876,8 @@
 
           <div class="gap-s"></div>
           <p class="t-small quiet">
-            This runs the same check on the same fingerprints, in about forty lines. The real check
-            reads the record file itself, and sends nothing anywhere.
+            This is the same check, on the same fingerprints, running in your browser. The real one
+            reads the file on your own computer and sends nothing anywhere.
           </p>
         </div>
       </section>
@@ -771,11 +893,16 @@
             <h2 class="t-h1">Most software ships a list of what it can do. This is the other one.</h2>
             <div class="gap-s"></div>
             <p class="lede quiet">
-              These <span data-run="refusalCount"></span> refusals are in the record, and they are
-              printed inside the finished packet under this same heading. Entry
-              <span data-run="humanRefusalEntry"></span> is the one worth reading twice. It is
-              Charter refusing a person, because the token that identified the case did not match.
-              The limit runs in both directions.
+              Every time Charter said no is written down, and all
+              <span
+                data-run="refusalCount"
+                data-explain="Counted from the diary: the steps marked as a refusal. The same list is printed inside the finished file, so the file and this page cannot disagree."
+                tabindex="0"
+              ></span>
+              of them are printed inside the finished file under this same heading. Step
+              <span data-run="humanRefusalEntry"></span> is worth reading twice: that is Charter
+              saying no to a person, because the job they asked about was not the job it was doing.
+              The limit works in both directions.
             </p>
           </div>
 
@@ -785,16 +912,15 @@
           <div class="gap"></div>
 
           <h2 class="t-head">
-            <span data-run="serviceCount"></span> outside services. In this run, all of them were
-            standing in.
+            <span data-run="serviceCount"></span> outside companies. In this example, every one of
+            them was a stand-in.
           </h2>
           <div class="gap-s"></div>
           <p class="t-body quiet">
-            This matters more than a logo would. The run you can replay reached no network at all.
-            Every outside service was a stand-in holding answers recorded in advance, which is why a
-            missing answer is an error here instead of a quiet real call. Two of them produced
-            entries you can read: the search that changed the name, and the registrar that refused
-            twice before registering.
+            The example you can replay never touched the internet. Each outside company was a
+            stand-in giving back answers recorded in advance, so nothing was bought, registered or
+            charged. Two of them still produced steps worth reading: the search that changed the
+            business name, and the registrar that said no twice before it said yes.
           </p>
 
           <div class="gap-m"></div>
@@ -805,16 +931,124 @@
           <h2 class="t-head">The one thing it will never do.</h2>
           <div class="gap-s"></div>
           <p class="t-body">
-            The law here is more subtle than the slogan. The Uniform Electronic Transactions Act,
-            section 14, lets a contract be formed by electronic agents even when no person is aware
-            of it, and the result is attributed to the person to be bound. So the honest claim is
-            not that a machine may not act. It is that the same law defines a signature as a process
-            executed or adopted by a person, with the intent to sign. Forming can be handed over.
-            The signature is the act of a person, and a machine has no intent to lend it.
+            United States law does let software make a deal on your behalf, and you are bound by
+            it. What the law does not do is call that a signature. A signature is something a
+            person does, on purpose, meaning to sign. Software has no intent to lend you. So
+            Charter can get everything ready, and the last act stays yours.
           </p>
 
           <div class="gap-m"></div>
-          <p class="t-h1">It prepares the whole packet. It signs nothing.</p>
+          <p class="t-h1">It does the paperwork. You do the signing.</p>
+        </div>
+      </section>
+
+      <!-- ═════════════════════════════════════════════════ 7. RUN YOUR OWN ══ -->
+      <section class="view" data-view="yours" hidden>
+        <div class="wrap" data-panel>
+          <div class="view-head">
+            <div class="eyebrow">
+              <svg viewBox="0 0 24 24"><use href="#i-person" /></svg>
+              your idea, not ours
+            </div>
+            <h2 class="t-h1">Everything else on this page is a recording. This part is not.</h2>
+            <div class="gap-s"></div>
+            <p class="lede quiet">
+              Describe your own business in a sentence or two. Charter will work on it for
+              real: a model deciding what to do next, a live search of the web for the name,
+              the registrar's own practice account. It stops and asks you at every point only
+              a person can decide, and it does not guess while it waits. At the end you get
+              the packet, the record of everything that happened, and the signature over that
+              record, all three to download and check yourself.
+            </p>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <!-- when there is nothing running behind this page -->
+          <div class="card" data-panel-offline hidden>
+            <h3 class="t-sub">This page is open as a file, so there is nothing to run.</h3>
+            <div class="gap-s"></div>
+            <p class="t-body">
+              The rest of the page works this way on purpose: it is one file and it needs
+              nothing. Running your own idea is different, because it has to reach a model and
+              a search company, and that needs a program running on a computer somewhere.
+            </p>
+            <div class="gap-s"></div>
+            <p class="t-body">Two commands, on your own machine:</p>
+            <div class="gap-s"></div>
+            <pre class="run-code">npm install
+npm run serve</pre>
+            <div class="gap-s"></div>
+            <p class="t-body quiet">
+              Then open the address it prints. It works with no keys at all, using answers
+              recorded in advance for every outside company. Add a free model key and set
+              REPLAY_MODE=false and the same run goes out to the real ones.
+            </p>
+          </div>
+
+          <!-- the box you type in -->
+          <form class="card" data-panel-form hidden>
+            <h3 class="t-sub">What is the business?</h3>
+            <div class="gap-s"></div>
+            <p class="t-body quiet">
+              Plain words. Who the owners are, what it does, where it is, and what each person
+              is putting in. One paragraph is plenty.
+            </p>
+            <div class="gap-s"></div>
+            <textarea
+              class="run-field"
+              rows="5"
+              data-panel-idea
+              required
+              minlength="20"
+              maxlength="4000"
+              placeholder="Two friends are opening a bicycle repair shop in Austin. One is putting in her tools and a van; the other is putting in cash..."
+            ></textarea>
+            <div class="gap-s"></div>
+            <label class="t-body">
+              Which US state will it be formed in?
+              <input
+                class="run-field run-field-small"
+                data-panel-state
+                required
+                pattern="[A-Za-z]{2}"
+                maxlength="2"
+                placeholder="TX"
+              />
+            </label>
+            <div class="gap-s"></div>
+            <button class="button" type="submit" data-panel-go>Run it on my idea</button>
+            <div class="gap-s"></div>
+            <div data-panel-limits></div>
+          </form>
+
+          <!-- the run itself -->
+          <div data-panel-live hidden>
+            <div class="card" data-panel-real></div>
+            <div class="gap-m"></div>
+
+            <!-- the one thing on this page that stops everything -->
+            <div class="card" data-human="true" data-panel-gate hidden>
+              <div class="eyebrow">
+                <svg viewBox="0 0 24 24"><use href="#i-person" /></svg>
+                only a person can answer this
+              </div>
+              <div class="gap-s"></div>
+              <p class="t-sub" data-panel-gate-text></p>
+              <div data-panel-gate-extra></div>
+              <div class="gap-s"></div>
+              <form data-panel-gate-form>
+                <input class="run-field" data-panel-gate-input />
+                <button class="button" type="button" data-panel-yes hidden>Yes</button>
+                <button class="button" data-kind="quiet" type="button" data-panel-no hidden>No</button>
+              </form>
+            </div>
+
+            <div class="gap-m"></div>
+            <div class="run-feed" data-panel-feed></div>
+            <div class="gap-m"></div>
+            <div data-panel-files></div>
+          </div>
         </div>
       </section>
     </main>
@@ -823,41 +1057,32 @@
     <footer class="foot">
       <div class="wrap">
         <p>
-          <b>Where the numbers came from.</b> Every value on this page is read from
-          <a href="run.json">run.json</a>, generated from the append-only record of one real run.
-          The generator refuses to write the file when the run does not back what the page says. The
-          record is beside this page, and so is the packet, and <code>npm run verify</code> checks
-          one against the other on your machine without sending anything anywhere.
+          <b>Every number on this page is real.</b> They all come from one actual run, saved beside
+          this page as <a href="run.json">run.json</a>. If the run does not back up what the page
+          says, the page does not get built. The diary and the finished file are here too, so you
+          can check them against each other on your own computer.
         </p>
 
         <p>
-          <b>The second ink.</b> There is exactly one colour on this page besides the ink and the
-          paper. It appears <span data-run="counts.human"></span> times, because the record contains
-          <span data-run="counts.human"></span> entries whose actor is a person. If the record
-          changes, the count changes.
+          <b>The blue.</b> There is one colour on this page besides the ink and the paper. It shows
+          up <span data-run="counts.human"></span> times, because
+          <span data-run="counts.human"></span> steps needed a person. If that changes, the colour
+          changes with it.
         </p>
 
         <p>
-          <b>There is a fifth colour in this stylesheet, and it is not in this page unless you
-          rewrite the record yourself.</b>
+          <b>What this page does not claim.</b> There are no customers and no reviews, because there
+          are none. This example never reached the internet, so nobody outside has confirmed when it
+          happened, and the checker says so plainly. Nothing here is legal advice.
         </p>
 
         <p>
-          <b>What this page does not claim.</b> There are no customers and no testimonials, because
-          there are none. The run reached no network, so no outside timestamp was taken, and the
-          checker says so. This run values both owners' contributions at the same amount, while the
-          sentence a person typed about the oven says about twelve thousand dollars. The agreement
-          uses the value that was recorded as a fact. Nothing on this page is legal advice.
-        </p>
-
-        <p>
-          <b>The writing.</b> Our sentences contain no em dashes. Any you can see belong to the
-          record and to the agreement, quoted as they were written. A plain text version of this
-          page is at <a href="llms.txt">llms.txt</a>.
+          A plain text version of this page is at <a href="llms.txt">llms.txt</a>.
         </p>
       </div>
     </footer>
 
     <script src="demo.js"></script>
+    <script src="panel.js"></script>
   </body>
 </html>

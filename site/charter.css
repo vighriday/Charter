@@ -114,6 +114,12 @@
   --tabs: 52px;
   --rail: 26px;
   --seam-col: 62px;
+
+  /* Wide enough for the longest event name the record holds, measured in
+     characters of the same monospaced face the rows are set in. A record row is
+     read as one line, and a name broken across two lines reads as two events.
+     The build refuses if a run ever carries a name longer than this. */
+  --kind-col: 34ch;
   --row-line: 20px;
   --radius: 10px;
 }
@@ -196,9 +202,28 @@ a {
   color: inherit;
 }
 
+/*
+   An icon carries no size of its own. An SVG with a viewBox and no width will
+   grow to fill whatever holds it, so an icon put somewhere new without a rule
+   naming its size does not come out slightly wrong, it comes out a thousand
+   pixels wide. That happened here, twice, on the two agreement articles that
+   exist because a person answered a question.
+   So the size lives on the icon itself, and the places that want a different
+   one say so. Being wrong now costs a pixel or two rather than the page.
+*/
 svg {
   display: block;
   flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+}
+
+/* The set of drawings the page reuses. It draws nothing itself and takes up no
+   room; every icon on the page points into it. */
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
 }
 
 code,
@@ -739,6 +764,18 @@ code,
   color: var(--ink-62);
 }
 
+/* One plain sentence under the mural, saying what the squares are. Without it a
+   first-time reader sees a wall of patterns and a number, and a picture nobody
+   can read teaches nothing at all. Set in the reading face rather than the
+   monospaced one, because it is a sentence and not a label. */
+.panel-note {
+  margin-top: 16px;
+  max-width: 54ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--on-ink-62);
+}
+
 .panel .mural-key {
   color: var(--on-ink-62);
 }
@@ -895,7 +932,7 @@ code,
 
 .row {
   display: grid;
-  grid-template-columns: var(--seam-col) 36px 58px 172px 1fr 92px;
+  grid-template-columns: var(--seam-col) 36px 58px var(--kind-col) 1fr 92px;
   gap: 12px;
   align-items: baseline;
   min-height: var(--row-line);
@@ -968,7 +1005,7 @@ code,
 
 .row-kind {
   font-weight: 500;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .row-detail {
@@ -1268,7 +1305,7 @@ code,
 
 .transcribed {
   display: grid;
-  grid-template-columns: var(--seam-col) 36px 58px 172px 1fr;
+  grid-template-columns: var(--seam-col) 36px 58px var(--kind-col) 1fr;
   gap: 12px;
   align-items: baseline;
   margin-top: 22px;
@@ -1474,7 +1511,9 @@ code,
 
 .check {
   display: grid;
-  grid-template-columns: 58px 1fr;
+  /* Wide enough for "step 154" set in the monospaced face, which is the longest
+     thing this column ever holds. The checker's own answers are shorter. */
+  grid-template-columns: 9ch 1fr;
   gap: 16px;
   align-items: baseline;
   padding: 11px 0;
@@ -1816,6 +1855,73 @@ code,
    20. WIDTHS
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* ══════════════════════════════════════════════════════════════════════════
+   SAYING WHERE A NUMBER CAME FROM
+
+   Anything countable on this page can be asked where it came from. The mark is a
+   dotted underline, which is the oldest signal on the web for "there is more
+   here", and the answer appears on hover and on keyboard focus.
+
+   Drawn with the same two inks as everything else: the note is the dark ground
+   with the paper as its type, so it reads as the page speaking rather than as a
+   browser control sitting on top of it.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+[data-explain] {
+  position: relative;
+  border-bottom: 1px dotted var(--ink-40);
+  cursor: help;
+}
+
+[data-explain]::after {
+  content: attr(data-explain);
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  z-index: 40;
+  width: max-content;
+  max-width: 300px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.45;
+  text-transform: none;
+  box-shadow: var(--lift-2);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur-fast) var(--ease-user),
+    visibility var(--dur-fast) var(--ease-user);
+}
+
+[data-explain]:hover::after,
+[data-explain]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Near the right edge the note would run off the page, so it hangs the other
+   way instead. */
+[data-explain][data-explain-side='right']::after {
+  left: auto;
+  right: 0;
+}
+
+/* On the dark panel the note swaps grounds, or it would be black on black. */
+.panel [data-explain] {
+  border-bottom-color: var(--on-ink-62);
+}
+
+.panel [data-explain]::after {
+  background: var(--paper);
+  color: var(--ink);
+}
+
 @media (max-width: 1240px) {
   :root {
     --edge: 28px;
@@ -1906,6 +2012,27 @@ code,
     height: 64px;
   }
 
+  /* Two download buttons and the name do not fit across a phone, and the one
+     that loses is the packet, which is the thing the whole page is about. So on
+     a narrow screen the buttons keep their arrow and lose their words.
+     Taken out of sight rather than out of the page, because a link with nothing
+     but an arrow in it is a link that anybody listening to this page cannot
+     tell apart from the other one. Both files are named again in full at the
+     foot of the page. */
+  .bar-action .says {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .bar-action {
+    gap: 0;
+    padding: 7px 9px;
+  }
+
   .bar-status {
     display: none;
   }
@@ -1926,11 +2053,16 @@ code,
     display: none;
   }
 
+  /* Narrow enough that the event name cannot sit beside the sequence number and
+     the fingerprint and still be one line, so it takes a line of its own. The
+     alternative is letting it wrap, and a name broken in half reads as two
+     events, which is the one thing these rows must never say. */
   .row,
   .transcribed {
     grid-template-columns: 34px 52px 1fr auto;
     grid-template-areas:
-      'seq actor kind chip'
+      'seq actor . chip'
+      'kind kind kind kind'
       'detail detail detail detail';
     gap: 4px 10px;
     padding-left: 8px;
@@ -1991,6 +2123,23 @@ code,
   .sheet {
     padding: 30px 24px;
     min-height: 0;
+  }
+
+  /* The turned sheets underneath reach a few pixels past the top one on the
+     right. On a wide screen there is margin to absorb that. On a phone there is
+     not, and those few pixels are the difference between a page that sits still
+     and one that slides sideways under the thumb. So the stack sits tighter,
+     and the room it still needs is left for it. */
+  .sheet-row {
+    padding-right: 8px;
+  }
+
+  .sheet::before {
+    transform: rotate(0.5deg) translate(2px, 2px);
+  }
+
+  .sheet::after {
+    transform: rotate(1deg) translate(3px, 3px);
   }
 
   .panel {
@@ -2068,5 +2217,97 @@ code,
 
   body {
     background: #fff;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────── running yours ──
+   The seventh tab, where a visitor runs Charter on their own business rather
+   than replaying ours. Everything here reuses the page's existing ink, paper and
+   spacing. What is new is only the shapes that had no equivalent before: a box
+   to type in, and a feed that grows while something is happening.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.run-field {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.run-field:focus-visible {
+  outline: 2px solid var(--human);
+  outline-offset: 1px;
+  border-color: var(--human);
+}
+
+.run-field-small {
+  width: 5.5rem;
+  text-transform: uppercase;
+  margin-left: 0.5rem;
+}
+
+.run-code {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+/* The feed scrolls inside itself. A run can produce a hundred lines, and a page
+   that grows by a hundred lines while somebody is reading it moves the thing
+   they were looking at off the screen. */
+.run-feed {
+  max-height: 26rem;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0;
+}
+
+.run-line {
+  padding: 0.45rem 1rem;
+  border-left: 3px solid transparent;
+}
+
+.run-line[data-kind='step'] {
+  border-left-color: var(--line);
+  border-top: 1px solid var(--line);
+  margin-top: 0.4rem;
+  padding-top: 0.8rem;
+}
+
+.run-line[data-kind='step']:first-child {
+  border-top: 0;
+  margin-top: 0;
+}
+
+/* The one colour on the page, used for the one thing it means everywhere else:
+   a person was needed here. */
+.run-line[data-kind='gate'] {
+  border-left-color: var(--human);
+}
+
+.run-line[data-kind='ended'] {
+  border-left-color: var(--line);
+  border-top: 1px solid var(--line);
+  margin-top: 0.4rem;
+  padding-top: 0.8rem;
+}
+
+@media (max-width: 720px) {
+  .run-field-small {
+    display: block;
+    margin: 0.4rem 0 0;
   }
 }

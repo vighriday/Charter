@@ -296,6 +296,7 @@
     wrongStageEntry: wrongStage ? wrongStage.seq : undefined,
     tamperEntry: tamperEntry ? tamperEntry.seq : undefined,
     'pack.short': run.pack ? run.pack.fingerprint.slice(0, 12) : undefined,
+    packPageCount: run.pack ? run.pack.pages.length : undefined,
     'verify.findingCount': run.verify.findings.length,
     'verify.yesCount': run.verify.findings.filter(function (f) {
       return f.answer === 'yes'
@@ -306,7 +307,7 @@
   }
 
   function valueOf(path) {
-    if (path === 'here') return pad(head < 0 ? '1' : run.entries[head].seq)
+    if (path === 'here') return String(Number(head < 0 ? 1 : run.entries[head].seq))
     if (Object.prototype.hasOwnProperty.call(DERIVED, path)) return DERIVED[path]
 
     var at = run
@@ -339,17 +340,17 @@
     if (entry.payload && typeof entry.payload.question === 'string') return entry.payload.question
 
     if (entry.kind === 'spend.authorised') {
-      return 'The registrar wants money. Charter cannot give itself permission to spend it.'
+      return 'The web address costs money. Charter cannot give itself permission to spend it.'
     }
     if (entry.kind === 'identity.field.checked') {
       return (
-        'One value on ' +
+        'One thing on ' +
         String(entry.payload.owner) +
-        '’s document could only be matched approximately.'
+        '’s ID was close, but not an exact match.'
       )
     }
     if (entry.kind === 'signature.approved') {
-      return 'Approve that this exact packet be sent.'
+      return 'Say yes to sending this exact file.'
     }
     return entry.kind
   }
@@ -501,19 +502,103 @@
     return shared
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════
+     WHAT EACH STEP IS CALLED, IN WORDS
+
+     The diary names every step the way a program names things: a short dotted
+     name, the same one every time, easy to search for and impossible to mistake
+     for another. That is the right way to write a diary and the wrong way to
+     show one. "identity.field.sent.for.review" is exact, and a person reading it
+     for the first time learns nothing from it.
+
+     So the row shows the plain phrase and keeps the exact name on hover, and the
+     file people download is untouched. Nothing is hidden and nothing is renamed:
+     the diary still says what it always said.
+
+     A name with no phrase here falls back to the name itself, so a new kind of
+     step shows up as itself rather than disappearing.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  var PLAIN_WORDS = {
+    'turn.started': 'asked itself what to do next',
+    'model.answered': 'decided what to do',
+    'tool.ran': 'used a tool',
+    'tool.refused': 'was not allowed to',
+    'tool.arguments.rejected': 'filled it in wrongly',
+    'turn.retried': 'tried again',
+    'question.asked': 'asked a question',
+    'question.answered': 'a person answered',
+    'fact.recorded': 'wrote something down',
+    'spend.requested': 'asked to spend money',
+    'spend.authorised': 'a person allowed it',
+    'spend.applied': 'money spent',
+    'human.act.refused': 'said no to a person',
+    'stage.entered': 'moved to the next step',
+    'search.performed': 'searched the web',
+    'names.compared': 'compared the names',
+    'address.checked': 'checked the web address',
+    'address.registration.refused': 'could not take the address',
+    'address.registered': 'took the web address',
+    'address.records.written': 'pointed the address at the site',
+    'address.records.listed': 'read the address settings back',
+    'address.records.refused': 'would not change the address settings',
+    'agreement.choice.recorded': 'recorded a choice for the contract',
+    'agreement.choice.refused': 'would not record that choice',
+    'agreement.drafted': 'wrote the contract',
+    'agreement.draft.refused': 'would not write the contract',
+    'identity.read': 'read an ID document',
+    'identity.read.refused': 'would not read the ID',
+    'identity.field.sent.for.review': 'sent a value to a person',
+    'identity.field.checked': 'a person checked a value',
+    'pack.sealed': 'finished and stamped the file',
+    'pack.refused': 'would not change the finished file',
+    'signature.approved': 'a person said yes to sending it',
+    'storefront.drawn': 'drew the shop picture',
+    'storefront.refused': 'would not draw the picture',
+    'site.published': 'put the website online',
+    'site.publish.refused': 'would not put the site online',
+  }
+
+  /* Who did a thing. The diary files them under the names the code uses, and only
+     one of those four words means the same thing to everybody else. */
+  var WHO = {
+    model: 'software',
+    system: 'system',
+    vendor: 'outside',
+    human: 'a person',
+  }
+
+  function whoDid(actor) {
+    return Object.prototype.hasOwnProperty.call(WHO, actor) ? WHO[actor] : actor
+  }
+
+  function inWords(kind) {
+    return Object.prototype.hasOwnProperty.call(PLAIN_WORDS, kind) ? PLAIN_WORDS[kind] : kind
+  }
+
+  /** What happened, in words, with the diary's own name for it kept on hover. */
+  function named(kind) {
+    var cell = part('row-kind', inWords(kind))
+    cell.title = kind
+    return cell
+  }
+
   function buildStageHead(stage) {
     var block = make('div', 'stage-head')
     var line = make('div', 'stage-line')
     line.append(
-      part('stage-no', 'Stage ' + stage.position),
-      part('stage-range', 'entries ' + stage.from + ' to ' + stage.to),
+      part('stage-no', 'Step ' + stage.position + ' of 8'),
+      part('stage-range', 'steps ' + Number(stage.from) + ' to ' + Number(stage.to)),
     )
     block.append(line, make('h3', 't-sub', stage.title), make('p', 'stage-what', stage.whatHappens))
-    block.append(make('div', 'tools-label', 'Tools'))
+    block.append(make('div', 'tools-label', 'What it is allowed to do here'))
 
     var tools = make('div', 'tools')
+    var does = whatToolsDo(stage.tools)
     for (var i = 0; i < stage.tools.length; i += 1) {
-      tools.append(make('span', 'tool', stage.tools[i]))
+      var one = make('span', 'tool', does[i])
+      one.title = stage.tools[i]
+      tools.append(one)
     }
     block.append(tools)
     return block
@@ -526,7 +611,7 @@
     var stamp = make('div', 'insert-stamp')
     stamp.append(
       icon('stop'),
-      part('', 'Entry ' + pad(entry.seq) + ' · the run is stopped · Charter has no tool for this'),
+      part('', 'Step ' + Number(entry.seq) + ' · stopped · only a person can answer this'),
     )
 
     insert.append(
@@ -547,7 +632,7 @@
         make(
           'div',
           'insert-aside',
-          'This question is recorded inside the answer rather than as an entry of its own.',
+          'This question is written down inside the answer, rather than as a step of its own.',
         ),
       )
     }
@@ -557,7 +642,7 @@
 
     // The packet is approved by name, not in the abstract.
     if (entry.payload && typeof entry.payload.packFingerprint === 'string') {
-      var named = make('p', 'insert-answer', 'The packet, by its fingerprint: ')
+      var named = make('p', 'insert-answer', 'The exact file, named by its fingerprint: ')
       named.append(make('code', '', entry.payload.packFingerprint.slice(0, 12)))
       insert.append(named)
     }
@@ -570,7 +655,7 @@
       performGate(entry, index, insert)
     })
     act.append(button)
-    insert.append(act, make('div', 'insert-skipped', 'Not performed by you'))
+    insert.append(act, make('div', 'insert-skipped', 'Answered by somebody else'))
 
     return insert
   }
@@ -591,8 +676,8 @@
     line.append(
       part('row-seam', seamBetween(run.entries[index - 1], entry)),
       part('row-seq', pad(entry.seq)),
-      part('row-actor', entry.actor),
-      part('row-kind', entry.kind),
+      part('row-actor', whoDid(entry.actor)),
+      named(entry.kind),
       part('row-detail', entry.prevHash.slice(0, 8) + ' → ' + entry.hash.slice(0, 8)),
     )
     insert.append(line)
@@ -602,8 +687,8 @@
         make(
           'p',
           'transcribed-bridge',
-          'You have just decided that there is no way out of this company. Charter is about to ' +
-            'write that down, and to say why, further into the record.',
+          'You have just decided there is no agreed way out of this company. Charter is about ' +
+            'to write that down, and say why, further along.',
         ),
       )
     }
@@ -614,8 +699,8 @@
         make(
           'p',
           'transcribed-bridge',
-          'The next entry is Charter refusing a person. A second attempt carried the wrong case ' +
-            'token, and it did not go through.',
+          'The next step is Charter saying no to a person. A second try named the wrong job, ' +
+            'so it did not go through.',
         ),
       )
     }
@@ -664,8 +749,8 @@
       row.append(
         part('row-seam', seamBetween(previous, entry)),
         part('row-seq', pad(entry.seq)),
-        part('row-actor', entry.actor),
-        part('row-kind', entry.kind),
+        part('row-actor', whoDid(entry.actor)),
+        named(entry.kind),
         part('row-detail', entry.detail),
       )
       var chipCell = make('span', 'row-chip')
@@ -839,7 +924,7 @@
     for (var i = 0; i < run.refusals.length; i += 1) {
       var line = make('div', 'check')
       var mark = make('span', 'check-answer')
-      mark.append(part('', pad(run.refusals[i].seq)))
+      mark.append(part('', 'step ' + Number(run.refusals[i].seq)))
       line.append(mark, make('p', 'cannot', run.refusals[i].why))
       root.append(line)
     }
@@ -959,7 +1044,13 @@
       var why = make('div')
       why.append(make('p', 'service-why', service.why))
       why.append(
-        make('div', 'service-entries', seqs.length === 0 ? 'none' : 'entries ' + seqs.join(', ')),
+        make(
+          'div',
+          'service-entries',
+          seqs.length === 0
+            ? 'it produced no steps in this run'
+            : 'steps ' + seqs.map(Number).join(', '),
+        ),
       )
 
       var grid = make('div', 'service')
@@ -999,7 +1090,7 @@
           make(
             'div',
             'document-note',
-            'Every value matched. Nothing went to a person, because nothing needed to.',
+            'Everything matched. Nothing had to go to a person.',
           ),
         )
       } else {
@@ -1029,31 +1120,35 @@
       if (i < run.agreement.decisions.length - 1) decisions.append(make('div', 'gap-s'))
     }
 
-    // Four to read first: who owns what, who runs it, and the two the owners'
-    // own answer produced. The rest open in place.
-    var FIRST = [
-      'Members and Ownership Interests',
-      'Management',
-      'No Withdrawal or Expulsion',
-      'Deadlock',
-    ]
-    var YOURS = ['No Withdrawal or Expulsion', 'Deadlock']
+    // A few are open to begin with and the rest open in place, because fifteen
+    // sections at once is a wall nobody reads.
+    //
+    // Which ones open is asked of the document rather than decided here: the ones
+    // it says a person opens it to read, and every one that is there because of an
+    // answer the owners gave. A list of headings in this file would be a second
+    // opinion about a document this page did not write, and it would be wrong the
+    // first time a run produced different sections.
+    var opensFirst = []
+    for (var f = 0; f < run.agreement.articles.length; f += 1) {
+      var candidate = run.agreement.articles[f]
+      if (candidate.readFirst || candidate.becauseOfAnAnswer) opensFirst.push(candidate.number)
+    }
 
     var root = find('[data-articles]')
     for (var j = 0; j < run.agreement.articles.length; j += 1) {
       var article = run.agreement.articles[j]
       var block = make('div', 'article')
       block.setAttribute('data-article', 'true')
-      if (YOURS.indexOf(article.heading) !== -1) block.setAttribute('data-yours', 'true')
-      if (FIRST.indexOf(article.heading) === -1) block.hidden = true
+      if (article.becauseOfAnAnswer) block.setAttribute('data-yours', 'true')
+      if (opensFirst.indexOf(article.number) === -1) block.hidden = true
       var heading = make('div', 'article-heading')
-      if (YOURS.indexOf(article.heading) !== -1) heading.append(icon('person'))
+      if (article.becauseOfAnAnswer) heading.append(icon('person'))
       heading.append(
         part(
           '',
           'Article ' +
             article.number +
-            (YOURS.indexOf(article.heading) === -1 ? '' : ' · because of what a person answered'),
+            (article.becauseOfAnAnswer ? ' · because of what a person answered' : ''),
         ),
       )
 
@@ -1144,13 +1239,23 @@
 
     var gap = width > 700 ? 6 : 3
     var tile = (width - gap * (MURAL_COLUMNS - 1)) / MURAL_COLUMNS
-    var rows = Math.ceil(run.entries.length / MURAL_COLUMNS)
+    // As many tiles as there are fingerprints to draw, which is not always as
+    // many as the record started with. Dropping the last two entries hands this
+    // 152, and a grid built for 154 would ask for a fingerprint that is not
+    // there and stop drawing altogether.
+    var showing = hashes.length
+    var rows = Math.ceil(showing / MURAL_COLUMNS)
     var height = rows * tile + (rows - 1) * gap
 
     var ratio = window.devicePixelRatio || 1
     muralCanvas.width = Math.round(width * ratio)
     muralCanvas.height = Math.round(height * ratio)
     muralCanvas.style.height = height + 'px'
+
+    // The number beside the mural is the number of tiles under it, so a record
+    // that has been shortened cannot be labelled with the total it began with.
+    var says = muralCanvas.parentNode.querySelector('[data-mural-count]')
+    if (says) says.textContent = showing + ' steps'
 
     var pen = muralCanvas.getContext('2d')
     pen.setTransform(ratio, 0, 0, ratio, 0, 0)
@@ -1159,7 +1264,7 @@
     var cell = tile / MURAL_CELLS
     var half = MURAL_CELLS / 2
 
-    for (var i = 0; i < run.entries.length; i += 1) {
+    for (var i = 0; i < showing; i += 1) {
       var entry = run.entries[i]
       var broken = brokenFrom !== null && Number(entry.seq) >= Number(brokenFrom)
       var bits = patternOf(hashes[i])
@@ -1234,6 +1339,74 @@
      and it is found by having no tools rather than by its number.
      ══════════════════════════════════════════════════════════════════════════ */
 
+  /* ══════════════════════════════════════════════════════════════════════════
+     WHAT EACH TOOL DOES, IN WORDS
+
+     A tool is one specific thing Charter is allowed to do. It has a short name in
+     the code and that name tells a first-time reader nothing, so every one of them
+     is described here in a phrase, and the description is what the page shows.
+
+     The list is checked on every build against the tools the run actually offered.
+     A tool with no description here fails the build rather than appearing on the
+     page under its code name.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  var WHAT_TOOLS_DO = run.toolWords
+
+  function whatToolsDo(tools) {
+    var said = []
+    for (var i = 0; i < tools.length; i += 1) {
+      var name = tools[i]
+      var does = Object.prototype.hasOwnProperty.call(WHAT_TOOLS_DO, name)
+        ? WHAT_TOOLS_DO[name]
+        : name
+      said.push(does)
+    }
+    return said
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     SAYING WHERE A NUMBER CAME FROM
+
+     Every number on this page came from somewhere, and a number whose origin a
+     reader has to take on trust is doing the opposite of what this page is for.
+     So anything countable carries a short sentence saying what was counted, shown
+     on hover and on keyboard focus.
+
+     Given a tabindex so it can be reached without a mouse, because an explanation
+     only some people can get to is not an explanation.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  function explain(node, sentence) {
+    node.setAttribute('data-explain', sentence)
+    node.setAttribute('tabindex', '0')
+    node.setAttribute('role', 'note')
+    return node
+  }
+
+  /**
+   * Which way each note hangs.
+   *
+   * A note is drawn beside the thing it explains, and one near the right edge of
+   * the window would reach past it. That does not merely look wrong: a hidden
+   * element still takes up room, so a note nobody has opened yet is enough to make
+   * the whole page slide sideways under a thumb.
+   *
+   * So every note is measured once the page has been laid out, and any that would
+   * not fit hangs the other way instead. Measured again after a resize, because
+   * the edge moves.
+   */
+  function placeNotes() {
+    var notes = document.querySelectorAll('[data-explain]')
+    var room = document.documentElement.clientWidth
+
+    for (var i = 0; i < notes.length; i += 1) {
+      var box = notes[i].getBoundingClientRect()
+      if (box.width === 0) continue
+      notes[i].setAttribute('data-explain-side', box.left + 300 > room - 16 ? 'right' : 'left')
+    }
+  }
+
   function fillFlow() {
     var root = find('[data-flow]')
     if (!root) return
@@ -1245,14 +1418,24 @@
       var step = make('div', 'flow-step')
       if (empty) step.setAttribute('data-empty', 'true')
 
+      var tools = make(
+        'div',
+        'flow-tools',
+        empty ? 'no tools' : stage.tools.length + (stage.tools.length === 1 ? ' tool' : ' tools'),
+      )
+
+      explain(
+        tools,
+        empty
+          ? 'Nothing at all. This is the step where the file goes to a person to sign, and ' +
+              'there is nothing here for software to do.'
+          : 'In this step it may only: ' + whatToolsDo(stage.tools).join('; ') + '. Nothing else.',
+      )
+
       step.append(
         make('div', 'flow-dot', String(stage.position)),
         make('div', 'flow-title', stage.title),
-        make(
-          'div',
-          'flow-tools',
-          empty ? 'no tools' : stage.tools.length + (stage.tools.length === 1 ? ' tool' : ' tools'),
-        ),
+        tools,
       )
       root.append(step)
     }
@@ -1345,7 +1528,7 @@
         return {
           ok: false,
           seq: entry.seq,
-          detail: 'this entry does not follow on from the one before it',
+          detail: 'this step does not follow on from the one before it',
           expected: previous,
           found: entry.prevHash,
         }
@@ -1356,7 +1539,7 @@
         return {
           ok: false,
           seq: entry.seq,
-          detail: 'this entry has been changed since it was written',
+          detail: 'this step has been changed since it was written',
           expected: shouldBe,
           found: entry.hash,
         }
@@ -1397,8 +1580,8 @@
       } catch (problem) {
         verdict.setAttribute('data-broken', 'false')
         verdict.textContent =
-          'That cannot be read as one entry’s detail, so there is nothing to take a ' +
-          'fingerprint of. Put the comma back, or press "put it back".'
+          'That is not something a step could say, so there is nothing to take a fingerprint ' +
+          'of. Put the comma back, or press undo.'
         seam.textContent = ''
         markFrom(null)
         drawMural(storedHashes, null)
@@ -1421,23 +1604,22 @@
         seam.setAttribute('data-broken', 'true')
 
         var oldHead = make('div')
-        oldHead.append(part('', 'vouched for  '), make('b', 'struck', run.attestation.head))
+        oldHead.append(part('', 'the note says it ended  '), make('b', 'struck', run.attestation.head))
         var newHead = make('div')
-        newHead.append(part('', 'now ends     '), make('b', 'struck', rewritten[rewritten.length - 1]))
+        newHead.append(part('', 'it now ends             '), make('b', 'struck', rewritten[rewritten.length - 1]))
         seam.append(oldHead, newHead)
 
         verdict.textContent =
-          'The chain holds again. Every link joins, every fingerprint is the one its own ' +
-          'entry produces, and this record now says ' +
+          'It joins up again. Every step now matches the one before it, and the diary says ' +
           String(JSON.parse(field.value).owner) +
-          ' holds a different share. ' +
+          ' owns a different share of the company. ' +
           changed +
           ' of the ' +
           run.entries.length +
-          ' fingerprints changed to make that fit, and you can see which ones. What did not ' +
-          'change is the attestation, which was made over the old ending by somebody holding ' +
-          'a key. It vouches for a record that ended one way, and this one ends another. The ' +
-          'past can still be rewritten. It can no longer be rewritten quietly.'
+          ' fingerprints had to change to make that work, and you can see exactly which ones. ' +
+          'What did not change is the sealed note. Charter stamped that note when it finished, ' +
+          'and it still describes a diary that ended a different way. The past can still be ' +
+          'rewritten. It can no longer be rewritten quietly.'
         return
       }
 
@@ -1453,32 +1635,33 @@
 
         var shortened = run.attestation && run.attestation.count !== String(result.count)
         verdict.textContent = shortened
-          ? 'The chain still holds. ' +
+          ? 'It still holds. ' +
             result.count +
-            ' entries, unbroken from the first to the last, because a shortened chain is a ' +
-            'perfectly valid chain. Nothing inside the record can tell you that something used ' +
-            'to follow it. The attestation can, and this is what it says. It vouches for ' +
+            ' steps, each one matching the one before it, because a shorter chain is still a ' +
+            'perfectly good chain. Nothing inside the diary can tell you that something used to ' +
+            'come after. The sealed note can. Charter stamped it when it finished and it says ' +
+            'there were ' +
             run.attestation.count +
-            ' entries and ' +
+            ' steps. Only ' +
             result.count +
-            ' were handed over. Entries have been added or removed since it was made.'
-          : 'The record holds together. ' +
+            ' were handed over. Steps have been added or taken away since.'
+          : 'It holds together. ' +
             result.count +
-            ' entries, unbroken from the first to the last.'
+            ' steps, each one matching the one before it.'
         return
       }
 
       verdict.textContent =
-        'The record breaks at entry ' +
-        result.seq +
+        'It breaks at step ' +
+        Number(result.seq) +
         ': ' +
         result.detail +
-        '. Everything before it is intact; everything from there on cannot be relied on.'
+        '. Everything before it is fine. Nothing from there on can be trusted.'
 
       var expected = make('div')
-      expected.append(part('', 'expected  '), make('b', 'struck', result.expected))
+      expected.append(part('', 'should be  '), make('b', 'struck', result.expected))
       var found = make('div')
-      found.append(part('', 'found     '), make('b', 'struck', result.found))
+      found.append(part('', 'actually   '), make('b', 'struck', result.found))
       seam.append(expected, found)
 
       markFrom(result.seq)
@@ -1502,7 +1685,7 @@
         // a control that appears to do nothing teaches the wrong thing. Say why.
         verdict.setAttribute('data-broken', 'false')
         verdict.textContent =
-          'Nothing has been changed yet, so there is nothing to make fit. Alter the value in ' +
+          'Nothing has been changed yet, so there is nothing to cover up. Change the value in ' +
           'the box above first, then press this.'
         return
       }
@@ -1515,6 +1698,7 @@
     // change with the width. Only the tile size does.
     window.addEventListener('resize', function () {
       drawMural(storedHashes, null)
+      placeNotes()
     })
   }
 
@@ -1637,7 +1821,12 @@
   // Whichever view the address bar asks for, and the overview otherwise.
   show(window.location.hash.replace('#', '') || 'overview', false)
 
+  // Once everything is on the page and has a width, every note works out which
+  // way it can hang without pushing the page sideways.
+  placeNotes()
+
   window.addEventListener('resize', function () {
+    placeNotes()
     drawMural(shownHashes, shownBrokenFrom)
     measureEmptiness()
   })
