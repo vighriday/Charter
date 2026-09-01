@@ -30,7 +30,7 @@
 
 import type { JsonObject, JsonValue } from '../record/canonical.js'
 import { compareNames, verdictFrom, type Comparison } from '../names/compare.js'
-import { maySpend, afterSpending, cents, asMoney } from './guard.js'
+import { maySpend, afterSpending, cents, asMoney, amountsSpokenIn } from './guard.js'
 import { prepareAgreement } from '../agreement/prepare.js'
 import { reviewDocument, explain } from '../identity/review.js'
 import { Pack, refusedAfterSealing } from '../pack/assemble.js'
@@ -108,19 +108,44 @@ export const askQuestion: Tool = {
  * worth twelve thousand dollars and forty-one cents, and matching on the cents
  * would let 1200041 through on the strength of somebody having written 12000.
  */
-export function saidByAPerson(cents: string, facts: CaseFacts): boolean {
-  const dollars = Math.round(Number(cents) / 100)
+export function saidByAPerson(
+  amountInCents: string,
+  facts: CaseFacts,
+  aboutOwner: string,
+): boolean {
+  // Not called `cents`: this file already imports a function by that name, and a
+  // parameter that quietly hides an imported function is the kind of thing that
+  // works until somebody adds one line and then does not.
+  const dollars = Math.round(Number(amountInCents) / 100)
   if (!Number.isFinite(dollars)) return false
 
+  const theirs = aboutOwner.trim().toLowerCase()
+
   const said = [
+    // Answers, because that is where somebody deliberately states a figure, and
+    // where the question "what do you agree to credit each contribution at" is
+    // answered for everybody at once.
     ...facts.answers.map((one) => one.answer),
     facts.description ?? '',
-    ...facts.owners.map((one) => one.contribution),
+    // This owner's contribution in their own words — and ONLY this owner's.
+    //
+    // The first version of this searched every owner's, and that let through the
+    // exact mistake it exists to stop: one owner puts in $20,000 cash, so $20,000
+    // appears somewhere, so writing $20,000 against the other owner's oven passed.
+    // The oven is not worth $20,000 because the cash is.
+    ...facts.owners
+      .filter((one) => one.name.trim().toLowerCase() === theirs)
+      .map((one) => one.contribution),
   ].join(' ')
 
   // Every run of digits, with the separators people use inside numbers removed.
-  const numbers: readonly string[] = said.replace(/[,\u00a0]/g, '').match(/\d+/g) ?? []
-  return numbers.includes(String(dollars))
+  const written: readonly string[] = said.replace(/[,\u00a0]/g, '').match(/\d+/g) ?? []
+  if (written.includes(String(dollars))) return true
+
+  // And every amount said in words, because "twelve thousand dollars" is at least
+  // as common as "$12,000" and refusing it would stop a run while the person is
+  // looking at the sentence where they said it.
+  return amountsSpokenIn(said).includes(dollars)
 }
 
 export const recordFact: Tool = {
@@ -215,7 +240,7 @@ export const recordFact: Tool = {
     // deciding a term, and it is refused with the question it should have asked.
     if (about === 'owner_contribution_value') {
       const owner = text(args, 'owner')
-      if (!saidByAPerson(value, facts)) {
+      if (!saidByAPerson(value, facts, owner)) {
         return (
           `Nobody has said that ${owner}'s contribution is worth ${asMoney(value)}. What a ` +
           `contribution is worth is a term of the agreement, not something to work out: ` +

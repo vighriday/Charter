@@ -184,3 +184,114 @@ export function afterSpending(
   const cost = cents(costCents, 'the cost')
   return { ...authorisation, spentCents: (spent + cost).toString() }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Amounts, as people actually write them
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Every amount of money mentioned in a piece of writing, in whole units.
+ *
+ * WHY THIS IS NEEDED AT ALL
+ *
+ * Charter will not write down what an owner's contribution is worth unless a
+ * person has said so, because that number decides how profit is divided for the
+ * life of the company. Checking that means finding the amounts in what people
+ * wrote.
+ *
+ * Half of them are digits: "$12,000", "18000". The other half are words: "twelve
+ * thousand dollars", "eighteen thousand in cash". Reading only the digits refuses
+ * perfectly good answers and, worse, tells the person nobody said a number while
+ * they are looking at the sentence where they said it.
+ *
+ * WHAT IT UNDERSTANDS AND WHERE IT STOPS
+ *
+ * Whole amounts up to the millions, written the ordinary way: "twelve thousand",
+ * "twenty-five thousand", "one hundred thousand", "two million", "a hundred
+ * thousand". Not fractions, not "twelve and a half thousand", not other languages.
+ *
+ * It is deliberately generous about what counts and strict about nothing, because
+ * of what it is used for: it produces candidate amounts that a person MIGHT have
+ * meant, and the caller checks whether the one being written down is among them.
+ * A number this misses causes a question to be asked. A number it invents does
+ * not get written down either, because it still has to match exactly.
+ */
+const ONES_SPOKEN: Readonly<Record<string, number>> = {
+  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+  eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13,
+  fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18,
+  nineteen: 19,
+}
+
+const TENS_SPOKEN: Readonly<Record<string, number>> = {
+  twenty: 20, thirty: 30, forty: 40, fifty: 50,
+  sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+}
+
+const MULTIPLIERS: Readonly<Record<string, number>> = {
+  hundred: 100,
+  thousand: 1_000,
+  million: 1_000_000,
+  billion: 1_000_000_000,
+}
+
+export function amountsSpokenIn(text: string): readonly number[] {
+  // "twenty-five" is one number written with a hyphen, and "a hundred" is a
+  // hundred. Both are ordinary English and both would otherwise be missed.
+  const words = text
+    .toLowerCase()
+    .replace(/[\u2010-\u2015]/g, '-')
+    .replace(/-/g, ' ')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .split(/\s+/)
+    .filter((one) => one !== '')
+
+  const found: number[] = []
+  let running = 0
+  let sofar = 0
+  let started = false
+
+  const finish = (): void => {
+    if (started && running + sofar > 0) found.push(running + sofar)
+    running = 0
+    sofar = 0
+    started = false
+  }
+
+  for (const word of words) {
+    const one = ONES_SPOKEN[word]
+    const ten = TENS_SPOKEN[word]
+    const times = MULTIPLIERS[word]
+
+    if (one !== undefined) {
+      sofar += one
+      started = true
+      continue
+    }
+    if (ten !== undefined) {
+      sofar += ten
+      started = true
+      continue
+    }
+    if (times !== undefined) {
+      // "a thousand" and "thousand" on their own both mean one of them.
+      const amount = sofar === 0 ? 1 : sofar
+      if (times === 100) {
+        sofar = amount * 100
+      } else {
+        running += amount * times
+        sofar = 0
+      }
+      started = true
+      continue
+    }
+    // "a" and "and" sit inside spoken numbers — "a hundred and twenty" — and
+    // must not end one.
+    if (word === 'a' || word === 'and') continue
+
+    finish()
+  }
+  finish()
+
+  return found
+}

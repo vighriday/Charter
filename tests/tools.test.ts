@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { maySpend, afterSpending, cents, asMoney, remainingUnder, NotAWholeNumberOfCents } from '../src/tools/guard.js'
+import {
+  maySpend,
+  afterSpending,
+  cents,
+  asMoney,
+  remainingUnder,
+  amountsSpokenIn,
+  NotAWholeNumberOfCents,
+} from '../src/tools/guard.js'
 import { emptyCase, type CaseFacts, type SpendAuthorisation } from '../src/stages/facts.js'
 import {
   preparedSearch,
@@ -591,5 +599,108 @@ describe('preparing the agreement', () => {
   it('spends nothing and can be undone', () => {
     expect(draftAgreement.costsMoney).toBe(false)
     expect(draftAgreement.reversible).toBe(true)
+  })
+})
+
+describe('what an owner put in is worth, which is a term and not an observation', () => {
+  // Texas allocates profit by contribution value AS STATED IN THE COMPANY'S
+  // RECORDS, and the agreement Charter writes is that record. So this number
+  // decides how money is divided for as long as the company exists, and a model
+  // that picks it has decided a term of somebody else's deal.
+  //
+  // It was picking it. In the demonstration one owner puts in $20,000 cash and the
+  // other an oven a person had said was "worth about $12,000", and the model wrote
+  // down $20,000 for both — a number that makes the shares come out even and that
+  // nobody had ever said. The finished packet then printed both figures on the
+  // same page.
+
+  it('refuses a value nobody has said, and asks the question instead', () => {
+    const facts: CaseFacts = {
+      ...emptyCase('case-1'),
+      description: 'Two sisters opening a bakery.',
+      answers: [
+        {
+          question: 'Which of you is putting in the oven, and roughly what is it worth?',
+          answer: 'Lucia is. It is a commercial oven she already owns, worth about $12,000.',
+        },
+      ],
+      owners: [
+        { name: 'Ana Rivera', contribution: '$20,000 in cash' },
+        { name: 'Lucia Rivera', contribution: 'a commercial oven, worth about $12,000' },
+      ],
+    }
+
+    const refused = recordFact.whyThisMustNotRun?.(
+      { about: 'owner_contribution_value', value: '2000000', owner: 'Lucia Rivera' },
+      facts,
+    )
+
+    expect(refused, 'nobody said the oven was worth $20,000').not.toBeNull()
+    expect(String(refused)).toContain('Ask the owners')
+  })
+
+  it('accepts a value a person actually said', () => {
+    const facts: CaseFacts = {
+      ...emptyCase('case-1'),
+      answers: [
+        {
+          question: 'What value do you agree to credit each contribution at?',
+          answer: 'We agree to credit them equally, at $20,000 each.',
+        },
+      ],
+      owners: [{ name: 'Lucia Rivera', contribution: 'an oven' }],
+    }
+
+    expect(
+      recordFact.whyThisMustNotRun?.(
+        { about: 'owner_contribution_value', value: '2000000', owner: 'Lucia Rivera' },
+        facts,
+      ),
+    ).toBeNull()
+  })
+
+  it('counts an amount written in words, because that is how people write them', () => {
+    // Refusing "twelve thousand dollars" would stop a run and tell the person
+    // nobody had said a number, while they are looking at the sentence where they
+    // said it.
+    const facts: CaseFacts = {
+      ...emptyCase('case-1'),
+      answers: [
+        {
+          question: 'What is the van worth?',
+          answer: 'About twelve thousand dollars, and we agree to credit it at that.',
+        },
+      ],
+      owners: [{ name: 'Priya Raman', contribution: 'her van' }],
+    }
+
+    expect(
+      recordFact.whyThisMustNotRun?.(
+        { about: 'owner_contribution_value', value: '1200000', owner: 'Priya Raman' },
+        facts,
+      ),
+    ).toBeNull()
+  })
+})
+
+describe('reading amounts out of what somebody wrote', () => {
+  it('reads the ordinary ways people write money', () => {
+    expect(amountsSpokenIn('worth about twelve thousand dollars')).toEqual([12000])
+    expect(amountsSpokenIn('eighteen thousand dollars in cash')).toEqual([18000])
+    expect(amountsSpokenIn('twenty-five thousand')).toEqual([25000])
+    expect(amountsSpokenIn('a hundred thousand pounds')).toEqual([100000])
+    expect(amountsSpokenIn('one hundred and twenty thousand')).toEqual([120000])
+    expect(amountsSpokenIn('two million')).toEqual([2000000])
+  })
+
+  it('finds nothing when there is nothing to find', () => {
+    expect(amountsSpokenIn('a commercial oven she already owns')).toEqual([])
+  })
+
+  it('keeps two separate amounts separate', () => {
+    // "forty" and "sixty" are two numbers in one sentence, not four thousand and
+    // sixty. A reader that ran them together would let a value through that
+    // nobody said.
+    expect(amountsSpokenIn('forty percent and sixty percent')).toEqual([40, 60])
   })
 })

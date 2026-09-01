@@ -2,7 +2,7 @@
 
 **From idea to legally alive.**
 
-![tests](https://img.shields.io/badge/tests-1%2C087%20passing-2f6f4e)
+![tests](https://img.shields.io/badge/tests-1%2C093%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
 ![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
@@ -180,7 +180,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,087 tests
+npm test          # 1,093 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -358,7 +358,7 @@ answer is 658, which is what this one said on 30 August.
 | The agent loop — one request, one turn, nothing carried between them | **built, 41 tests** <!-- tests/loop.test.ts --> |
 | Checking the model's arguments, and telling it exactly what to send instead | **built, 27 tests** <!-- tests/tool-schema.test.ts --> |
 | All eight stages, which tools exist in each, and the rules that decide when each is finished | **built, 63 tests** <!-- tests/stages.test.ts --> |
-| Every tool, including the rule that nothing costs money without a person's permission covering it | **built, 46 tests**, the spending rule proved by nothing being charged rather than by an error <!-- tests/tools.test.ts --> |
+| Every tool, including the rule that nothing costs money without a person's permission covering it, and the rule that what an owner's contribution is worth has to have been said by a person | **built, 52 tests**, the spending rule proved by nothing being charged rather than by an error <!-- tests/tools.test.ts --> |
 | One whole case through all eight stages, as a test rather than only as a demonstration | **built, 12 tests** <!-- tests/whole-run.test.ts --> |
 | Whether two business names collide, decided in plain code | **built, 24 tests** <!-- tests/names.test.ts --> |
 | The ownership agreement — every number, article number and cross-reference worked out in code, including a check that the voting rule and the deadlock article do not contradict each other | **built, 75 tests** <!-- tests/agreement.test.ts --> |
