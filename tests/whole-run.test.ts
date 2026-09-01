@@ -219,6 +219,18 @@ beforeAll(async () => {
   await answerQuestion(person, 'Who will run the company day to day?', 'The two of us.')
   await answerQuestion(person, 'Do you want a way for an owner to leave?', 'No.')
 
+  // What a contribution is WORTH is a term of the deal, and the tool refuses to let
+  // the model invent one. Texas splits profit by contribution value as recorded in
+  // the agreement, so this number decides how money is divided for as long as the
+  // company exists.
+  //
+  // The two owners here agree to credit an oven worth about $12,000 at the same
+  // $20,000 as the cash. That is a perfectly ordinary thing to agree and it is the
+  // reason the shares come out even. What is not allowed is a model deciding it,
+  // which is what used to happen: the packet said the oven was "worth about
+  // $12,000, valued at $20,000.00" and nobody had ever been asked.
+  await answerQuestion(person, 'The oven was said to be worth about $12,000 and the cash is $20,000. For the agreement, what value do you both agree to credit each contribution at?', 'We agree to credit them equally, at $20,000 each. The oven is worth less on paper but it is what makes the bakery work, and we want an even split.')
+
   note(
     'draft',
     await run(

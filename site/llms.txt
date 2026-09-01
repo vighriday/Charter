@@ -12,7 +12,7 @@ was never the paperwork. It is writing down an agreement between two people who
 trust each other completely today and might not in three years.
 
 The website replays one real run, case demo-bakery, entry by entry. It stops at
-each of the 6 entries a person caused and will not carry on until somebody
+each of the 7 entries a person caused and will not carry on until somebody
 clicks. Nothing on it was typed in by hand. Every value below is read from the
 record of that run, which is beside this file as record.jsonl.
 
@@ -23,68 +23,68 @@ THE RUN, COUNTED
      154  entries
      119  by the model
       19  by ordinary code
-      10  by an outside service
-       6  by a person
+       9  by an outside service
+       7  by a person
        5  refusals
        8  stages
        0  tools in the boundary stage
       15  articles in the agreement
-   17766  bytes in the sealed packet
+   18091  bytes in the sealed packet
        2  PDF permission level
-    1039  tests
+    1087  tests
 
 ----------------------------------------------------------------------
 
 THE EIGHT STAGES
 
-  1. Understand
+  1. Understand the business
      34 entries, 3 tools, 1 to 35
-     The person describes their business. Charter asks about anything it still needs, including permission to spend a stated amount on the web address.
+     You describe the business in your own words. Charter asks about anything it still needs, including permission to spend a set amount on the web address.
 
-  2. Research the name
+  2. Check the name is free
      21 entries, 3 tools, 38 to 58
-     Search for businesses already using this name, and decide whether the proposed one is clear. Whether two names collide is decided in plain code, not by the model.
+     Look for businesses already trading under this name, and work out whether the new one is clear of them. Whether two names are too close is decided by fixed rules, not by guesswork.
 
-  3. Secure the address
-     34 entries, 5 tools, 59 to 92
-     Check whether the web address is free, and register it only if a person has already given permission covering the price.
+  3. Get the web address
+     33 entries, 5 tools, 59 to 91
+     See whether the web address is available, and buy it only if a person has already agreed to a price that covers it.
 
-  4. Draft the agreement
-     33 entries, 4 tools, 93 to 127
-     Ask the owners the few things the agreement cannot be written without, then prepare it. Every number, every article number and every cross-reference is worked out in plain code. The model chooses when, never what.
+  4. Write the contract
+     33 entries, 4 tools, 92 to 127
+     Ask the owners the handful of things the contract cannot be written without, then write it. Every number, every section number and every reference between sections is worked out by fixed rules, so none of it is invented.
 
-  5. Verify identity
+  5. Check the owners are who they say
      10 entries, 2 tools, 128 to 137
-     Read each owner's identity document, score every field, and send the doubtful ones to a person. No model takes part in that decision.
+     Read each owner's ID, compare every value on it, and pass anything that is not a clean match to a person to decide. Nothing guesses here.
 
-  6. Assemble the pack
+  6. Put it all in one file
      5 entries, 1 tools, 139 to 143
-     Merge everything into one file, add structure, then seal it and take the fingerprint of exactly what was sealed. After the seal, anything that would rewrite the file is refused and the refusal is recorded.
+     Join everything into a single document, stamp it, and take the fingerprint of exactly what was stamped. From then on, anything that would change the words is turned down, and the refusal is written down.
 
-  7. The boundary
+  7. Hand it to a person
      1 entries, 0 tools, 144 to 144
-     The agent stops. A person approves, and ordinary code — not the agent — carries the pack to them to sign.
+     Charter stops here. A person says yes, and separate code that Charter cannot reach carries the file to them to sign.
 
-  8. Publish
+  8. Put the website online
      9 entries, 2 tools, 146 to 154
-     Build the website, draw its first picture from the owner's own words, put it online, and point the web address at it.
+     Build the business a website, draw its first picture from the owners' own words, put it online, and point the web address at it.
 
-  7 entries belong to no stage. 6 of them are a person. The rest are
+  8 entries belong to no stage. 7 of them are a person. The rest are
   Charter refusing a person, because the token did not match.
 
 ----------------------------------------------------------------------
 
 WHAT CHARTER WAS ASKED TO DO AND WOULD NOT
 
-  entry 24: record_fact — arguments did not fit, asking again
+  entry 24: tried to write down something you told it, but the details did not fit, so it asked again
 
-  entry 31: "register_address" exists, but not in stage "understand". Tools change only when the stage changes, and the model was never shown this one.
+  entry 31: it tried to buy a web address, which it can do, but not during "Understand the business". What Charter may do changes only when the step changes, and this was never on the list for this one.
 
-  entry 37: the case token did not match
+  entry 37: this answer named a different job
 
-  entry 67: not available
+  entry 67: somebody else already has this address
 
-  entry 75: "registering riverabaking.com" costs $99.00, and only $25.00 is left under the permission given on 2026-08-28T09:00:43.000Z ($25.00 in total, $0.00 already spent). A person has to raise the limit before this can run. Charter does not spend past a bound somebody set, even by a cent.
+  entry 74: riverabaking.com costs 9900 cents and only 2500 cents are left of what a person allowed. Registering it will be refused however many times it is tried. Ask a person to allow at least 9900 cents, or find a cheaper address.
 
 
 ----------------------------------------------------------------------
@@ -93,27 +93,27 @@ WHAT THE CHECKER ANSWERS
 
   npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json
 
-  [yes]  Is the pack a PDF that carries a seal?
-  [yes]  Does the seal say only filling in and signing are allowed?
-  [yes]  Does the seal cover the whole file?
-  [yes]  Is this the same pack the record describes?
-  [yes]  Is the record unbroken from the first entry to the last?
-  [yes]  Does the attestation match, against the key that came from outside the pack?
-  [yes]  Does the attestation cover the record that was handed over?
-  [ ? ]  Has somebody who is not Charter said this record existed?
+  [yes]  Is the file a real PDF with a stamp on it?
+  [yes]  Does the stamp allow only filling in and signing?
+  [yes]  Does the stamp cover the whole file?
+  [yes]  Is this the same file the diary describes?
+  [yes]  Does every step in the diary match the one before it?
+  [yes]  Does that note check out, using a key from outside the file?
+  [yes]  Does that note describe the diary that was handed over?
+  [ ? ]  Has anybody outside Charter confirmed this diary existed?
 
   8 questions. 7 answered yes. 1 it cannot answer, and it says so
   rather than leaving it out.
 
 WHAT THIS CHECK CANNOT PROVE
 
-  - That this record is as old as it says. Charter holds the record and the key that vouches for it, so a record produced later, in one go, would look exactly like this one. An outside timestamp is what closes that, and this pack did not come with one.
+  - That this diary is as old as it says. Charter holds both the diary and the key that stamps it, so a diary written later, all in one go, would look exactly like this one. A timestamp from an outside authority would settle it, and this file did not come with one.
 
-  - Who sealed this. The certificate is issued by Charter to Charter, so no outside authority has checked that Charter is who it says it is. A PDF reader will report the same thing. What is proved above is that the file has not changed since it was sealed, which is a claim about the bytes rather than about identity.
+  - Who stamped this. The certificate is Charter vouching for Charter, so nobody outside has checked that Charter is who it says it is. Any PDF reader will tell you the same. What is proved above is that the file has not changed since it was finished, which is about the file and not about identity.
 
-  - That the record is complete in the sense of nothing having been left out at the time of writing. It proves nothing was altered or removed afterwards, which is a different and smaller claim.
+  - That nothing was left out in the first place. It proves nothing was changed or removed afterwards, which is a smaller thing.
 
-  - Anything about whether the agreement is right for these people. This is not a review of the document, and nothing here is a legal opinion.
+  - Whether this contract is right for these two people. Nobody here has reviewed it, and nothing here is legal advice.
 
 
 ----------------------------------------------------------------------
@@ -177,19 +177,19 @@ THE AGREEMENT
 THE OUTSIDE SERVICES
 
   SerpApi (serpapi.com), the search: stand-in
-    Saved answers, because REPLAY_MODE is true. It holds answers recorded in advance and has no path to the network at all, so a missing answer is an error rather than a quiet real call.
+    Answers recorded in advance, because this is a replay. It gives back answers recorded in advance and has no way of reaching the internet at all, so a missing answer stops the run rather than quietly becoming a real call.
 
   Name.com (name.com), the registrar: stand-in
-    Saved answers, because REPLAY_MODE is true. Nothing is registered and nothing is charged. It holds answers recorded in advance and has no path to the network at all, so a missing answer is an error rather than a quiet real call.
+    Answers recorded in advance, because this is a replay. Nothing is registered and nobody is charged. It gives back answers recorded in advance and has no way of reaching the internet at all, so a missing answer stops the run rather than quietly becoming a real call.
 
   Nutrient (nutrient.io), the identity: stand-in
-    Documents recorded in advance, because REPLAY_MODE is true. No real person’s identity document is involved. It holds answers recorded in advance and has no path to the network at all, so a missing answer is an error rather than a quiet real call.
+    Documents recorded in advance, because this is a replay. No real person’s ID is involved. It gives back answers recorded in advance and has no way of reaching the internet at all, so a missing answer stops the run rather than quietly becoming a real call.
 
   not built yet, the publishing: stand-in
-    Publishing the website is not built yet. The pack itself is assembled and sealed by Charter’s own code and does not go through any outside company, so what is standing in here is putting the finished site online.
+    Putting the website online is not built yet. The file itself is put together and stamped by Charter’s own code and never goes through anybody else, so the only thing standing in here is the website going live.
 
   Perfect Corp (yce.perfectcorp.com), the imagery: stand-in
-    Drawing the storefront picture is not wired to the real service yet. The words it would send are the owners' own, read from the record, so a run shows exactly what would have been drawn. No photograph of any person is ever sent, and that company's face and skin tools are absent from every stage of this project.
+    Drawing the shop picture is not connected to the real service yet. The words it would send are the owners' own, taken from the diary, so you can see exactly what would have been drawn. No photograph of anybody is ever sent, and that company's face and skin tools are not used anywhere in this project.
 
 
 ----------------------------------------------------------------------

@@ -282,7 +282,7 @@ export function buildAgreementDocx(data: AgreementData): Uint8Array {
     body.push(paragraph(`${owner.ordinal} owner: ${owner.fullName}`, { style: 'Heading2' }))
     body.push(
       paragraph(
-        `${owner.fullName} contributed ${owner.contribution}, valued at ` +
+        `${owner.fullName} contributed ${owner.contribution}, credited at ` +
           `${owner.contributionValue}, and holds ${owner.agreedShare} of the company.`,
       ),
     )
@@ -300,7 +300,14 @@ export function buildAgreementDocx(data: AgreementData): Uint8Array {
     }
   }
 
-  body.push(paragraph(`Total contributed: ${data.totalContributions}.`))
+  body.push(paragraph(`Total credited: ${data.totalContributions}.`))
+  body.push(
+    paragraph(
+      'What something is worth on the open market and what the owners agree to ' +
+        'credit it at are different numbers. Texas divides profit by the credited ' +
+        'value as written in the company records, and this agreement is that record.',
+    ),
+  )
 
   // ---- decisions ------------------------------------------------------------
   body.push(paragraph('How decisions are made', { style: 'Heading1' }))

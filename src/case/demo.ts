@@ -536,7 +536,39 @@ async function main(): Promise<void> {
     'Do you want a written way for an owner to leave and be bought out?',
     'No. We have not agreed one.',
   )
-  console.log(`  ${GREEN}·${OFF} Two people answered. The run carries on.\n`)
+  // The third question, and the one worth watching.
+  //
+  // One owner is putting in $20,000 cash. The other is putting in an oven she
+  // already owns, and when asked what it is worth a person said "about $12,000".
+  // Those two numbers do not make an even split, and an even split is what the
+  // shares say.
+  //
+  // What used to happen here: the model wrote down $20,000 for both, nobody was
+  // asked, and the finished packet said the oven was "worth about $12,000, valued
+  // at $20,000.00" on the same page. The number was invented to make the
+  // arithmetic work.
+  //
+  // It is not a small thing to invent. Texas allocates profit by contribution value
+  // AS STATED IN THE COMPANY'S RECORDS, and this agreement is that record, so that
+  // number decides how money is split for as long as the company exists.
+  //
+  // The two of them may very well agree to credit the oven at $20,000 — it is an
+  // ordinary and sensible thing to agree, and it is the honest reason the split is
+  // even. So they are asked, and the tool refuses the value until they have
+  // answered.
+  await answerQuestion(
+    { db, caseId: CASE, token: TOKEN, expectedToken: TOKEN, clock },
+    'The oven was said to be worth about $12,000 and the cash is $20,000. For the ' +
+      'agreement, what value do you both agree to credit each contribution at?',
+    'We agree to credit them equally, at $20,000 each. The oven is worth less on ' +
+      'paper but it is what makes the bakery work, and we want an even split.',
+  )
+  console.log(`  ${GREEN}·${OFF} Three people answered. The run carries on.\n`)
+  console.log(
+    `  ${DIM}The third one is the one to watch. What a contribution is WORTH is a term\n` +
+      `  of the deal, not an observation, and Texas splits profit by that number. The\n` +
+      `  tool refuses to write one down that nobody has said out loud.${OFF}\n`,
+  )
 
   const stageFourAgain = scripted([
     choosing('record_fact', { about: 'owner_share', value: '50', owner: 'Ana Rivera' }),

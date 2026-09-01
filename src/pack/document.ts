@@ -304,8 +304,8 @@ export async function buildPackDocument(contents: PackContents): Promise<Uint8Ar
   for (const owner of data.owners) {
     pack.row(
       `${owner.ordinal} owner`,
-      `${owner.fullName} — contributed ${owner.contribution}, valued at ` +
-        `${owner.contributionValue}. Holds ${owner.agreedShare}.`,
+      `${owner.fullName} — contributed ${owner.contribution}. Credited in this ` +
+        `agreement at ${owner.contributionValue}. Holds ${owner.agreedShare}.`,
     )
     if (!owner.agreedMatchesContribution) {
       pack.paragraph(
@@ -320,7 +320,23 @@ export async function buildPackDocument(contents: PackContents): Promise<Uint8Ar
   }
 
   pack.gap(8)
-  pack.row('Total contributed', data.totalContributions)
+  pack.row('Total credited', data.totalContributions)
+
+  // Said once, plainly, because the two numbers on the lines above look like a
+  // contradiction until somebody explains that they answer different questions.
+  // One owner describes an oven as worth about $12,000 and the agreement credits it
+  // at $20,000; a reader who is not told why reasonably concludes there is a
+  // mistake. There is not. The credited figure is the one the owners agreed, and it
+  // is the one the law then uses.
+  pack.paragraph(
+    'What something is worth on the open market and what the owners agree to credit ' +
+      'it at are different numbers, and both belong here. Texas divides profit by ' +
+      'the credited value as written in the company’s records, and this agreement is ' +
+      'that record. Every credited figure above was stated by the owners themselves ' +
+      'and answered in their own words; Charter refuses to write one down that ' +
+      'nobody has said.',
+    { quiet: true },
+  )
   pack.row('An ordinary decision', `carries on ${data.ordinaryVote} of ownership`)
   pack.row('A decision that changes the deal', `carries on ${data.majorVote}`)
 
