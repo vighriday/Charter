@@ -173,6 +173,28 @@ export type TurnOutcome =
       readonly providerId: string
     }
   | { readonly kind: 'gave up'; readonly why: string }
+  /**
+   * The turn produced nothing usable, and the step carries on anyway.
+   *
+   * WHY THIS IS NOT THE SAME AS GIVING UP
+   *
+   * A model can answer a turn in a way nothing can be done with: words where a
+   * tool call was needed, arguments that do not fit, or the same already-done
+   * thing over and over. It is asked again twice, and if all three attempts are
+   * unusable the turn is spent.
+   *
+   * That used to end the whole run. On a real run it did, four steps in: the
+   * smallest model — the only one left, the others having used their day — tried
+   * to write down a description that was already written down, three times, and
+   * everything stopped. Four steps of real work were thrown away over one bad turn
+   * by a model that was on its third choice.
+   *
+   * A wasted turn is a wasted turn. The step has a ceiling on turns and that
+   * ceiling is what stops a loop; there is no need for a second, harsher rule that
+   * ends everything at the first sign of a model having a bad moment. The waste is
+   * written down, so it is visible rather than hidden.
+   */
+  | { readonly kind: 'turn wasted'; readonly why: string }
 
 export interface TurnReport {
   readonly outcome: TurnOutcome
@@ -222,7 +244,23 @@ export async function takeTurn(input: TurnInput): Promise<TurnReport> {
   }
 
   const tools = specsFor(input.registry, input.stage)
-  const situation = describeSituation(input.facts)
+
+  // What is still missing, taken from the SAME rule that decides whether this step
+  // may be left. Not a second list written for the model, which would drift from
+  // the first one the day somebody changed either.
+  //
+  // Without this the model was told everything that is known and nothing about
+  // what is wanted, and it filled the gap by writing down what it already knew.
+  // On the first real run it re-recorded the description and the state, in a loop,
+  // until the step was abandoned. It was not being stupid. Nobody had told it what
+  // was left to do.
+  const stillMissing = stage.readyToLeave(input.facts)
+  const situation =
+    describeSituation(input.facts) +
+    (stillMissing.ready
+      ? `\n\nEverything this step needs is here.`
+      : `\n\nThis step is not finished: ${stillMissing.because}. That is what to work on ` +
+        `now. Writing down something that is already written down does not move it forward.`)
 
   let correction: string | undefined
   let repairsUsed = 0
@@ -341,6 +379,29 @@ export async function takeTurn(input: TurnInput): Promise<TurnReport> {
       continue
     }
 
+    // A call that would change nothing is refused before it runs, and the model is
+    // told what is already true. Without this, a model that does not notice its own
+    // last move is already in the summary repeats it until the step runs out of
+    // turns, having done one thing five times and nothing else.
+    const pointless = tool.whyThisMustNotRun?.(answer.args, input.facts) ?? null
+    if (pointless !== null) {
+      events.push({
+        kind: 'tool.refused',
+        payload: { asked: tool.name, why: pointless },
+      })
+      correction =
+        `${pointless}\n\nThat is already written down, so writing it again would ` +
+        `change nothing at all.` +
+        (stillMissing.ready
+          ? ` This step has everything it needs.`
+          : ` What this step is still missing: ${stillMissing.because}. Do that. If ` +
+            `you do not know it, ask the owners for it rather than writing down ` +
+            `something you already have.`)
+      repairsUsed++
+      if (repairsUsed > MAX_REPAIR_ATTEMPTS) break
+      continue
+    }
+
     const outcome = await tool.run(answer.args, {
       caseId: input.caseId,
       facts: input.facts,
@@ -372,9 +433,10 @@ export async function takeTurn(input: TurnInput): Promise<TurnReport> {
 
   const why =
     `the model was asked ${MAX_REPAIR_ATTEMPTS} more time(s) after its first answer ` +
-    `could not be used, and still did not produce something runnable. Stopping ` +
-    `rather than asking again: each attempt spends a request from a daily ` +
-    `allowance that does not return until midnight in the provider's own time zone.`
+    `could not be used, and still did not produce something runnable. This turn is ` +
+    `spent and the step carries on with the turns it has left. Asking a fourth time ` +
+    `inside one turn would only spend more of a daily allowance that does not return ` +
+    `until midnight in the provider's own time zone.`
   events.push({ kind: 'turn.abandoned', payload: { stage: input.stage, why } })
-  return { outcome: { kind: 'gave up', why }, events }
+  return { outcome: { kind: 'turn wasted', why }, events }
 }

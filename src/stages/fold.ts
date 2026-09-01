@@ -345,7 +345,10 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         const limitCents = asText(payload, 'limitCents')
         const forWhat = asText(payload, 'forWhat')
         if (limitCents === undefined || forWhat === undefined) break
-        facts = { ...facts, spendRequested: { limitCents, forWhat } }
+        facts = {
+          ...facts,
+          spendRequested: { limitCents, forWhat, sinceLastPermission: true },
+        }
         break
       }
 
@@ -368,6 +371,14 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
         // while every screen showed a £25 limit. Money already gone is gone.
         facts = {
           ...facts,
+          // Whatever was being asked for has now been answered. A later request
+          // sets this back to true and stops the run again, which is how a limit
+          // that turned out to be too low gets raised.
+          ...(facts.spendRequested === undefined
+            ? {}
+            : {
+                spendRequested: { ...facts.spendRequested, sinceLastPermission: false },
+              }),
           spendAuthorisation: {
             limitCents,
             forWhat,
@@ -395,7 +406,23 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
           query,
           resultCount: resultCount ?? '0',
           answeredBy: answeredBy ?? 'unrecorded',
+          // The titles, so that what the search learned is part of what is known
+          // rather than only part of what was written down.
+          found: asRows(payload, 'results')
+            .map((row) => asText(row, 'title') ?? '')
+            .filter((title) => title !== ''),
         })
+        break
+      }
+
+      // A person settling a name the comparison called close. Read AFTER the
+      // comparison in the same pass, because the record is read forward and a
+      // person's decision comes after the comparison that prompted it — so it wins
+      // simply by being later, which is also how a person changing their mind
+      // works.
+      case 'name.decided': {
+        const decided = asText(payload, 'verdict')
+        if (decided === 'clear' || decided === 'collides') verdict = decided
         break
       }
 
@@ -527,13 +554,49 @@ export function foldFacts(caseId: string, entries: readonly RecordedEntry[]): Ca
  * stays usable at all. A summary that grows without limit is the thing that
  * quietly breaks a run halfway through.
  */
+/**
+ * How many of the answers a person gave are repeated back to the model each turn.
+ *
+ * Every turn of a stage sends this whole summary again, and there is a hard ceiling
+ * on request size that exists so the smallest fallback model stays usable. Ten is
+ * enough to carry a stage's worth of conversation and small enough that a long run
+ * cannot grow the request until it is refused.
+ */
+const ANSWERS_SHOWN = 10
+
+/** How many of the searches already run are listed back to the model. */
+const SEARCHES_SHOWN = 4
+
+/** How many results from each of those searches are listed. */
+const FOUND_SHOWN = 8
+
+/** The longest a single question or answer is repeated back, in characters. */
+const LONGEST_REPEATED = 400
+
+/** Cut long text at a word, and say that it was cut rather than pretending. */
+function shorten(text: string): string {
+  const flat = text.replace(/\s+/g, ' ').trim()
+  if (flat.length <= LONGEST_REPEATED) return flat
+
+  const cut = flat.slice(0, LONGEST_REPEATED)
+  const lastSpace = cut.lastIndexOf(' ')
+  return `${lastSpace > LONGEST_REPEATED - 60 ? cut.slice(0, lastSpace) : cut}... (cut short)`
+}
+
 export function describeSituation(facts: CaseFacts): string {
   const lines: string[] = []
   lines.push(`Case ${facts.caseId}.`)
   lines.push(
-    facts.description === undefined
-      ? 'Nobody has described the business yet.'
-      : `The owners describe it as: ${facts.description}`,
+    facts.description !== undefined
+      ? `The owners describe it as: ${facts.description}`
+      : facts.answers.length === 0
+        ? 'Nobody has described the business yet.'
+        : // They have said something and it has not been written down. Saying only
+          // "nobody has described it" while the description sits in the answers
+          // below reads as a contradiction, and a model resolves a contradiction by
+          // asking again. Which is the loop this whole paragraph exists to stop.
+          'The description has not been written down yet. If they have told you ' +
+          'below, write it down first, in their words, before asking anything else.',
   )
   if (facts.proposedName !== undefined) lines.push(`Proposed name: ${facts.proposedName}`)
   if (facts.state !== undefined) lines.push(`To be formed in: ${facts.state}`)
@@ -548,6 +611,38 @@ export function describeSituation(facts: CaseFacts): string {
 
   if (facts.openQuestions.length > 0) {
     lines.push(`Waiting for an answer to: ${facts.openQuestions.join('; ')}`)
+  }
+
+  // Everything a person has actually said, in their own words.
+  //
+  // THIS PARAGRAPH IS WHY A REAL RUN WORKS AT ALL. Without it the model was told
+  // which questions were still outstanding and never told a single answer. On the
+  // first real run with a real model that produced exactly what it should have:
+  // the model asked what the business does, was told, could not see the reply, and
+  // asked again. Eight turns, eight versions of the same question, until the stage
+  // ran out of turns. The answers were all in the record. Nothing was reading them
+  // back out.
+  //
+  // Written as a person speaking rather than as data, because that is what it is,
+  // and because a model shown a labelled list of question and answer pairs tends to
+  // treat them as a form to be filled rather than as things it has been told.
+  if (facts.answers.length > 0) {
+    const said = facts.answers.slice(-ANSWERS_SHOWN)
+    const older = facts.answers.length - said.length
+
+    lines.push('The owners have already told you this, and must not be asked again:')
+    for (const one of said) {
+      lines.push(`  asked: ${shorten(one.question)}`)
+      lines.push(`  they said: ${shorten(one.answer)}`)
+    }
+    // Said out loud rather than quietly dropped. A model working from a list it
+    // has been told is complete, when it is not, will confidently fill the gap.
+    if (older > 0) {
+      lines.push(
+        `  (${older} earlier answer(s) are in the record and not repeated here, to keep ` +
+          `this short enough to send. Ask again only if you truly need one of them.)`,
+      )
+    }
   }
 
   const authorisation = facts.spendAuthorisation
@@ -570,6 +665,23 @@ export function describeSituation(facts: CaseFacts): string {
           `proposed name yet.`
         : `${research.searches.length} search(es) run. Name check so far: ${research.verdict}.`,
     )
+
+    // What the searches actually found, which is the whole point of having run
+    // them. Without this the model is told a number and never the names, and the
+    // next thing it has to do is compare those names.
+    for (const search of research.searches.slice(-SEARCHES_SHOWN)) {
+      lines.push(`  searched: ${search.query}`)
+      if (search.found.length === 0) {
+        lines.push('    nothing came back')
+        continue
+      }
+      for (const title of search.found.slice(0, FOUND_SHOWN)) {
+        lines.push(`    found: ${shorten(title)}`)
+      }
+      if (search.found.length > FOUND_SHOWN) {
+        lines.push(`    (${search.found.length - FOUND_SHOWN} more, not listed here)`)
+      }
+    }
   }
 
   const address = facts.address
@@ -582,7 +694,27 @@ export function describeSituation(facts: CaseFacts): string {
           : address.available === false
             ? 'taken'
             : 'not checked yet'
-    lines.push(`Web address ${address.candidate}: ${state}.`)
+    lines.push(
+      `Web address ${address.candidate}: ${state}` +
+        `${address.priceCents === undefined ? '' : `, ${address.priceCents} cents for the first year`}.`,
+    )
+
+    // The exact thing that stopped a real run: a price above the limit, and no
+    // way for the model to see that was the problem. It could see the limit and it
+    // could see the address; it was never shown the two side by side.
+    const permission = facts.spendAuthorisation
+    if (
+      permission !== undefined &&
+      address.priceCents !== undefined &&
+      address.registered !== true &&
+      Number(address.priceCents) > Number(permission.limitCents) - Number(permission.spentCents)
+    ) {
+      lines.push(
+        `That is MORE than the ${permission.limitCents} cents a person allowed, so ` +
+          `registering it will be refused. Either ask a person to allow at least ` +
+          `${address.priceCents} cents, or find a cheaper address.`,
+      )
+    }
   }
 
   return lines.join('\n')

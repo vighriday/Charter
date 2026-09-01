@@ -97,7 +97,7 @@ describe('the invariants', () => {
     // This is where a person signs. The agent stops, ordinary code carries the
     // pack to them, and the approval never passes through the agent loop.
     expect(STAGES.boundary.tools).toEqual([])
-    expect(STAGES.boundary.title).toBe('The boundary')
+    expect(STAGES.boundary.title).toBe('Hand it to a person')
   })
 
   it('offers the model exactly the current stage\'s tools and nothing else', () => {
@@ -110,7 +110,7 @@ describe('the invariants', () => {
 
   it('refuses to run a real tool reached for from the wrong stage', () => {
     // register_address exists, but not in stage one.
-    expect(() => toolFor(registry, 'understand', 'register_address')).toThrow(/not in stage/)
+    expect(() => toolFor(registry, 'understand', 'register_address')).toThrow(/but not during/)
   })
 
   it('refuses a tool that does not exist at all, and says what does', () => {
@@ -118,8 +118,10 @@ describe('the invariants', () => {
       toolFor(registry, 'understand', 'sign_the_agreement')
       expect.unreachable('should have refused')
     } catch (error) {
-      expect((error as Error).message).toContain('there is no tool called')
-      expect((error as Error).message).toContain('ask_question')
+      expect((error as Error).message).toContain('which does not exist')
+      // The refusal says what it CAN do here, in the same words a reader of the
+      // website gets, rather than in the names the code uses for those tools.
+      expect((error as Error).message).toContain('ask you a question')
     }
   })
 
@@ -244,7 +246,9 @@ describe('moving a case from one stage to the next', () => {
     const facts: CaseFacts = {
       ...understood,
       nameResearch: {
-        searches: [{ query: 'rivera sisters bakery', resultCount: '3', answeredBy: 'test' }],
+        searches: [
+          { query: 'rivera sisters bakery', resultCount: '3', answeredBy: 'test', found: [] },
+        ],
         collisions: [],
         verdict: 'clear',
       },

@@ -421,20 +421,28 @@ describe('when the arguments do not fit', () => {
     expect(report.events.some((event) => event.kind === 'fact.recorded')).toBe(false)
   })
 
-  it('gives up after two corrections rather than spending the day', async () => {
+  it('stops asking after two corrections rather than spending the day', async () => {
     // Each attempt costs a request from an allowance of a few hundred a day that
     // does not return until midnight in the provider's own time zone.
     const router = answering(calling('record_fact', { about: 'wrong', value: 'TX' }))
     const report = await turn({ router })
-    expect(report.outcome.kind).toBe('gave up')
+    expect(report.outcome.kind).toBe('turn wasted')
     expect(router.asked).toHaveLength(MAX_REPAIR_ATTEMPTS + 1)
   })
 
-  it('says why it gave up, in words about the cost', async () => {
+  it('spends the turn and not the run, so one bad turn does not undo four steps', async () => {
+    // This used to end the whole run, and on a real run it did: four steps of work
+    // were thrown away because the smallest model — the only one left, the others
+    // having used their day — answered one turn badly three times.
+    //
+    // A wasted turn is a wasted turn. The step has a ceiling on turns and that is
+    // what stops a loop; a second, harsher rule that ends everything at the first
+    // bad moment was never needed.
     const router = answering(calling('record_fact', { about: 'wrong', value: 'TX' }))
     const report = await turn({ router })
-    if (report.outcome.kind !== 'gave up') return expect.unreachable('should have given up')
+    if (report.outcome.kind !== 'turn wasted') return expect.unreachable('should have been spent')
     expect(report.outcome.why).toContain('daily')
+    expect(report.outcome.why).toContain('carries on')
   })
 })
 
@@ -453,9 +461,11 @@ describe('when the model asks for a tool it was not offered', () => {
   it('refuses a tool that does not exist at all', async () => {
     const router = answering(calling('sign_the_agreement', {}))
     const report = await turn({ router })
-    expect(report.outcome.kind).toBe('gave up')
+    // The turn is spent, not the run. What matters here is that the thing it asked
+    // for never ran and it was told why.
+    expect(report.outcome.kind).toBe('turn wasted')
     const refused = report.events.find((event) => event.kind === 'tool.refused')
-    expect(String(refused?.payload['why'])).toContain('there is no tool called')
+    expect(String(refused?.payload['why'])).toContain('which does not exist')
   })
 
   it('never runs a tool from another stage, whatever the model asked for', async () => {

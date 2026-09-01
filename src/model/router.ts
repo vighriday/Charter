@@ -315,7 +315,24 @@ export const DEFAULT_ROUTES: Routes = {
   // Messy speech into typed fields. The hardest thing asked of the model.
   understand: ['gemini:gemini-3.5-flash', 'gemini:gemini-3.5-flash-lite', 'groq:qwen/qwen3.8-27b'],
   // Choosing which parts of the agreement apply.
-  draft: ['gemini:gemini-3.5-flash', 'gemini:gemini-3.1-flash-lite', 'groq:qwen/qwen3.8-27b'],
+  //
+  // The second choice used to be the older small model. That looked reasonable and
+  // was wrong in practice, for a reason only a real run showed: the first choice
+  // here has a free allowance of twenty requests a DAY, so on any day with real use
+  // it is gone by the afternoon and the second choice does the whole step. Writing
+  // the contract is the second hardest thing asked of a model, and it was being
+  // done by the weakest one available.
+  //
+  // On a real run that meant twelve turns of writing down something already
+  // written down, and a step that never finished. The newer small model has the
+  // same 500-a-day allowance and is markedly better at working out what is still
+  // missing. The old one stays, last, because something is better than nothing.
+  draft: [
+    'gemini:gemini-3.5-flash',
+    'gemini:gemini-3.5-flash-lite',
+    'groq:qwen/qwen3.8-27b',
+    'gemini:gemini-3.1-flash-lite',
+  ],
 
   // Everything else is routine.
   research: ['gemini:gemini-3.5-flash-lite', 'gemini:gemini-3.1-flash-lite'],

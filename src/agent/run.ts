@@ -45,6 +45,8 @@ import type { Tool } from '../tools/registry.js'
 import type { Services } from '../tools/services.js'
 import { takeTurn, type TurnOutcome, type TurnTaker } from './loop.js'
 import { DEFAULT_SETTINGS, type Settings } from '../settings.js'
+import { asMoney, plainDay } from '../tools/guard.js'
+import { whatToolDoes } from '../tools/words.js'
 
 export interface RunOptions {
   readonly db: Database
@@ -171,6 +173,11 @@ export async function runStage(options: RunOptions, stage: StageName): Promise<S
       say(event.kind, stage, describe(event.kind, event.payload))
     }
 
+    // A turn that produced nothing usable. The step goes round again and the
+    // ceiling on turns is what bounds it, which is the bound that was always
+    // meant to do this job.
+    if (report.outcome.kind === 'turn wasted') continue
+
     if (report.outcome.kind === 'gave up') {
       return {
         stage,
@@ -281,7 +288,16 @@ function describeGap(stage: StageName, facts: CaseFacts): string {
 function actorFor(kind: string): Actor {
   // A person. Only two things in a run come from one, and both are the important
   // ones: answering a question, and granting permission to spend.
-  if (kind === 'spend.authorised' || kind === 'question.answered') return 'human'
+  if (
+    kind === 'spend.authorised' ||
+    kind === 'question.answered' ||
+    // A person settling a name the comparison could not. Named here rather than
+    // caught by the "name." prefix below, because the comparison itself writes
+    // entries with that prefix and those are the machine's.
+    kind === 'name.decided'
+  ) {
+    return 'human'
+  }
   // An outside company. Recorded separately from us, because "the registrar said
   // this address was free" and "we decided it was free" are different claims.
   if (kind.startsWith('search.') || kind.startsWith('address.')) return 'vendor'
@@ -303,30 +319,64 @@ function actorFor(kind: string): Actor {
  * for the same entry. Two describers would drift, and the page would then say
  * something the run never said.
  */
+/**
+ * A name a program uses, written the way a person writes it.
+ *
+ * Facts are filed under names like "proposed_name" and "expiry_date", because a
+ * program needs one exact spelling for each thing it stores. A person reading the
+ * diary does not, and an underscore in the middle of a sentence is a small,
+ * constant reminder that this page was written for somebody else.
+ */
+function plainly(name: string): string {
+  return name.replace(/_/g, ' ')
+}
+
 export function describe(kind: string, payload: Record<string, unknown>): string {
   switch (kind) {
     case 'turn.started':
-      return `turn ${String(payload['turn'])}, offering ${String(payload['toolsOffered'])}`
-    case 'model.answered':
-      return `${String(payload['providerId'])} chose ${String(payload['chose'])}`
+      return (
+        `turn ${String(payload['turn'])}. It may: ` +
+        String(payload['toolsOffered'])
+          .split(',')
+          .map((one) => whatToolDoes(one.trim()))
+          .join('; ')
+      )
+    case 'model.answered': {
+      const from = String(payload['providerId'])
+      const chose = whatToolDoes(String(payload['chose']))
+      return from.startsWith('written-out:')
+        ? `decided to ${chose}, from answers written out in advance`
+        : `${from} decided to ${chose}`
+    }
     case 'tool.arguments.rejected':
-      return `${String(payload['tool'])} — arguments did not fit, asking again`
-    case 'tool.refused':
-      return `refused ${String(payload['asked'])}`
+      return (
+        `tried to ${whatToolDoes(String(payload['tool']))}, but the details did not fit, ` +
+        `so it asked again`
+      )
+    case 'tool.refused': {
+      // With the reason, always. Watching a real run, "would not write down
+      // something you told it" twelve times in a row reads as a broken program.
+      // The reason — that it was already written down — is the line that shows the
+      // program working, and it was being thrown away.
+      const why = payload['why'] === undefined ? '' : ` — ${String(payload['why'])}`
+      return `would not ${whatToolDoes(String(payload['asked']))}${why}`
+    }
     case 'turn.retried':
       return `asked again after a correction`
     case 'tool.ran':
-      return String(payload['tool'])
+      return whatToolDoes(String(payload['tool']))
     case 'question.asked':
       return String(payload['question'])
     case 'fact.recorded':
-      return `${String(payload['about'])} = ${String(payload['value'])}`
+      return `${plainly(String(payload['about']))}: ${String(payload['value'])}`
     case 'spend.requested':
-      return `asked to spend up to ${String(payload['limitCents'])} cents`
+      return `asked to spend up to ${asMoney(String(payload['limitCents']))}`
     case 'search.performed':
       return `"${String(payload['query'])}" — ${String(payload['resultCount'])} result(s)`
     case 'names.compared':
-      return `name check: ${String(payload['verdict'])}`
+      return payload['verdict'] === 'collides'
+        ? 'too close to a name already in use'
+        : 'clear of the names already in use'
     case 'address.checked':
       return `${String(payload['domain'])} — ${payload['available'] === true ? 'free' : 'taken'}`
     case 'address.registration.refused':
@@ -350,22 +400,23 @@ export function describe(kind: string, payload: Record<string, unknown>): string
     case 'address.records.refused':
       return `refused to write records for ${String(payload['domain'])}`
     case 'storefront.drawn':
-      return `drew the storefront from ${String(payload['charactersSent'])} characters of the owners' own words`
+      return `drew the shop picture from the owners' own words, and nothing else`
     case 'storefront.refused':
       return `refused to draw the storefront`
     case 'spend.applied':
       return (
-        `${String(payload['amountCents'])} cents spent, ` +
-        `${String(payload['spentCentsAfter'])} of ${String(payload['limitCents'])} used`
+        `${asMoney(String(payload['amountCents']))} spent, ` +
+        `${asMoney(String(payload['spentCentsAfter']))} of ` +
+        `${asMoney(String(payload['limitCents']))} used`
       )
     case 'spend.authorised':
-      return `a person granted up to ${String(payload['limitCents'])} cents`
+      return `a person allowed up to ${asMoney(String(payload['limitCents']))}`
     case 'question.answered':
       return `a person answered: ${String(payload['answer'])}`
     case 'stage.entered':
-      return `stage ${String(payload['position'])}`
+      return `moved to step ${String(payload['position'])} of 8`
     case 'agreement.choice.recorded':
-      return `${String(payload['which'])} = ${String(payload['value'])}`
+      return `${plainly(String(payload['which']))}: ${String(payload['value'])}`
     case 'agreement.choice.refused':
     case 'agreement.draft.refused':
     case 'pack.refused':
@@ -373,24 +424,32 @@ export function describe(kind: string, payload: Record<string, unknown>): string
     case 'identity.read.refused':
       return String(payload['why'])
     case 'agreement.drafted':
-      return `${String(payload['articleCount'])} articles, dated ${String(payload['dated'])}`
+      return `${String(payload['articleCount'])} sections, dated ${plainDay(String(payload['dated']))}`
     case 'identity.read': {
       const waiting = Array.isArray(payload['toReview']) ? payload['toReview'].length : 0
       return (
-        `${String(payload['owner'])}: ${String(payload['fieldsRead'])} value(s) read, ` +
-        `${waiting} to a person`
+        `${String(payload['owner'])}: read ${String(payload['fieldsRead'])} value(s), ` +
+        `${waiting === 0 ? 'none needed a person' : `${waiting} needed a person`}`
       )
     }
     case 'identity.field.sent.for.review':
-      return `${String(payload['owner'])} ${String(payload['field'])} — ${String(payload['label'])}`
+      return (
+        `${String(payload['owner'])}, ${plainly(String(payload['field']))}: not a clean ` +
+        `match, so a person decides`
+      )
     case 'identity.field.checked':
-      return `a person checked ${String(payload['owner'])} ${String(payload['field'])}: ${String(payload['found'])}`
+      return (
+        `a person checked ${String(payload['owner'])}'s ` +
+        `${plainly(String(payload['field']))}: ${String(payload['found'])}`
+      )
     case 'pack.sealed':
-      return `sealed ${String(payload['sizeBytes'])} bytes, fingerprint ${String(payload['fingerprint']).slice(0, 12)}`
+      return `finished and stamped the file, fingerprint ${String(payload['fingerprint']).slice(0, 12)}`
     case 'signature.approved':
-      return `${String(payload['approvedBy'])} approved sending this exact pack`
+      return `${String(payload['approvedBy'])} said yes to sending this exact file`
     case 'site.published':
       return `live at ${String(payload['liveAt'])}`
+    case 'human.act.refused':
+      return `said no to a person: ${String(payload['why'])}`
     default:
       return kind
   }

@@ -95,6 +95,26 @@ export interface SearchPerformed {
   readonly resultCount: string
   /** Which service answered. Recorded, but never shown to the model. */
   readonly answeredBy: string
+  /**
+   * The titles that came back, in the order they came back.
+   *
+   * WHY THE RESULTS HAVE TO BE HERE AND NOT ONLY IN THE RECORD
+   *
+   * The model is never handed back what a tool returned. It is shown where things
+   * stand, worked out by reading the record forward, and it decides again from
+   * that. That is what makes a run survive a crash: there is no conversation to
+   * lose.
+   *
+   * It also means anything a tool learns is lost unless the summary carries it.
+   * Searching the web for businesses already using a name learns a list of names,
+   * and the next thing the model has to do is compare those names against the
+   * proposed one. On the first real run it could not, because it had never been
+   * shown them: it searched, saw nothing, searched again, and used up the whole
+   * step on twelve searches of the same two queries.
+   *
+   * So the titles are folded back into what is known, and the summary lists them.
+   */
+  readonly found: readonly string[]
 }
 
 /** A business found that might be the same name as the one being proposed. */
@@ -289,7 +309,24 @@ export interface CaseFacts {
    * other. While this is set and no permission exists, the case is waiting on a
    * person, and asking the model again would spend a request to learn nothing.
    */
-  readonly spendRequested?: { readonly limitCents: string; readonly forWhat: string }
+  readonly spendRequested?: {
+    readonly limitCents: string
+    readonly forWhat: string
+    /**
+     * True when this request came AFTER the last permission a person gave.
+     *
+     * A run can need a bigger limit than the one it asked for. It asks for $15,
+     * somebody allows $15, and the thing it then finds costs $17.99. Charter
+     * refuses to go over, which is right, and the only way forward is to ask
+     * again for more.
+     *
+     * Without this, that second asking went unheard: the code that stops for a
+     * person looked for a request with no permission at all, and there was a
+     * permission — the old one, for the wrong amount. So the run sat asking and
+     * being refused until the step ran out of turns.
+     */
+    readonly sinceLastPermission: boolean
+  }
   readonly spendAuthorisation?: SpendAuthorisation
   readonly nameResearch?: NameResearch
   readonly address?: AddressWork
