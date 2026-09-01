@@ -98,6 +98,26 @@ interface HeldRun {
   attestationText: string | null
 }
 
+/**
+ * Whether two secrets match, compared without leaking where they first differ.
+ *
+ * An ordinary comparison stops at the first character that differs, so how long it
+ * takes says something about how much of a guess was right. That is a thin channel
+ * and a real one, and there is no reason to leave it open when closing it is four
+ * lines.
+ *
+ * Written once and used by everything that checks a secret, because two copies of
+ * this would eventually be one careful copy and one ordinary one.
+ */
+export function sameSecret(sent: string, expected: string): boolean {
+  if (sent.length !== expected.length) return false
+  let difference = 0
+  for (let at = 0; at < sent.length; at += 1) {
+    difference |= sent.charCodeAt(at) ^ expected.charCodeAt(at)
+  }
+  return difference === 0
+}
+
 /** How a question should be answered, worked out from how it was asked. */
 export function answerKind(question: string): Waiting['answerWith'] {
   if (/\[y\/N\]/i.test(question)) return 'yes-no'
@@ -150,7 +170,15 @@ export class Runs {
     }
   }
 
-  /** The token a page must send back to answer. Never shown to anybody else. */
+  /**
+   * The secret for a run, for the server to compare against what was sent.
+   *
+   * Given out once, to whoever started the run, and never again. It is needed to
+   * READ a run as well as to answer one: a run's feed carries the business
+   * description in the owners' own words, and its record carries their names and
+   * every answer they gave. A run that could be read by anybody who guessed its
+   * name would be a pile of strangers' business plans with a thin lid on it.
+   */
   tokenFor(id: string): string | null {
     return this.held.get(id)?.token ?? null
   }
@@ -173,7 +201,7 @@ export class Runs {
   answer(id: string, token: string, answer: string): 'ok' | 'not waiting' | 'not you' {
     const run = this.held.get(id)
     if (run === undefined) return 'not waiting'
-    if (token !== run.token) return 'not you'
+    if (!sameSecret(token, run.token)) return 'not you'
     const waiting = run.waiting
     if (waiting === null) return 'not waiting'
 
@@ -218,7 +246,15 @@ export class Runs {
     readonly description: string
     readonly state: string
   }): Promise<{ readonly id: string; readonly token: string }> {
-    const id = `web-${randomBytes(4).toString('hex')}`
+    // Sixteen bytes, not four.
+    //
+    // Four bytes is about four billion names, which sounds like a lot and is not:
+    // a name is the thing that appears in a web address, and web addresses get
+    // guessed at by anybody who feels like trying. The secret below is what
+    // actually protects a run — see the note on `answer` and the reading rule in
+    // src/serve/server.ts — and this simply stops the name itself being a weak
+    // second door standing next to a strong first one.
+    const id = `web-${randomBytes(16).toString('hex')}`
     const token = randomBytes(24).toString('hex')
 
     const run: HeldRun = {

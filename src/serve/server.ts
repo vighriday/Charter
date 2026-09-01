@@ -42,7 +42,7 @@ import { extname, join, normalize, sep } from 'node:path'
 
 import { loadEnvFile, readSettings, SettingRefusal, type Settings } from '../settings.js'
 import { Limits, DEFAULT_ALLOWANCE, SEARCHES_A_MONTH, SEARCHES_A_RUN } from './limits.js'
-import { Runs } from './runs.js'
+import { Runs, sameSecret } from './runs.js'
 
 /** Where the site's own files live. */
 const SITE = 'site'
@@ -101,6 +101,30 @@ export function fileAsked(urlPath: string, root = SITE): string | null {
   if (full !== inside && !full.startsWith(inside + sep)) return null
   return full
 }
+
+/**
+ * The run secret a request carried, or empty when it carried none.
+ *
+ * Sent as `Authorization: Bearer <secret>` and never in the web address itself.
+ * A secret in an address is a secret in the browser history, in whatever the
+ * visitor pastes into a message to somebody, and in every log between here and
+ * them. The page holds it in memory and sends it on each request, including the
+ * ones that download the three files.
+ */
+export function secretSent(headers: IncomingMessage['headers']): string {
+  const line = headers['authorization']
+  const value = Array.isArray(line) ? line[0] : line
+  if (typeof value !== 'string') return ''
+  const match = /^Bearer\s+(.+)$/i.exec(value.trim())
+  return match === null ? '' : (match[1] as string).trim()
+}
+
+/** What to say to somebody asking about a run that is not theirs. */
+const NOT_YOURS =
+  'A run belongs to whoever started it. Reading one needs the secret it was given ' +
+  'when it started, because its feed carries the business description in the ' +
+  "owners' own words and its record carries their names and every answer they " +
+  'gave. Start your own run and you will have its secret.'
 
 async function readBody(request: IncomingMessage): Promise<string> {
   const parts: Buffer[] = []
@@ -244,7 +268,18 @@ export async function start(options: ServerOptions = {}): Promise<{ readonly por
     // ---- watch a run ---------------------------------------------------------
     const watching = /^\/api\/runs\/([A-Za-z0-9-]+)$/.exec(path)
     if (watching !== null && request.method === 'GET') {
-      const view = runs.view(watching[1] as string)
+      const id = watching[1] as string
+      const expected = runs.tokenFor(id)
+
+      // The same answer whether the run does not exist or is somebody else's.
+      // Telling the two apart would let a stranger work out which names are real
+      // without ever reading one, which is most of the way to reading one.
+      if (expected === null || !sameSecret(secretSent(request.headers), expected)) {
+        sendJson(response, 403, { error: NOT_YOURS })
+        return
+      }
+
+      const view = runs.view(id)
       if (view === null) {
         sendJson(response, 404, { error: 'there is no run by that name here' })
         return
@@ -289,9 +324,20 @@ export async function start(options: ServerOptions = {}): Promise<{ readonly por
       path,
     )
     if (wanting !== null && request.method === 'GET') {
+      const id = wanting[1] as string
+      const expected = runs.tokenFor(id)
+
+      // The files are the most private thing here. The record carries every answer
+      // a person gave and the packet carries their names, so this is the endpoint
+      // where getting the rule wrong hands somebody else's paperwork to a stranger.
+      if (expected === null || !sameSecret(secretSent(request.headers), expected)) {
+        sendJson(response, 403, { error: NOT_YOURS })
+        return
+      }
+
       const which =
         wanting[2] === 'pack.pdf' ? 'pack' : wanting[2] === 'record.jsonl' ? 'record' : 'attestation'
-      const file = runs.fileFor(wanting[1] as string, which)
+      const file = runs.fileFor(id, which)
       if (file === null) {
         sendJson(response, 404, { error: 'that file does not exist yet' })
         return

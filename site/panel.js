@@ -66,7 +66,19 @@
   /* ── talking to the server ───────────────────────────────────────────────── */
 
   function askServer(path, options) {
-    return fetch(path, options).then(function (response) {
+    var settings = options || {}
+
+    // The run's own secret goes on every request about a run, in a header and
+    // never in the address. A secret in an address is a secret in the browser
+    // history, in whatever the visitor pastes into a message to somebody, and in
+    // every log between here and there.
+    if (token) {
+      settings.headers = Object.assign({}, settings.headers, {
+        authorization: 'Bearer ' + token,
+      })
+    }
+
+    return fetch(path, settings).then(function (response) {
       return response.json().then(function (body) {
         return { status: response.status, body: body }
       })
@@ -300,16 +312,47 @@
     files.appendChild(title)
 
     for (var i = 0; i < names.length; i += 1) {
-      var row = document.createElement('p')
-      row.className = 't-body'
-      var link = document.createElement('a')
-      link.href = '/api/runs/' + runId + '/' + names[i]
-      link.textContent = names[i]
-      link.setAttribute('download', names[i])
-      row.appendChild(link)
-      row.appendChild(document.createTextNode(' — ' + (WHAT_THE_FILES_ARE[names[i]] || '')))
-      files.appendChild(row)
+      files.appendChild(fileRow(names[i]))
     }
+  }
+
+  /*
+    A button rather than a plain link.
+
+    The three files are the most private things here: the record carries every
+    answer a person gave, and the packet carries their names. Reading them needs
+    the run's secret, and a plain link cannot carry a header — it could only carry
+    the secret in the address, which is the one place it must not be. So the file
+    is fetched with the header and handed to the browser from memory.
+  */
+  function fileRow(name) {
+    var row = document.createElement('p')
+    row.className = 't-body'
+
+    var button = document.createElement('button')
+    button.className = 'button'
+    button.type = 'button'
+    button.textContent = name
+    button.addEventListener('click', function () {
+      fetch('/api/runs/' + runId + '/' + name, {
+        headers: { authorization: 'Bearer ' + token },
+      })
+        .then(function (response) {
+          return response.blob()
+        })
+        .then(function (blob) {
+          var where = URL.createObjectURL(blob)
+          var link = document.createElement('a')
+          link.href = where
+          link.download = name
+          link.click()
+          URL.revokeObjectURL(where)
+        })
+    })
+
+    row.appendChild(button)
+    row.appendChild(document.createTextNode(' — ' + (WHAT_THE_FILES_ARE[name] || '')))
+    return row
   }
 
   findOutWhereWeStand()
