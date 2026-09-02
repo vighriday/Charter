@@ -128,6 +128,24 @@ export interface ReadDocument {
   readonly fields: readonly ExtractedField[]
   /** How hard the service was asked to work, recorded so a run cannot be quietly cheaper. */
   readonly depth: string
+  /**
+   * Whether this was a specimen document rather than a real person's.
+   *
+   * Charter is a demonstration that strangers can run on the open internet, and
+   * asking a stranger to upload a real passport so that a demonstration can read
+   * it would be a worse thing than anything this project prevents. So a run uses a
+   * document Charter wrote for a made up person, clearly marked on its face.
+   *
+   * The reading is completely real: a real document goes to a real service, which
+   * really reads it and really reports how sure it is. What must never be real is
+   * the impression that somebody's identity was involved. So this travels with the
+   * result, into the record and onto the screen, and a run that read a made up
+   * document can never be mistaken for a run that read somebody's passport.
+   *
+   * Missing means nobody said, which is treated the same as a specimen. The
+   * cautious direction is the one that claims less.
+   */
+  readonly specimen?: boolean
 }
 
 /**

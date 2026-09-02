@@ -53,11 +53,12 @@ import {
   type RegistrarService,
   type SearchService,
 } from '../tools/services.js'
+import { buildSpecimenDocument, SPECIMEN_KIND } from '../identity/specimen.js'
 import { foxitDocuments } from './foxit.js'
 import { joinHere } from '../pack/join.js'
 import { namecomRegistrar } from './namecom.js'
 import { webSearch } from './search.js'
-import { nutrientIdentityReader } from './nutrient.js'
+import { nutrientIdentityReader, type FoundDocument } from './nutrient.js'
 import type { Fetcher } from './http.js'
 import type { ReadDocument } from '../identity/fields.js'
 import type { SearchAnswer, AddressQuote } from '../tools/services.js'
@@ -93,13 +94,17 @@ export interface ChooseOptions {
     readonly quotes?: Readonly<Record<string, AddressQuote>>
     readonly documents?: Readonly<Record<string, ReadDocument>>
   }
-  /** Turns a document reference into something the reader can fetch. */
-  readonly documentAt?: (
-    documentRef: string,
-  ) => Promise<{
-    readonly where: { readonly url: string } | { readonly base64: string }
-    readonly kind: string
-  }>
+  /**
+   * Where the owners' identity documents come from.
+   *
+   * Left out by almost everybody. When it is left out, Charter writes a specimen
+   * document for the owner by name and reads that. Somebody running this on their
+   * own machine, against their own documents, passes their own finder here.
+   */
+  readonly documentAt?: (asked: {
+    readonly owner: string
+    readonly documentRef: string
+  }) => Promise<FoundDocument>
 }
 
 const STANDING_IN =
@@ -193,33 +198,41 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
         }
 
   // ---- reading identity documents ------------------------------------------
+  //
+  // No caller has to provide a document. Charter writes one, for the owner named
+  // in the run, clearly marked a specimen on its face, and that is deliberate
+  // rather than a shortcut: this is a demonstration strangers run from a website,
+  // and asking a stranger to upload their passport so that a demonstration can
+  // read it would be a worse thing than anything this project prevents.
+  //
+  // The reading is completely real. The person is not, and that fact travels with
+  // the result into the record. See src/identity/specimen.ts.
   const identityKey = held('NUTRIENT_EXTRACTION_KEY')
-  const canRead = identityKey !== '' && options.documentAt !== undefined
 
   const identity: Chosen<IdentityReader> =
-    replaying || !canRead
+    replaying || identityKey === ''
       ? {
           service: preparedIdentity(prepared.documents ?? {}),
           kind: 'stand-in',
           why: replaying
             ? `Documents recorded in advance, because this is a replay. No real ` +
-              `person’s ID is involved. ${STANDING_IN}`
-            : identityKey === ''
-              ? `NUTRIENT_EXTRACTION_KEY is not set. ${STANDING_IN}`
-              : `No way to fetch a document was provided, so there is nothing to send. ` +
-                `${STANDING_IN}`,
+              `person’s ID is involved and nothing was sent anywhere. ${STANDING_IN}`
+            : `NUTRIENT_EXTRACTION_KEY is not set. ${STANDING_IN}`,
         }
       : {
           service: nutrientIdentityReader({
             extractionKey: identityKey,
-            documentAt: options.documentAt as NonNullable<ChooseOptions['documentAt']>,
+            documentAt: options.documentAt ?? specimenFor,
             ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
           }),
           kind: 'real',
           why:
-            'The reading service, at the depth EXTRACTION_DEPTH names. It reads and ' +
-            'decides nothing: whether a value needs a person is worked out afterwards ' +
-            'in plain code, and no model takes part in it.',
+            'The reading service, at the depth EXTRACTION_DEPTH names. The document ' +
+            'it reads is one Charter wrote for a made up person and marked a ' +
+            'specimen on its face, because nobody should be asked to hand a real ' +
+            'identity document to a demonstration. The reading is real: it reads ' +
+            'and decides nothing, and whether a value needs a person is worked out ' +
+            'afterwards in plain code, with no model taking part.',
         }
 
   // ---- joining, reading back, and shrinking the pack ------------------------
@@ -319,4 +332,20 @@ export function describeChoices(services: ChosenServices): readonly string[] {
 /** How many of them are talking to a real company. */
 export function howManyAreReal(services: ChosenServices): number {
   return Object.values(services.chosen).filter((one) => one.kind === 'real').length
+}
+
+/**
+ * The document a run reads, when nobody supplied one.
+ *
+ * Written here for the owner by name, marked a specimen on its face, and the same
+ * bytes every time for the same name. Somebody running this on their own machine
+ * with their own documents passes their own finder instead, and this is never
+ * reached.
+ */
+async function specimenFor(asked: { readonly owner: string }): Promise<FoundDocument> {
+  return {
+    bytes: await buildSpecimenDocument(asked.owner),
+    kind: SPECIMEN_KIND,
+    specimen: true,
+  }
 }
