@@ -227,7 +227,7 @@ export const OUTSIDE_COMPANIES: readonly OutsideCompany[] = [
     host: 'yce.perfectcorp.com',
     job: 'Draws the first picture for the new business’s website, from the owners’ own words.',
     step: 8,
-    state: 'not built',
+    state: 'written, not proven',
     whatWeSend: [
       'The sentence the owners typed when they described their business, which is already in the record because it started the legal work.',
       'Never a photograph of anybody.',
@@ -235,10 +235,12 @@ export const OUTSIDE_COMPANIES: readonly OutsideCompany[] = [
     whatComesBack: ['A picture, and the exact words that produced it, so the record can show both.'],
     neverUsed: [
       'Their face analysis, skin analysis and face swapping. None of it appears in any tool list, none is reachable from anything the model can trigger, and a business formation tool has no business touching anybody’s face.',
+      'Inventing people or lettering. The picture is asked for with nobody in it and no words in it: invented people would be staff the business does not employ, and invented lettering would be a sign saying something nobody chose, on a business that has just spent an hour being careful about its wording.',
     ],
-    code: ['src/tools/services.ts'],
+    seeItYourself: 'npm run picture:proof',
+    code: ['src/vendors/perfectcorp.ts', 'src/vendors/build.ts'],
     stillNotTrue:
-      'There is no client for this yet, and no key. A run says so and shows the words it would have sent, so a reader can see exactly what would have been drawn.',
+      'This client has never been called: there is no key for it yet. Their sign-in needs a key and the public key issued beside it, and every sign-in encrypts the key with the current time so an old one is refused. Until the command above prints the address of a picture, a run says plainly what it would have drawn.',
   },
   {
     company: 'Google, Gemini',

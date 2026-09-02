@@ -152,9 +152,27 @@ describe('the file the website reads', () => {
 
   it('carries the awkward parts as well as the good ones', () => {
     // The specific failure this guards: somebody regenerating the page from a
-    // trimmed list, so that the two companies that have never been called quietly
+    // trimmed list, so that the companies which have never been called quietly
     // stop appearing on it.
-    expect(generated).toContain('written, not proven')
-    expect(generated).toContain('not built')
+    //
+    // Read out of the code rather than written here, so this keeps working when a
+    // state empties out. A hard-written state name would either pass forever or
+    // fail on the happy day the last one turned live.
+    const awkward = OUTSIDE_COMPANIES.filter((one) => one.state !== 'live')
+
+    for (const one of awkward) {
+      expect(generated, `${one.company} is missing from the page`).toContain(one.company)
+      expect(generated, `${one.company} does not say what is not true`).toContain(
+        one.stillNotTrue as string,
+      )
+    }
+  })
+
+  it('carries what every company refuses to do', () => {
+    // The column a feature list would not have. It is the most useful thing on
+    // the page and the easiest thing to leave off it.
+    for (const one of OUTSIDE_COMPANIES) {
+      expect(generated, `${one.company}`).toContain(one.neverUsed[0] as string)
+    }
   })
 })

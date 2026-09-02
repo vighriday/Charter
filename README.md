@@ -180,7 +180,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,133 tests
+npm test          # 1,245 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -392,18 +392,24 @@ answer is 658, which is what this one said on 30 August.
 | One whole case through all eight stages, as a test rather than only as a demonstration | **built, 12 tests** <!-- tests/whole-run.test.ts --> |
 | Whether two business names collide, decided in plain code | **built, 24 tests** <!-- tests/names.test.ts --> |
 | The ownership agreement — every number, article number and cross-reference worked out in code, including a check that the voting rule and the deadlock article do not contradict each other | **built, 75 tests** <!-- tests/agreement.test.ts --> |
-| Whether a written date is a day that actually happened, in one place both callers use | **built, 20 tests** <!-- tests/dates.test.ts --> |
+| Whether a written date is a day that actually happened, and how to read a date off somebody else's document without guessing at one written all in numbers | **built, 29 tests** <!-- tests/dates.test.ts --> |
 | Reading identity documents, and routing a value to a person on whether it can be found in the document rather than on a confidence score | **built, 27 tests** <!-- tests/identity.test.ts --> |
 | Assembling the pack, and refusing anything that would rewrite the file after it is sealed | **built, 40 tests** <!-- tests/pack.test.ts --> |
 | The live run: bringing your own idea, and the five places it stops and waits for you | **built, 6 tests** <!-- tests/live.test.ts --> |
 | Reading typed answers without losing any of them, so the whole run can be driven from a written-out list rather than only by hand | **built, 7 tests** <!-- tests/keyboard.test.ts --> |
 | The run panel on the website: anybody runs their own idea with our keys, and the limits that let it be open to everybody rather than to nobody | **built, 17 tests**, and the shipped number was wrong until the test did the arithmetic <!-- tests/limits.test.ts --> |
 | Who may read a run, and what a web address can reach. Reading somebody's run needs the same secret answering it does, because its record carries their names and every answer they gave | **built, 20 tests** <!-- tests/serve.test.ts --> |
-| The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 25 tests** <!-- tests/document.test.ts --> |
+| The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 26 tests** <!-- tests/document.test.ts --> |
 | Reading the words back out of the sealed file, so the website shows the document rather than its own copy of the document | **built, 12 tests** <!-- tests/pack-read.test.ts --> |
 | The same agreement as an editable Word file, so the owners can take it to somebody they trust before anybody signs anything | **built, 23 tests** <!-- tests/docx.test.ts --> |
 | Pointing a registered name at the website, and reading the records back from the registrar to find out whether "accepted" meant "stored" | **built, 22 tests** <!-- tests/address-records.test.ts --> |
-| The real clients for the outside companies — search, the registrar, reading identity documents — and the rule that picks between each one and its stand-in | **built, 52 tests**, exercised end to end with no account, no key and nothing spent <!-- tests/vendors.test.ts --> |
+| The real clients for the outside companies — search, the registrar, reading identity documents, drawing a picture — and the rule that picks between each one and its stand-in | **built, 54 tests**, exercised end to end with no account, no key and nothing spent <!-- tests/vendors.test.ts --> |
+| Every outside company in one list: what is sent, what comes back, what is refused, and whether any of it has actually happened. The website page is generated from it | **built, 15 tests.** Three words for what is true and only three, so a vaguer fourth cannot appear <!-- tests/who-does-what.test.ts --> |
+| The document service that joins the packet, shrinks it, and reads its text back out so a program other than the writer says what the packet says | **built, 21 tests** and live. `npm run foxit:proof`. Ask the same service to rewrite the sealed packet and it answers "no permission" <!-- tests/foxit.test.ts --> |
+| The page in the packet saying what Charter did NOT do, and the join that puts it there | **built, 17 tests.** It never guesses at a filing office and never prints a fee <!-- tests/pack-join.test.ts --> |
+| The identity document Charter writes for itself, so nobody is ever asked to upload a real one | **built, 10 tests** and read live by the real reading service <!-- tests/specimen.test.ts --> |
+| Carrying the sealed packet to the owners to sign, from a folder no tool can reach | **built, 21 tests.** NEVER CALLED — their eSign product issues its own key pair. `npm run esign:proof` gets to exactly that line and says which one to fetch <!-- tests/esign.test.ts --> |
+| Drawing the new business's first picture from the owners' own words, with nobody in it and no lettering | **built, 16 tests.** NEVER CALLED — no key yet. `npm run picture:proof` <!-- tests/picture.test.ts --> |
 | The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document <!-- tests/seal.test.ts --> |
 | The checker a stranger runs against a finished pack | **built, 19 tests.** `npm run verify` <!-- tests/verify.test.ts --> |
 | An outside timestamp over the end of the record, from an authority that is not us — and the refusal of one that is about somebody else's record | **built, 27 tests** <!-- tests/anchor.test.ts --> |
@@ -415,7 +421,7 @@ answer is 658, which is what this one said on 30 August.
 | The tool registry, and the catalogue generated from the code that runs | **built.** [TOOLS.md](TOOLS.md), regenerated and compared on every build |
 | Putting the finished website online | **not yet.** A stand-in today. The pack itself is Charter's own code and goes through no outside company |
 | The client for the document service that writes the agreement from a Word template, built to the four answers their own team gave us about where their documentation and their shipped example disagree | **built, 20 tests.** Waiting on one thing only: their demonstration environment needs a bearer token obtained through a Microsoft sign-in done by a person in a browser, and until there is one the agreement is written by Charter's own code from the same data <!-- tests/doctavian.test.ts --> |
-| Foxit and Perfect Corp | **not yet.** Named in the settings file, which says plainly that nothing reads them |
+| Putting a picture and a signing request in front of a real server | **not yet.** Both clients are written and tested and neither has met its server. The settings file and the website both call that "written, not proven" rather than anything kinder |
 | Building a website for the new business, and putting it online | **not yet** |
 
 ---
