@@ -1,9 +1,9 @@
 {
   "v": "1",
   "runId": "demo-bakery",
-  "head": "243fc343a42900d7870aae626f25eace76d7b58d0d95257d6c4859b775f136e2",
+  "head": "5e6e67d0b354d972fa185ee489b9931d641feb6b14783e08d2d1108c176933af",
   "count": "154",
   "attestedAt": "2026-08-28T09:03:20.000Z",
   "keyId": "e9882545fba024e54fdbb93088300da8ff3d2e6455089726b05b48f82559249b",
-  "proof": "hbRY216W5XB0kysHnp2939U1/5j/d35qNMBvai2qm5lPn4QY21n9lEi7jcS7YsK6Ca1D9Tqsr5JnaZ1NhR60Ag=="
+  "proof": "UDpAYSvuwQd6+yvX6CKyUvhUGdOIeQkKA8DPAOTkJGISAZ8KNGOgGMvfwj/+ggPS7daKVHUXFgDTIJwDzcMBCg=="
 }

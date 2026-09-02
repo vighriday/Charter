@@ -3598,19 +3598,19 @@
       "actor": "model",
       "stage": "assemble",
       "at": "2026-08-28T09:03:04.000Z",
-      "fingerprint": "7d64cd756cb1",
+      "fingerprint": "f0fc132fe28e",
       "detail": "join everything into one file and stamp it",
       "refusal": false,
-      "payloadHash": "5c7c77de98e694d8d0168afa83f7c4c779de0c304e49e944c73cc3ccd46592e7",
+      "payloadHash": "0753698dae8a9680c828a68dce1f0eee7942b2550925188f20fef25922932e25",
       "prevHash": "bfa7f47f6817dcb1fceb01ca459682b09f963532703af173568d838e4d0ce913",
-      "hash": "7d64cd756cb10f46f782e805319a65a6d7629a03d398f77c5c42293b3fbf7869",
+      "hash": "f0fc132fe28ebcd030d9091288c7eed86cb9b5edae0c5008487ce83743562abe",
       "payload": {
         "args": {},
         "tool": "assemble_pack",
         "result": {
           "sealed": "yes",
           "sizeBytes": "22128",
-          "fingerprint": "e16013f027db0c727a079513b8f6d96e828d025b44d02cb2f468569ac026d9f3",
+          "fingerprint": "702dafc3bd7d5596b45c4cd69357fdf4209928ec1c13dd719f85cf14451c2f80",
           "documentsJoined": "2",
           "missingFromPack": "0",
           "permissionLevel": "2",
@@ -3627,12 +3627,12 @@
       "actor": "system",
       "stage": "assemble",
       "at": "2026-08-28T09:03:05.000Z",
-      "fingerprint": "022201414ab6",
-      "detail": "finished and stamped the file, fingerprint e16013f027db",
+      "fingerprint": "25a1ac1492e1",
+      "detail": "finished and stamped the file, fingerprint 702dafc3bd7d",
       "refusal": false,
-      "payloadHash": "abaf7c8f2e78f08c8fe3dc8f9de06f0db98dd08b125775676ad5f43b2f74e91e",
-      "prevHash": "7d64cd756cb10f46f782e805319a65a6d7629a03d398f77c5c42293b3fbf7869",
-      "hash": "022201414ab6a1a0445dde77b526f257fd72a4a6c68413f1ee13758432544700",
+      "payloadHash": "a399ce4a64c68ac47e8bc9a3757838a6eef9c0985e53a49d4bfff43409a2f001",
+      "prevHash": "f0fc132fe28ebcd030d9091288c7eed86cb9b5edae0c5008487ce83743562abe",
+      "hash": "25a1ac1492e1031d5568f20b3056bcc4dd0518171d3781a9f0ab9c5437e4b5d0",
       "payload": {
         "parts": [
           "the ownership agreement",
@@ -3642,8 +3642,8 @@
         ],
         "joinedBy": "Charter's own code, with no account and no network. A real join, not a stand-in",
         "sizeBytes": "22128",
-        "certificate": "52d3ab111611afed888196d303a9861b80839efe80de816100678e183d290e36",
-        "fingerprint": "e16013f027db0c727a079513b8f6d96e828d025b44d02cb2f468569ac026d9f3",
+        "certificate": "90065856e562ef02df9ce79e5354afcf291b069f8accb73a4e9d8c7c50e305ce",
+        "fingerprint": "702dafc3bd7d5596b45c4cd69357fdf4209928ec1c13dd719f85cf14451c2f80",
         "joinedParts": [
           "the formation pack",
           "what you must still do yourself"
@@ -3702,12 +3702,12 @@
       "actor": "system",
       "stage": "boundary",
       "at": "2026-08-28T09:03:06.000Z",
-      "fingerprint": "dca7f723c921",
+      "fingerprint": "9b1621bd25cb",
       "detail": "moved to step 7 of 8",
       "refusal": false,
       "payloadHash": "47a65ee70e48d588c7dc33f6c42802a3e13ad9f75f9d3dbc518f47daafbaec10",
-      "prevHash": "022201414ab6a1a0445dde77b526f257fd72a4a6c68413f1ee13758432544700",
-      "hash": "dca7f723c9215cc7408eb45cd8705ec59e76b5f16836a01bae451b10c98910cc",
+      "prevHash": "25a1ac1492e1031d5568f20b3056bcc4dd0518171d3781a9f0ab9c5437e4b5d0",
+      "hash": "9b1621bd25cbbe22d6e12952135b482646e8431cb36abbcfbeecb1e6216d87d1",
       "payload": {
         "to": "boundary",
         "from": "assemble",
@@ -3721,20 +3721,20 @@
       "actor": "human",
       "stage": null,
       "at": "2026-08-28T09:03:08.000Z",
-      "fingerprint": "2f53e5c83b01",
+      "fingerprint": "304bf96753c9",
       "detail": "Ana Rivera said yes to sending this exact file",
       "refusal": false,
       "humanAct": {
         "button": "Approve sending the packet",
         "why": "This is the boundary. Stage seven has no tools at all, and the packet does not move until a person names it by its fingerprint and approves."
       },
-      "payloadHash": "f22602c92ae9ebae711bb2e1ecfaf6bd6f92b5070cd151d661a3d6f5063544d9",
-      "prevHash": "dca7f723c9215cc7408eb45cd8705ec59e76b5f16836a01bae451b10c98910cc",
-      "hash": "2f53e5c83b0125540fab2d045cba53626f73e3a7090bbb33e5e08c1b858e81d2",
+      "payloadHash": "7abfd5fdf2e16add17cefbe749328eefabf33ed59d8175a7e834177684aa69f9",
+      "prevHash": "9b1621bd25cbbe22d6e12952135b482646e8431cb36abbcfbeecb1e6216d87d1",
+      "hash": "304bf96753c96b87b6341c1174a1c8e489ef501a76f0eebb5f798f34ba9ee729",
       "payload": {
         "approvedAt": "2026-08-28T09:03:07.000Z",
         "approvedBy": "Ana Rivera",
-        "packFingerprint": "e16013f027db0c727a079513b8f6d96e828d025b44d02cb2f468569ac026d9f3"
+        "packFingerprint": "702dafc3bd7d5596b45c4cd69357fdf4209928ec1c13dd719f85cf14451c2f80"
       }
     },
     {
@@ -3744,12 +3744,12 @@
       "actor": "system",
       "stage": "publish",
       "at": "2026-08-28T09:03:09.000Z",
-      "fingerprint": "58290ba72ab6",
+      "fingerprint": "c9bb9e8b8c40",
       "detail": "moved to step 8 of 8",
       "refusal": false,
       "payloadHash": "c071ce044655a871562abced3534a6594dcb4b23dcb6369ec08e14ae4ac6202d",
-      "prevHash": "2f53e5c83b0125540fab2d045cba53626f73e3a7090bbb33e5e08c1b858e81d2",
-      "hash": "58290ba72ab6833286462c7a1f1931dab43e7e63575cb6ee1b50a5791987813a",
+      "prevHash": "304bf96753c96b87b6341c1174a1c8e489ef501a76f0eebb5f798f34ba9ee729",
+      "hash": "c9bb9e8b8c409546c78b056663ce1583df7d232544360b18583d3c4e99de8586",
       "payload": {
         "to": "publish",
         "from": "boundary",
@@ -3763,12 +3763,12 @@
       "actor": "model",
       "stage": "publish",
       "at": "2026-08-28T09:03:11.000Z",
-      "fingerprint": "71ae674c2195",
+      "fingerprint": "e9f869a679ae",
       "detail": "turn 1. It may: draw the shop picture; put the website online",
       "refusal": false,
       "payloadHash": "d64ed44f638178a5865b9d97cc399b65a2d9e15f8e557de2aa6e119c4f39356f",
-      "prevHash": "58290ba72ab6833286462c7a1f1931dab43e7e63575cb6ee1b50a5791987813a",
-      "hash": "71ae674c219545ed436ed9dfa2777d65bd09448b107a555ec52914dc1fb91b3e",
+      "prevHash": "c9bb9e8b8c409546c78b056663ce1583df7d232544360b18583d3c4e99de8586",
+      "hash": "e9f869a679ae3e4b3a78446b27ecace61f2ba54106df34c7b1bdabd8cb875c15",
       "payload": {
         "turn": "1",
         "stage": "publish",
@@ -3786,12 +3786,12 @@
       "actor": "model",
       "stage": "publish",
       "at": "2026-08-28T09:03:12.000Z",
-      "fingerprint": "45f3cb93dea5",
+      "fingerprint": "48086f5ffcc8",
       "detail": "decided to draw the shop picture, from answers written out in advance",
       "refusal": false,
       "payloadHash": "663f9a14ef90eb058185b77f40c40141ffcfa97da93efec4fb60e2458b8e7a11",
-      "prevHash": "71ae674c219545ed436ed9dfa2777d65bd09448b107a555ec52914dc1fb91b3e",
-      "hash": "45f3cb93dea58d956249fcc12ad6abd2948819b71b9b0ebe62a7380b4b6c03bc",
+      "prevHash": "e9f869a679ae3e4b3a78446b27ecace61f2ba54106df34c7b1bdabd8cb875c15",
+      "hash": "48086f5ffcc8f2029ff2b64bf891a64333989c9b0544bef6125eaac279397eed",
       "payload": {
         "raw": {
           "chose": "draw_storefront",
@@ -3812,12 +3812,12 @@
       "actor": "model",
       "stage": "publish",
       "at": "2026-08-28T09:03:13.000Z",
-      "fingerprint": "546b2f6e4416",
+      "fingerprint": "ee409ff6e604",
       "detail": "draw the shop picture",
       "refusal": false,
       "payloadHash": "915903c06d0db3a239a0bf304fe6e28c0dfe3c76e0ac4a3421b5266b1d10b2d1",
-      "prevHash": "45f3cb93dea58d956249fcc12ad6abd2948819b71b9b0ebe62a7380b4b6c03bc",
-      "hash": "546b2f6e441622848e6563a5bc91e33396f1280a4c506752ea48acdf7dac4d9d",
+      "prevHash": "48086f5ffcc8f2029ff2b64bf891a64333989c9b0544bef6125eaac279397eed",
+      "hash": "ee409ff6e604c8709aec26421f71b92ea212109df542ba47ce18687ac696c08e",
       "payload": {
         "args": {},
         "tool": "draw_storefront",
@@ -3835,12 +3835,12 @@
       "actor": "system",
       "stage": "publish",
       "at": "2026-08-28T09:03:14.000Z",
-      "fingerprint": "18b11d91143c",
+      "fingerprint": "fc664458eb71",
       "detail": "drew the shop picture from the owners' own words, and nothing else",
       "refusal": false,
       "payloadHash": "a1c07c0772364971bbb0cf86fae0a6cfc38fd2bbe32adab029530b2502e10093",
-      "prevHash": "546b2f6e441622848e6563a5bc91e33396f1280a4c506752ea48acdf7dac4d9d",
-      "hash": "18b11d91143ce3515dd37ab3d21da0ef1426bb2bf31a5d761c67358da8ffd16e",
+      "prevHash": "ee409ff6e604c8709aec26421f71b92ea212109df542ba47ce18687ac696c08e",
+      "hash": "fc664458eb710b95458d37a2f0c6cdb9c37da205aa5df929829320e86c5b7d2d",
       "payload": {
         "url": "prepared:storefront",
         "shape": "1664x928",
@@ -3857,12 +3857,12 @@
       "actor": "model",
       "stage": "publish",
       "at": "2026-08-28T09:03:16.000Z",
-      "fingerprint": "c32f21e24f50",
+      "fingerprint": "b3e286a9e78e",
       "detail": "turn 2. It may: draw the shop picture; put the website online",
       "refusal": false,
       "payloadHash": "e29e83bdcc27d2961dabe126a7c7f2bdb6b420a2b57e9dad515e65191932696d",
-      "prevHash": "18b11d91143ce3515dd37ab3d21da0ef1426bb2bf31a5d761c67358da8ffd16e",
-      "hash": "c32f21e24f504f0cc78003763a27b56af2c81aa23659bcccfc98931be63987a0",
+      "prevHash": "fc664458eb710b95458d37a2f0c6cdb9c37da205aa5df929829320e86c5b7d2d",
+      "hash": "b3e286a9e78e0258e7f17335a259f14b5283b8f216a92a0178ebefa9e5e1faf0",
       "payload": {
         "turn": "2",
         "stage": "publish",
@@ -3880,12 +3880,12 @@
       "actor": "model",
       "stage": "publish",
       "at": "2026-08-28T09:03:17.000Z",
-      "fingerprint": "b4f8284f8585",
+      "fingerprint": "b336d5e21314",
       "detail": "decided to put the website online, from answers written out in advance",
       "refusal": false,
       "payloadHash": "7c0aebc3e01c0610894d23afa8c3cd7552b3da50135ab343041492eb41bf6635",
-      "prevHash": "c32f21e24f504f0cc78003763a27b56af2c81aa23659bcccfc98931be63987a0",
-      "hash": "b4f8284f8585cedced03a6c050d59e8482d091de59419a41fbeaeb7f97f243e7",
+      "prevHash": "b3e286a9e78e0258e7f17335a259f14b5283b8f216a92a0178ebefa9e5e1faf0",
+      "hash": "b336d5e21314908c0accab977f46b03f3dae4678f9d0c071edfa9e716e93eeb0",
       "payload": {
         "raw": {
           "chose": "publish_site",
@@ -3906,12 +3906,12 @@
       "actor": "model",
       "stage": "publish",
       "at": "2026-08-28T09:03:18.000Z",
-      "fingerprint": "5c050d320d36",
+      "fingerprint": "1cabfe16da83",
       "detail": "put the website online",
       "refusal": false,
       "payloadHash": "39fc44745b79f80c9c23c0307ed3039a976c9fcaee8c7c7f567ce8dc5a5715af",
-      "prevHash": "b4f8284f8585cedced03a6c050d59e8482d091de59419a41fbeaeb7f97f243e7",
-      "hash": "5c050d320d3634e521d5f1eb31ea9e24b68b6e256e26e0f5c952b12a45806fc3",
+      "prevHash": "b336d5e21314908c0accab977f46b03f3dae4678f9d0c071edfa9e716e93eeb0",
+      "hash": "1cabfe16da83de02d2d3f87233f058e2a3a6f7787e2d4fc8bb07abd182ab866e",
       "payload": {
         "args": {},
         "tool": "publish_site",
@@ -3929,12 +3929,12 @@
       "actor": "system",
       "stage": "publish",
       "at": "2026-08-28T09:03:19.000Z",
-      "fingerprint": "243fc343a429",
+      "fingerprint": "5e6e67d0b354",
       "detail": "live at https://riverasistersbakingco.com",
       "refusal": false,
       "payloadHash": "0ce46e5aa29e6de20e1b8313c3ff0619ed67d124d2f7467c28c4de2d14867594",
-      "prevHash": "5c050d320d3634e521d5f1eb31ea9e24b68b6e256e26e0f5c952b12a45806fc3",
-      "hash": "243fc343a42900d7870aae626f25eace76d7b58d0d95257d6c4859b775f136e2",
+      "prevHash": "1cabfe16da83de02d2d3f87233f058e2a3a6f7787e2d4fc8bb07abd182ab866e",
+      "hash": "5e6e67d0b354d972fa185ee489b9931d641feb6b14783e08d2d1108c176933af",
       "payload": {
         "liveAt": "https://riverasistersbakingco.com",
         "address": "riverasistersbakingco.com"
@@ -4094,7 +4094,7 @@
     }
   ],
   "pack": {
-    "fingerprint": "e16013f027db0c727a079513b8f6d96e828d025b44d02cb2f468569ac026d9f3",
+    "fingerprint": "702dafc3bd7d5596b45c4cd69357fdf4209928ec1c13dd719f85cf14451c2f80",
     "sizeBytes": "22128",
     "permissionLevel": "2",
     "parts": [
@@ -4506,11 +4506,11 @@
   },
   "genesis": "6cba86f1867aead7f409fc61fd6609f96dd7a8cc095f7578ddabe208ccc03634",
   "attestation": {
-    "head": "243fc343a42900d7870aae626f25eace76d7b58d0d95257d6c4859b775f136e2",
+    "head": "5e6e67d0b354d972fa185ee489b9931d641feb6b14783e08d2d1108c176933af",
     "count": "154",
     "keyId": "e9882545fba024e54fdbb93088300da8ff3d2e6455089726b05b48f82559249b"
   },
-  "tests": 1258,
+  "tests": 1297,
   "verify": {
     "findings": [
       {
@@ -4531,7 +4531,7 @@
       {
         "question": "Is this the same file the diary describes?",
         "answer": "yes",
-        "detail": "Both are e16013f027db0c72…"
+        "detail": "Both are 702dafc3bd7d5596…"
       },
       {
         "question": "Does every step in the diary match the one before it?",

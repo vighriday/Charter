@@ -31,7 +31,7 @@ THE RUN, COUNTED
       15  articles in the agreement
    22128  bytes in the sealed packet
        2  PDF permission level
-    1258  tests
+    1297  tests
 
 ----------------------------------------------------------------------
 
