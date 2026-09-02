@@ -21,9 +21,9 @@ decision comes up.
 ![signing](https://img.shields.io/badge/signs%20for%20you-never-8a3324)
 
 You describe your business in plain English. Charter prepares everything around the
-government filing — it researches the name, secures a web address, drafts the
-ownership agreement, checks each owner's identity documents, assembles one signable
-pack, and puts a live website online.
+government filing — it researches the name, secures a web address and points it at
+the new site, drafts the ownership agreement, checks each owner's identity documents,
+and assembles one signable pack.
 
 Then it stops, and hands the pack to the owners to sign **themselves**.
 
@@ -68,7 +68,7 @@ flowchart TD
   S5["5 · Check the owners' identity documents<br/><i>read the fields, send the doubtful ones to a person</i>"]
   S6["6 · Assemble and seal the packet<br/><i>one PDF, sealed so it can be filled in and signed</i>"]
   S7["7 · The boundary<br/><b>no tools at all</b>"]
-  S8["8 · Put the website online<br/><i>after, and only after, a person approved</i>"]
+  S8["8 · Put the website online<br/><i>after a person approved. A stand-in does this today</i>"]
 
   S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
 
