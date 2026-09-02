@@ -51,6 +51,7 @@ import {
   preparedImagery,
   type Services,
 } from '../src/tools/services.js'
+import { joinHere } from '../src/pack/join.js'
 
 import {
   answerQuestion,
@@ -127,6 +128,7 @@ beforeAll(async () => {
     }),
     publishing: preparedPublishing(),
     imagery: preparedImagery(),
+  documents: joinHere({ whyNotTheService: 'This is a test and reaches nothing.' }),
     search: preparedSearch({
       'Rivera Sisters Bakery Texas': {
         answeredBy: 'the-first-search-service',

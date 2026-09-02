@@ -211,6 +211,67 @@ export interface DrawnPicture {
   readonly drawnBy: string
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// The document service
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** One document on its way into the pack. */
+export interface DocumentPart {
+  /** What this document is, in plain words. Recorded, and sent as the file name. */
+  readonly name: string
+  readonly bytes: Uint8Array
+}
+
+/** Several documents, now one. */
+export interface JoinedDocument {
+  readonly bytes: Uint8Array
+  /** The names of what went in, in the order they appear. */
+  readonly partNames: readonly string[]
+  /** Which company joined them. Recorded, never returned to the model. */
+  readonly joinedBy: string
+}
+
+/** The text of a document, read back out of it after it was written. */
+export interface ReadBack {
+  /**
+   * Whether the text could be read back at all.
+   *
+   * False is a real, ordinary answer: no key, no network, or out of allowance.
+   * It means "not checked" and must never be reported as "checked and fine".
+   */
+  readonly happened: boolean
+  /** Everything that was read, run together. Empty when it did not happen. */
+  readonly text: string
+  /** Which company read it, or why nobody did. Recorded, never given to a model. */
+  readonly readBy: string
+}
+
+/** A file made smaller, or honestly left alone. */
+export interface Shrunk {
+  readonly bytes: Uint8Array
+  readonly wasShrunk: boolean
+  readonly shrunkBy: string
+}
+
+export interface DocumentService {
+  /**
+   * Join documents into one, in the order given.
+   *
+   * Called before the seal and never after. Joining after sealing would add pages
+   * to a file whose seal says what pages it had.
+   */
+  join(parts: readonly DocumentPart[]): Promise<JoinedDocument>
+  /**
+   * Read the text back out of a finished document.
+   *
+   * Changes nothing. Its only purpose is that somebody other than the writer can
+   * say what the document says.
+   */
+  readBack(bytes: Uint8Array): Promise<ReadBack>
+  /** Make the file smaller. Called before the seal and never after. */
+  shrink(bytes: Uint8Array): Promise<Shrunk>
+}
+
 /** Turns the finished documents into one file, and puts the website online. */
 export interface PublishingService {
   /**
@@ -231,6 +292,7 @@ export interface Services {
   readonly identity: IdentityReader
   readonly publishing: PublishingService
   readonly imagery: ImageryService
+  readonly documents: DocumentService
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

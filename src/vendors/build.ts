@@ -3,9 +3,10 @@
  *
  * WHAT THIS DECIDES
  *
- * Charter needs four things from outside: search the live web, check and register a
- * web address, read the fields off an identity document, and put a website online.
- * Each has a real client and a stand-in that answers only from what it was given.
+ * Charter needs several things from outside: search the live web, check and
+ * register a web address, read the fields off an identity document, join the pack
+ * together and read its text back, put a website online, and draw the new
+ * business's first picture. Each has a real client and a stand-in.
  *
  * This picks one of the two per service, and says in plain words which and why.
  *
@@ -45,12 +46,15 @@ import {
   preparedPublishing,
   preparedRegistrar,
   preparedSearch,
+  type DocumentService,
   type IdentityReader,
   type ImageryService,
   type PublishingService,
   type RegistrarService,
   type SearchService,
 } from '../tools/services.js'
+import { foxitDocuments } from './foxit.js'
+import { joinHere } from '../pack/join.js'
 import { namecomRegistrar } from './namecom.js'
 import { webSearch } from './search.js'
 import { nutrientIdentityReader } from './nutrient.js'
@@ -68,9 +72,12 @@ export interface Chosen<T> {
 }
 
 export interface ChosenServices extends Services {
-  /** Which of the five are real, for the record and for the person watching. */
+  /** Which of them are real, for the record and for the person watching. */
   readonly chosen: Readonly<
-    Record<'search' | 'registrar' | 'identity' | 'publishing' | 'imagery', Chosen<unknown>>
+    Record<
+      'search' | 'registrar' | 'identity' | 'documents' | 'publishing' | 'imagery',
+      Chosen<unknown>
+    >
   >
 }
 
@@ -100,7 +107,7 @@ const STANDING_IN =
   'at all, so a missing answer stops the run rather than quietly becoming a real call.'
 
 /**
- * Pick the four services, and say which is which.
+ * Pick each service, and say which is which.
  *
  * Never throws for a missing credential. That is the normal state of a fresh clone
  * and the intended way to evaluate this project.
@@ -110,7 +117,7 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
   const settings = options.settings
   const prepared = options.prepared ?? {}
 
-  // One question asked once, so the four answers cannot disagree with each other.
+  // One question asked once, so the answers cannot disagree with each other.
   const replaying = settings.replaying
   const held = (name: string): string => (env[name] ?? '').trim()
 
@@ -215,6 +222,53 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
             'in plain code, and no model takes part in it.',
         }
 
+  // ---- joining, reading back, and shrinking the pack ------------------------
+  //
+  // The one service whose stand-in does real work. Joining is genuine either way:
+  // with a key it goes out to the document service, and without one it happens
+  // here with the same result, because a fresh clone has to produce a real pack.
+  //
+  // What only the real service can do is read the finished pack back out. That
+  // check is worth having precisely because the reader is a different program
+  // than the writer, so the stand-in answers "not checked" rather than pretending.
+  const foxitId = held('FOXIT_PDF_CLIENT_ID')
+  const foxitSecret = held('FOXIT_PDF_CLIENT_SECRET')
+  const foxitUrl = held('FOXIT_PDF_BASE_URL')
+  const canUseDocumentService = foxitId !== '' && foxitSecret !== '' && foxitUrl !== ''
+
+  const whyNotTheService = replaying
+    ? 'This run is replaying answers recorded in advance, so nothing was sent anywhere.'
+    : !canUseDocumentService
+      ? 'FOXIT_PDF_BASE_URL, FOXIT_PDF_CLIENT_ID and FOXIT_PDF_CLIENT_SECRET are not all set.'
+      : ''
+
+  const documents: Chosen<DocumentService> =
+    replaying || !canUseDocumentService
+      ? {
+          service: joinHere({ whyNotTheService }),
+          kind: 'stand-in',
+          why:
+            `The pack is joined here instead, which is a real join and not a ` +
+            `pretend one: every page is copied across and the file can be opened ` +
+            `and signed. What does not happen is the finished pack being read back ` +
+            `by anybody other than the program that wrote it. ${whyNotTheService}`,
+        }
+      : {
+          service: foxitDocuments({
+            baseUrl: foxitUrl,
+            clientId: foxitId,
+            clientSecret: foxitSecret,
+            ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
+          }),
+          kind: 'real',
+          why:
+            'The document service, for the reversible work only: joining the pack ' +
+            'together, reading its text back out so somebody other than the writer ' +
+            'says what it says, and making the file small enough to email. It is ' +
+            'asked for nothing at all after the pack is sealed, and it refuses ' +
+            'those anyway, which is checked by npm run foxit:refusal.',
+        }
+
   // ---- assembling and publishing -------------------------------------------
   //
   // Always the stand-in today, and said plainly rather than left to be discovered.
@@ -248,20 +302,21 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
     search: search.service,
     registrar: registrar.service,
     identity: identity.service,
+    documents: documents.service,
     publishing: publishing.service,
     imagery: imagery.service,
-    chosen: { search, registrar, identity, publishing, imagery },
+    chosen: { search, registrar, identity, documents, publishing, imagery },
   }
 }
 
-/** The four lines a person reads before a run starts. */
+/** The one line per service a person reads before a run starts. */
 export function describeChoices(services: ChosenServices): readonly string[] {
   return Object.entries(services.chosen).map(
     ([name, chosen]) => `${name.padEnd(11)}${chosen.kind === 'real' ? 'REAL' : 'stand-in'}  ${chosen.why}`,
   )
 }
 
-/** How many of the five are talking to a real company. */
+/** How many of them are talking to a real company. */
 export function howManyAreReal(services: ChosenServices): number {
   return Object.values(services.chosen).filter((one) => one.kind === 'real').length
 }

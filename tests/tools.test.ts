@@ -18,6 +18,7 @@ import {
   NoRecordedAnswer,
   type Services,
 } from '../src/tools/services.js'
+import { joinHere } from '../src/pack/join.js'
 
 import {
   askQuestion,
@@ -70,6 +71,7 @@ const services = (over: Partial<Services> = {}): Services => ({
   identity: preparedIdentity({}),
   publishing: preparedPublishing(),
   imagery: preparedImagery(),
+  documents: joinHere({ whyNotTheService: 'This is a test and reaches nothing.' }),
   ...over,
 })
 

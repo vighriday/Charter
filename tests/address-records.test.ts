@@ -39,6 +39,7 @@ import {
   preparedImagery,
   type Services,
 } from '../src/tools/services.js'
+import { joinHere } from '../src/pack/join.js'
 import { emptyCase, type CaseFacts } from '../src/stages/facts.js'
 import type { ToolContext } from '../src/tools/registry.js'
 import { DEFAULT_SETTINGS } from '../src/settings.js'
@@ -58,6 +59,7 @@ const services = (over: Partial<Services> = {}): Services => ({
   identity: preparedIdentity({}),
   publishing: preparedPublishing(),
   imagery: preparedImagery(),
+  documents: joinHere({ whyNotTheService: 'This is a test and reaches nothing.' }),
   ...over,
 })
 

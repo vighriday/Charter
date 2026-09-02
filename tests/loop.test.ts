@@ -11,6 +11,7 @@ import {
   preparedImagery,
   type Services,
 } from '../src/tools/services.js'
+import { joinHere } from '../src/pack/join.js'
 
 import { emptyCase } from '../src/stages/facts.js'
 import { STAGES } from '../src/stages/stages.js'
@@ -39,6 +40,7 @@ const services = (over: Partial<Services> = {}): Services => ({
   identity: preparedIdentity({}),
   publishing: preparedPublishing(),
   imagery: preparedImagery(),
+  documents: joinHere({ whyNotTheService: 'This is a test and reaches nothing.' }),
   ...over,
 })
 

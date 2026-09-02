@@ -559,7 +559,7 @@ describe('reading the fields off a document', () => {
 // Choosing between the real thing and a stand-in
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('which of the five services are real', () => {
+describe('which services are real', () => {
   it('uses a stand-in for all five on the settings a fresh clone gets', () => {
     const services = chooseServices({ settings: DEFAULT_SETTINGS, caseId: 'c', env: {} })
     expect(howManyAreReal(services)).toBe(0)
@@ -619,11 +619,13 @@ describe('which of the five services are real', () => {
     expect(services.chosen.publishing.why).toMatch(/stamped by Charter/)
   })
 
-  it('gives a plain sentence for every one of the five', () => {
+  it('gives a plain sentence for every service, whichever answered', () => {
     const lines = describeChoices(
       chooseServices({ settings: DEFAULT_SETTINGS, caseId: 'c', env: {} }),
     )
-    expect(lines).toHaveLength(5)
+    // Six services now: searching, the registrar, reading identity documents,
+    // the document work on the pack, publishing, and the storefront picture.
+    expect(lines).toHaveLength(6)
     for (const line of lines) expect(line.length).toBeGreaterThan(40)
   })
 
