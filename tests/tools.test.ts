@@ -340,6 +340,89 @@ describe('checking a web address', () => {
     expect(outcome.result['available']).toBe(false)
     expect(outcome.result['price']).toBeUndefined()
   })
+
+  describe('asking the same question twice', () => {
+    // THE RUN THIS BROKE, ON THE DEPLOYED SITE.
+    //
+    // A model checked two addresses, was told both were free, and then checked
+    // those same two again, one after the other, until the stage ran out of turns
+    // and the whole run stopped at step three with no packet.
+    //
+    // The rule meant to stop that only looked at the address being worked on now.
+    // Checking B made B the current one and pushed A into the list of ones already
+    // tried, which the rule was not reading, so checking A again looked new. Two
+    // addresses were all it took to go round for ever.
+    const free = (candidate: string) => ({ candidate, available: true, priceCents: '1799' })
+
+    it('refuses a repeat of the address being worked on now', () => {
+      const why = checkAddress.whyThisMustNotRun?.(
+        { domain: 'riverabakery.com' },
+        facts({ address: free('riverabakery.com') }),
+      )
+      expect(why).toContain('already been checked')
+      expect(why).toContain('$17.99')
+    })
+
+    it('refuses a repeat of one tried earlier, which is the loop', () => {
+      const why = checkAddress.whyThisMustNotRun?.(
+        { domain: 'twospokesrepair.com' },
+        facts({
+          // The state part way through the real run: the second address is the one
+          // in hand, and the first has been pushed into the list behind it.
+          address: free('twospokesatx.com'),
+          addressesTried: [free('twospokesrepair.com'), free('twospokesatx.com')],
+        }),
+      )
+      expect(why).toContain('twospokesrepair.com has already been checked')
+    })
+
+    it('says what to do next instead of only saying no', () => {
+      // A refusal that does not say what would work sends a model straight back
+      // round the same loop by a different address.
+      const why = checkAddress.whyThisMustNotRun?.(
+        { domain: 'riverabakery.com' },
+        facts({ address: free('riverabakery.com') }),
+      )
+      expect(why).toContain('permission')
+      expect(why).toContain('register')
+    })
+
+    it('tells it to try another one when the address is taken', () => {
+      const why = checkAddress.whyThisMustNotRun?.(
+        { domain: 'taken.com' },
+        facts({ address: { candidate: 'taken.com', available: false } }),
+      )
+      expect(why).toContain('Try a different address')
+    })
+
+    it('allows an address nobody has asked about yet', () => {
+      expect(
+        checkAddress.whyThisMustNotRun?.(
+          { domain: 'somethingelse.com' },
+          facts({ address: free('riverabakery.com'), addressesTried: [free('riverabakery.com')] }),
+        ),
+      ).toBeNull()
+    })
+
+    it('allows one that was tried but never got an answer', () => {
+      // Half a check is not a check. If the answer never came back, asking again
+      // is the only way to find out.
+      expect(
+        checkAddress.whyThisMustNotRun?.(
+          { domain: 'unanswered.com' },
+          facts({ addressesTried: [{ candidate: 'unanswered.com' }] }),
+        ),
+      ).toBeNull()
+    })
+
+    it('does not care how the address was typed', () => {
+      const why = checkAddress.whyThisMustNotRun?.(
+        { domain: '  RiveraBakery.COM  ' },
+        facts({ address: free('riverabakery.com') }),
+      )
+      expect(why).toContain('already been checked')
+    })
+  })
 })
 
 describe('registering a web address', () => {

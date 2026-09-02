@@ -188,6 +188,12 @@ const EXPECTED = [
   // them, and an invitation to check something that is not there is worse than
   // no invitation. They are rewritten by npm run site:data, never edited.
   /^site\/(index\.html|charter\.css|demo\.js|panel\.js|mark\.svg|llms\.txt)$/,
+  // The logo, in the two sizes a browser asks for: one for the tab and one for a
+  // phone that has been asked to keep the page on its home screen. It is not in
+  // the body of the page, and index.html says why in the comment beside the
+  // links. The full size original is not in here, because a repository is not a
+  // place to keep somebody's working file.
+  /^site\/logo(-180)?\.png$/,
   // services.js is generated from src/vendors/who-does-what.ts by npm run
   // services, and the build fails if the page and the code disagree. It is
   // committed because the page must need nothing from anybody once it is open.

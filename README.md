@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="site/logo.png" width="128" alt="The Charter logo: a dark blue letter C wrapped around a white document with a folded corner, and a blue tick across the foot of the document." />
+</p>
+
 # Charter
 
 **From idea to legally alive.**
@@ -9,7 +13,7 @@ replay one real run step by step, and the eighth lets you put in your own
 business and watch Charter work on it, stopping to ask you every time a real
 decision comes up.
 
-![tests](https://img.shields.io/badge/tests-1%2C282%20passing-2f6f4e)
+![tests](https://img.shields.io/badge/tests-1%2C289%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
 ![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
@@ -123,10 +127,11 @@ why it is drawn separately.
 
 ## What it looks like
 
-Five real screens from `npm run serve`. Nothing here is a mockup, a mock-up of a
-mockup, or a picture arranged to look better than the thing. Every number in them
-was produced by the run the page ships with, and every one of these pages is on
-your own machine thirty seconds after `npm install`.
+Six real screens. Nothing here is a mockup, a mock-up of a
+mockup, or a picture arranged to look better than the thing. The first five are the run this
+repository ships, and every number in them was produced by that run. They are on
+your own machine thirty seconds after `npm install`, with `npm run serve`. The
+sixth is the deployed site working on a business typed in a few minutes earlier.
 
 ![The front page. A headline reading 'It does the paperwork. You do the signing.' Beside it, 154 small squares, each one step of a real run, with seven of them marked as needing a person.](site/shots/01-what-it-is.png)
 
@@ -169,6 +174,15 @@ three columns, and the third is the one a feature list would never have. Each is
 marked **live**, **written but never called**, or **not built** — three fixed words,
 enforced by a test, so a vaguer fourth one cannot appear. Nothing may be called live
 without naming a command a stranger can run to prove it.
+
+![The run panel on the deployed site, stopped, headed 'only a person can answer this' and asking 'allow up to $15.00? [y/N]' with a Yes and a No button. Below it the feed reads: Charter wants to spend up to $15.00 to register Two Spokes Bicycle Repair and secure its web address. It cannot give itself permission.](site/shots/06-stopped-and-asking.png)
+
+**The other five pictures are the recorded run. This one is not.** It is the
+deployed site, working on a business typed into it a few minutes before the picture
+was taken, with the outside companies switched on rather than standing in. It has
+stopped, because buying a web address costs money and the software cannot give
+itself permission to spend any. The line underneath says the registrar is on its
+practice account, so nothing is charged there either.
 
 ---
 
@@ -243,7 +257,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,282 tests
+npm test          # 1,289 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -531,7 +545,7 @@ answer is 658, which is what this one said on 30 August.
 | The agent loop — one request, one turn, nothing carried between them | **built, 41 tests** <!-- tests/loop.test.ts --> |
 | Checking the model's arguments, and telling it exactly what to send instead | **built, 27 tests** <!-- tests/tool-schema.test.ts --> |
 | All eight stages, which tools exist in each, and the rules that decide when each is finished | **built, 63 tests** <!-- tests/stages.test.ts --> |
-| Every tool, including the rule that nothing costs money without a person's permission covering it, and the rule that what an owner's contribution is worth has to have been said by a person | **built, 52 tests**, the spending rule proved by nothing being charged rather than by an error <!-- tests/tools.test.ts --> |
+| Every tool, including the rule that nothing costs money without a person's permission covering it, the rule that what an owner's contribution is worth has to have been said by a person, and the rule that refuses a question already answered, which a run on the deployed site went round in circles on until it ran out of turns | **built, 59 tests**, the spending rule proved by nothing being charged rather than by an error <!-- tests/tools.test.ts --> |
 | One whole case through all eight stages, as a test rather than only as a demonstration | **built, 12 tests** <!-- tests/whole-run.test.ts --> |
 | Whether two business names collide, decided in plain code | **built, 24 tests** <!-- tests/names.test.ts --> |
 | The ownership agreement — every number, article number and cross-reference worked out in code, including a check that the voting rule and the deadlock article do not contradict each other | **built, 75 tests** <!-- tests/agreement.test.ts --> |

@@ -528,16 +528,42 @@ export const checkAddress: Tool = {
   costsMoney: false,
   whyThisMustNotRun(args: JsonObject, facts): string | null {
     const domain = text(args, 'domain').trim().toLowerCase()
-    const address = facts.address
-    if (address === undefined) return null
-    if (address.candidate.trim().toLowerCase() !== domain) return null
-    if (address.available === undefined) return null
+
+    // EVERY ADDRESS EVER CHECKED, NOT JUST THE LAST ONE.
+    //
+    // This used to look only at the address being worked on now, and that left a
+    // hole big enough to hang a whole run on. A model that checks A, then B, then
+    // A again is asking a question it has already had answered, but each check
+    // makes that address the current one and pushes the other into the list of
+    // ones already tried, which this rule was not reading. So both repeats looked
+    // new, and the two of them could be alternated for ever.
+    //
+    // It happened on the deployed site. The run found two free addresses, then
+    // checked those same two, one after the other, eight more times without ever
+    // registering either, until the stage ran out of turns and the whole run
+    // stopped at step three. The visitor saw it stop with no packet.
+    //
+    // The guard against a loop is worth more than the guard against a wasted call.
+    // A repeated question costs one free lookup; a repeated question the run cannot
+    // get past costs the run.
+    const asked = [facts.address, ...facts.addressesTried].find(
+      (one) =>
+        one !== undefined &&
+        one.candidate.trim().toLowerCase() === domain &&
+        one.available !== undefined,
+    )
+    if (asked === undefined) return null
 
     return (
-      `${address.candidate} has already been checked and it is ` +
-      `${address.available ? 'free' : 'taken'}` +
-      `${address.priceCents === undefined ? '' : `, at ${asMoney(address.priceCents)} for the first year`}` +
-      `. Asking again gives the same answer.`
+      `${asked.candidate} has already been checked and it is ` +
+      `${asked.available ? 'free' : 'taken'}` +
+      `${asked.priceCents === undefined ? '' : `, at ${asMoney(asked.priceCents)} for the first year`}` +
+      `. Asking again gives the same answer. ` +
+      `${
+        asked.available
+          ? 'It is free, so the next thing to do is ask a person for permission to spend, and then register it.'
+          : 'Try a different address.'
+      }`
     )
   },
   async run(args: JsonObject, context: ToolContext): Promise<ToolOutcome> {
