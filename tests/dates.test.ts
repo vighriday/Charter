@@ -20,7 +20,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { daysInMonth, isLeapYear, isRealDate } from '../src/dates.js'
+import { dateOnADocument, daysInMonth, isLeapYear, isRealDate } from '../src/dates.js'
 import { asWrittenDate } from '../src/agreement/numbers.js'
 import { UnusableNumber } from '../src/agreement/numbers.js'
 
@@ -130,5 +130,86 @@ describe('the date as it is written into an agreement', () => {
 
   it('refuses a month that never happened, and says so differently', () => {
     expect(() => asWrittenDate('2026-13-01')).toThrow(/no month 13/)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dates as they are written on somebody else's document
+// ─────────────────────────────────────────────────────────────────────────────
+
+/*
+  WHY THIS SECTION EXISTS
+
+  Charter writes dates as year-month-day, and the rule above is strict about that
+  because Charter controls what it writes.
+
+  An identity document is written by somebody else. A driving licence says
+  "16 JAN 1975". The first time the real reading service was called, it read that
+  perfectly, and Charter's own check then reported it as "not a date that can be
+  read" — so every date on every real document went to a person for the wrong
+  reason. A checker that cries wolf on every document teaches whoever reads its
+  output to stop looking, which is worse than not checking.
+
+  THE ONE THAT MUST NOT BE GUESSED
+
+  "03/09/2026" is the third of September in most of the world and the ninth of
+  March in the United States. Both readings are ordinary dates, so a wrong guess
+  produces a plausible wrong date that nobody notices. Charter does not guess. It
+  says the document does not say, and a person looks.
+*/
+
+describe('reading a date off somebody else’s document', () => {
+  it('reads year-month-day, which means one day everywhere', () => {
+    expect(dateOnADocument('2026-09-03')).toEqual({ kind: 'read', day: '2026-09-03' })
+  })
+
+  it('reads a month written in letters, day first', () => {
+    for (const written of ['16 JAN 1975', '16 Jan 1975', '16-JAN-1975', '16/january/1975']) {
+      expect(dateOnADocument(written), written).toEqual({ kind: 'read', day: '1975-01-16' })
+    }
+  })
+
+  it('reads a month written in letters, month first', () => {
+    for (const written of ['JAN 16 1975', 'January 16, 1975']) {
+      expect(dateOnADocument(written), written).toEqual({ kind: 'read', day: '1975-01-16' })
+    }
+  })
+
+  it('turns two digits of a year into four, in the direction a person would', () => {
+    // "75" on a date of birth is 1975, not 2075. The turn sits well ahead of today
+    // so an expiry date decades away still reads forwards.
+    expect(dateOnADocument('16 JAN 75')).toEqual({ kind: 'read', day: '1975-01-16' })
+    expect(dateOnADocument('16 JAN 34')).toEqual({ kind: 'read', day: '2034-01-16' })
+  })
+
+  it('refuses to guess at a date written all in numbers', () => {
+    // The whole argument of this project, applied to four characters.
+    const read = dateOnADocument('03/09/2026')
+    expect(read.kind).toBe('ambiguous')
+    expect(read.kind === 'ambiguous' && read.why).toMatch(/two different days/)
+  })
+
+  it('treats every separator between numbers the same way', () => {
+    for (const written of ['03/09/2026', '03-09-2026', '03.09.2026', '03 09 2026']) {
+      expect(dateOnADocument(written).kind, written).toBe('ambiguous')
+    }
+  })
+
+  it('refuses a day that never happened, however it was written', () => {
+    expect(dateOnADocument('31 FEB 2026').kind).toBe('unreadable')
+    expect(dateOnADocument('29 FEB 1900').kind, '1900 was not a leap year').toBe('unreadable')
+    expect(dateOnADocument('29 FEB 2000').kind, '2000 was').toBe('read')
+    expect(dateOnADocument('2026-02-31').kind).toBe('unreadable')
+  })
+
+  it('says plainly when there is no date there at all', () => {
+    for (const written of ['', '   ', 'nonsense', 'SPECIMEN-731A984F']) {
+      expect(dateOnADocument(written).kind, written).toBe('unreadable')
+    }
+  })
+
+  it('refuses a month that is not a month', () => {
+    const read = dateOnADocument('16 XYZ 1975')
+    expect(read.kind).toBe('unreadable')
   })
 })

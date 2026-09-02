@@ -47,7 +47,7 @@
  */
 
 import { fingerprintBytes } from '../record/canonical.js'
-import { isRealDate } from '../dates.js'
+import { dateOnADocument } from '../dates.js'
 import {
   type ExtractedField,
   type MatchLabel,
@@ -128,7 +128,16 @@ export type ReviewReason =
   | { readonly kind: 'required-field-missing'; readonly field: string }
   | { readonly kind: 'no-score-available' }
   | { readonly kind: 'below-the-floor'; readonly score: number; readonly floor: number }
-  | { readonly kind: 'not-a-date'; readonly value: string }
+  | { readonly kind: 'not-a-date'; readonly value: string; readonly why: string }
+  /**
+   * Written in a way that means two different days depending on who reads it.
+   *
+   * Its own reason rather than folded into "not a date", because they ask a
+   * person to do two different things. An unreadable date means the reading
+   * failed and the document needs looking at. An ambiguous one means the reading
+   * worked perfectly and the document itself does not say which day it is.
+   */
+  | { readonly kind: 'date-could-be-two-days'; readonly value: string; readonly why: string }
   | { readonly kind: 'expired'; readonly on: string; readonly checkedOn: string }
   | { readonly kind: 'name-does-not-match'; readonly onDocument: string; readonly given: string }
   | { readonly kind: 'in-the-audit-sample'; readonly rate: number }
@@ -166,7 +175,9 @@ export function explain(reason: ReviewReason): string {
     case 'below-the-floor':
       return `The reader's own confidence was ${reason.score}, below the floor of ${reason.floor}. This is the last test applied, and the weakest, because the service says the score is uncalibrated.`
     case 'not-a-date':
-      return `"${reason.value}" is not a date that can be read.`
+      return `"${reason.value}" could not be read as a date. ${reason.why}`
+    case 'date-could-be-two-days':
+      return reason.why
     case 'expired':
       return `The document expired on ${reason.on}, which is before ${reason.checkedOn}.`
     case 'name-does-not-match':
@@ -264,11 +275,21 @@ export function reviewField(field: ExtractedField, settings: ReviewSettings): Fi
 
   // ---- format and consistency, which need no service at all ------------------
   if (field.name === 'date_of_birth' || field.name === 'expiry_date') {
-    if (!isRealDate(field.value)) {
-      reasons.push({ kind: 'not-a-date', value: field.value })
-    } else if (field.name === 'expiry_date' && field.value < settings.today) {
+    // Read the way it is written on somebody else's document, not the way Charter
+    // writes dates. A licence says "16 JAN 1975", and a checker that only
+    // understands year-month-day reports every real document as unreadable — which
+    // sends every date to a person for the wrong reason, and teaches whoever reads
+    // those to stop looking.
+    const read = dateOnADocument(field.value)
+
+    if (read.kind === 'ambiguous') {
+      // The reading worked. The document itself does not say which day it means.
+      reasons.push({ kind: 'date-could-be-two-days', value: field.value, why: read.why })
+    } else if (read.kind === 'unreadable') {
+      reasons.push({ kind: 'not-a-date', value: field.value, why: read.why })
+    } else if (field.name === 'expiry_date' && read.day < settings.today) {
       // Both are year-month-day, so comparing them as text compares them as dates.
-      reasons.push({ kind: 'expired', on: field.value, checkedOn: settings.today })
+      reasons.push({ kind: 'expired', on: read.day, checkedOn: settings.today })
     }
   }
 

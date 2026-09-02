@@ -58,3 +58,134 @@ export function isRealDate(value: string): boolean {
 
   return day <= daysInMonth(year, month)
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dates as they are written on somebody else's document
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MONTH_NAMES: Readonly<Record<string, number>> = {
+  jan: 1, january: 1,
+  feb: 2, february: 2,
+  mar: 3, march: 3,
+  apr: 4, april: 4,
+  may: 5,
+  jun: 6, june: 6,
+  jul: 7, july: 7,
+  aug: 8, august: 8,
+  sep: 9, sept: 9, september: 9,
+  oct: 10, october: 10,
+  nov: 11, november: 11,
+  dec: 12, december: 12,
+}
+
+/** What reading a date off a document produced. */
+export type DateOnADocument =
+  /** Read, and turned into one day everybody would agree on. */
+  | { readonly kind: 'read'; readonly day: string }
+  /**
+   * Written in a way that means two different days depending on who reads it.
+   *
+   * Not an error and not a pass. It is the answer that sends the value to a
+   * person, which is the only correct answer to a genuinely ambiguous date.
+   */
+  | { readonly kind: 'ambiguous'; readonly why: string }
+  /** Not a date at all, or a day that never happened. */
+  | { readonly kind: 'unreadable'; readonly why: string }
+
+/**
+ * Read a date the way it is written on an identity document.
+ *
+ * WHY THIS IS NOT THE SAME AS `isRealDate`
+ *
+ * `isRealDate` asks whether text Charter WROTE is a real day. Charter writes
+ * year-month-day and nothing else, so that check can be strict about the shape.
+ *
+ * This asks about text somebody ELSE wrote, on a document Charter did not design.
+ * A driving licence says "16 JAN 1975". A passport says "16 JAN 75". Neither is
+ * wrong, and a checker that only understands year-month-day reports every real
+ * document as unreadable — which sends every date on every document to a person
+ * for the wrong reason, and trains whoever reads those to stop looking.
+ *
+ * THE RULE ABOUT DATES WRITTEN ALL IN NUMBERS
+ *
+ * "03/09/2026" is the third of September in most of the world and the ninth of
+ * March in the United States. There is no way to tell which from the text, and
+ * both readings are ordinary dates, so a wrong guess produces a plausible wrong
+ * date rather than an error anybody would notice.
+ *
+ * So Charter does not guess. A date written all in numbers comes back as
+ * ambiguous, and a person looks at the document and says which it is. That is the
+ * whole argument of this project applied to four characters: where the software
+ * cannot know, it must say so rather than pick.
+ *
+ * A month written in letters has no such problem, so those are read.
+ */
+export function dateOnADocument(value: string): DateOnADocument {
+  const text = value.trim()
+  if (text === '') return { kind: 'unreadable', why: 'there was nothing there' }
+
+  // ---- year-month-day, which means one day everywhere ------------------------
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return isRealDate(text)
+      ? { kind: 'read', day: text }
+      : { kind: 'unreadable', why: `${text} is not a day that happened` }
+  }
+
+  // ---- a month written in letters, in either order ---------------------------
+  const named =
+    /^(\d{1,2})[\s.\-/]+([A-Za-z]{3,9})[\s.\-/]+(\d{2}|\d{4})$/.exec(text) ??
+    reorder(/^([A-Za-z]{3,9})[\s.\-/]+(\d{1,2})[\s.\-/,]+(\d{2}|\d{4})$/.exec(text))
+
+  if (named !== null) {
+    const day = Number(named[1])
+    const month = MONTH_NAMES[(named[2] as string).toLowerCase()]
+    const year = fullYear(named[3] as string)
+
+    if (month === undefined) {
+      return { kind: 'unreadable', why: `"${named[2]}" is not a month` }
+    }
+    if (day < 1 || day > daysInMonth(year, month)) {
+      return { kind: 'unreadable', why: `${text} is not a day that happened` }
+    }
+
+    return {
+      kind: 'read',
+      day: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    }
+  }
+
+  // ---- all numbers, which is where the guessing would start ------------------
+  if (/^\d{1,2}[\s.\-/]\d{1,2}[\s.\-/](\d{2}|\d{4})$/.test(text)) {
+    return {
+      kind: 'ambiguous',
+      why:
+        `"${text}" is written all in numbers, so the first two numbers could be ` +
+        `the day and the month or the month and the day. Those are two different ` +
+        `days and both of them are ordinary dates, so guessing would produce a ` +
+        `wrong date nobody would notice. A person has to say which it is.`,
+    }
+  }
+
+  return { kind: 'unreadable', why: `"${text}" is not written like a date` }
+}
+
+/** Put a month-first match into day, month, year order. */
+function reorder(match: RegExpExecArray | null): RegExpExecArray | null {
+  if (match === null) return null
+  const swapped = [match[0], match[2], match[1], match[3]] as unknown as RegExpExecArray
+  return swapped
+}
+
+/**
+ * Two digits of a year turned into four.
+ *
+ * A document written with two digits is read against a window rather than
+ * assuming this century: "75" on a date of birth is 1975, not 2075. The turn is
+ * put well ahead of today so that an expiry date decades away still reads
+ * forwards, and a date of birth still reads backwards.
+ */
+function fullYear(written: string): number {
+  const year = Number(written)
+  if (written.length === 4) return year
+  return year <= 40 ? 2000 + year : 1900 + year
+}

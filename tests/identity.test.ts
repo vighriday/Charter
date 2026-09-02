@@ -238,7 +238,12 @@ describe('telling a reviewer what is actually wrong', () => {
       { kind: 'required-field-missing', field: 'date_of_birth' },
       { kind: 'no-score-available' },
       { kind: 'below-the-floor', score: 0.6, floor: 0.85 },
-      { kind: 'not-a-date', value: 'nonsense' },
+      { kind: 'not-a-date', value: 'nonsense', why: '"nonsense" is not written like a date' },
+      {
+        kind: 'date-could-be-two-days',
+        value: '03/09/2026',
+        why: '"03/09/2026" is written all in numbers, so it could be two different days.',
+      },
       { kind: 'expired', on: '2020-01-01', checkedOn: '2026-08-29' },
       { kind: 'name-does-not-match', onDocument: 'Ben', given: 'Ana' },
     ] as const
