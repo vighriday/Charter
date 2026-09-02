@@ -298,7 +298,7 @@
   var WHAT_THE_FILES_ARE = {
     'pack.pdf': 'the packet itself, unsigned, for the owners to sign themselves',
     'record.jsonl': 'every step, in order, each one carrying the fingerprint of the one before',
-    'attestation.json': 'one signature over that record, so a change to it can be found',
+    'attestation.json': 'one attestation over that record, so a change to it can be found',
   }
 
   function showFiles(names) {

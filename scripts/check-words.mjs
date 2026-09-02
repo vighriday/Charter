@@ -113,9 +113,27 @@ const RULES = [
     // Deliberately narrow. It looks for the word attached to a machine subject or
     // to our own record, not for every use of it: the project talks about human
     // signatures constantly and has to be able to.
+    // Widened on 2 September, because two real ones got straight through it in
+    // three separate ways.
+    //
+    // The lists of little words in front were too short. The website said "the
+    // signature over THAT record" on the very page where a visitor downloads their
+    // three files, and the run panel called the file "ONE signature over that
+    // record". Neither "that" nor "one" was listed, so the checker passed both.
+    //
+    // The website one was also split across two lines by nothing more than the
+    // width of the editor, which the joined-line pass further down now handles.
+    //
+    // And it no longer takes the denial escape. That escape exists for broad rules
+    // like "legal advice", where a nearby "not" usually means the sentence is
+    // drawing a line rather than crossing it. This rule is already narrow enough
+    // that no nearby word can make it acceptable: "the signature over the record"
+    // is wrong here in every sentence it can appear in. The website one was
+    // suppressed on every build since it was written by the words "does not guess"
+    // sitting in the same paragraph, about something else entirely.
     pattern:
-      /\b(?:the|its|our|a)\s+signature\s+(?:over|of)\s+(?:our|the|its)\s+(?:own\s+)?(?:record|log|chain|attestation)/gi,
-    deniable: true,
+      /\b(?:the|its|our|a|an|one|each|this|that)\s+signature\s+(?:over|of)\s+(?:our|the|its|this|that|each)\s+(?:own\s+)?(?:record|log|chain|attestation)/gi,
+    deniable: false,
     why: 'calls a machine act a signature. What the machine puts over its own record is an attestation',
     instead: '"attestation"',
   },
@@ -244,25 +262,53 @@ for (const file of filesToCheck()) {
   lines.forEach((line, index) => {
     if (ALLOWED.some((allowed) => line.includes(allowed))) return
 
+    /**
+     * The line, and the line joined to the one after it.
+     *
+     * WHY THE SECOND ONE EXISTS. Prose wraps, and a banned phrase does not care
+     * where the wrapping falls. The website carried "and the signature over that"
+     * at the end of one line and "record" at the start of the next, which is the
+     * phrase this checker exists to catch, split in half by nothing more than the
+     * width of the editor. Reading one line at a time, the checker saw two
+     * innocent halves and said the file was clean.
+     *
+     * A match found only in the joined text is reported when it actually crosses
+     * the join. Anything sitting wholly inside the first line is left to the
+     * ordinary pass above, so nothing is reported twice.
+     */
+    const next = lines[index + 1] ?? ''
+    const joined = `${line} ${next}`
+    const crossesTheJoin = (at, text) => at < line.length && at + text.length > line.length + 1
+
     for (const rule of RULES) {
-      rule.pattern.lastIndex = 0
-      let match
-      while ((match = rule.pattern.exec(line)) !== null) {
-        if (
-          rule.deniable &&
-          isDenial(line, match.index, lines[index - 1] ?? '', lines[index + 1] ?? '')
-        ) {
-          continue
+      for (const [text, isJoined] of [
+        [line, false],
+        [joined, true],
+      ]) {
+        if (isJoined && (next === '' || ALLOWED.some((allowed) => next.includes(allowed)))) continue
+
+        rule.pattern.lastIndex = 0
+        let match
+        while ((match = rule.pattern.exec(text)) !== null) {
+          if (isJoined && !crossesTheJoin(match.index, match[0])) continue
+          // The line AFTER whatever was just read. For the joined text that is one
+          // further on, because the next line is already part of what was read.
+          // Getting this wrong turns every sentence whose denial sits on the
+          // following line into a false accusation.
+          const after = (isJoined ? lines[index + 2] : lines[index + 1]) ?? ''
+          if (rule.deniable && isDenial(text, match.index, lines[index - 1] ?? '', after)) {
+            continue
+          }
+          findings.push({
+            file,
+            line: index + 1,
+            text: match[0],
+            why: rule.why,
+            instead: rule.instead,
+            isPublic,
+            context: text.trim().slice(0, 100),
+          })
         }
-        findings.push({
-          file,
-          line: index + 1,
-          text: match[0],
-          why: rule.why,
-          instead: rule.instead,
-          isPublic,
-          context: line.trim().slice(0, 100),
-        })
       }
     }
   })
