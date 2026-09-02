@@ -2311,3 +2311,195 @@ code,
     margin: 0.4rem 0 0;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   WHO IT USES
+
+   One card per outside company. The card is deliberately plain: three columns of
+   plain sentences, and a chip at the top saying whether any of it has actually
+   happened.
+
+   The chip carries the whole weight of this page, so it is the only coloured
+   thing on the card. Blue is not used for it. On this site blue means a person
+   was needed, and spending that colour on a status would blunt the one signal
+   the rest of the page depends on. So a live service is set solid in ink, a
+   service that has never been called is outlined in the stamp colour because it
+   is a warning, and one with no code behind it is set quiet.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.who-key {
+  border-left: 2px solid var(--rule-strong);
+  padding-left: 22px;
+  display: grid;
+  gap: 12px;
+  max-width: 78ch;
+}
+
+.who {
+  border-top: 0.8px solid var(--rule-strong);
+  padding: 26px 0 30px;
+}
+
+.who-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.who-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.who-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--ink-40);
+  flex: none;
+}
+
+.who-name {
+  font-family: var(--serif);
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+
+.who-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.who-state {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border: 0.8px solid transparent;
+  white-space: nowrap;
+}
+
+.who-state-live {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.who-state-written {
+  border-color: var(--stamp);
+  color: var(--stamp);
+}
+
+.who-state-not-built {
+  border-color: var(--rule-strong);
+  color: var(--ink-40);
+}
+
+.who-host,
+.who-step {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-40);
+}
+
+.who-job {
+  font-size: 17px;
+  line-height: 1.5;
+  margin-top: 14px;
+  max-width: 72ch;
+}
+
+.who-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+  margin-top: 22px;
+}
+
+.who-column-head {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+  padding-bottom: 8px;
+  border-bottom: 0.8px solid var(--rule);
+  margin-bottom: 12px;
+}
+
+.who-never .who-column-head {
+  color: var(--stamp);
+  border-bottom-color: color-mix(in oklab, var(--stamp) 30%, transparent);
+}
+
+.who-lines {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.who-lines li {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-62);
+}
+
+.who-note {
+  margin-top: 20px;
+  padding: 14px 18px;
+  background: color-mix(in oklab, var(--stamp) 5%, transparent);
+  border-left: 2px solid var(--stamp);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 82ch;
+}
+
+.who-note-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--stamp);
+}
+
+.who-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 34px;
+  margin-top: 20px;
+}
+
+.who-run,
+.who-code {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.who-run-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+
+.who-foot code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: color-mix(in oklab, var(--ink) 5%, transparent);
+  padding: 3px 7px;
+}
+
+@media (max-width: 900px) {
+  .who-columns {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}

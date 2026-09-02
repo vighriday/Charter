@@ -1063,6 +1063,100 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
+     8d. EVERY OUTSIDE COMPANY, AND WHETHER IT HAS ACTUALLY HAPPENED
+
+     Built from site/services.js, which is generated from
+     src/vendors/who-does-what.ts. There is no second copy of this list anywhere,
+     and a check fails the build the moment the generated file and the code
+     disagree. That matters more here than anywhere else on the page, because
+     this is the list somebody would most like to quietly leave the awkward
+     parts off.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  function fillWhoItUses() {
+    var root = find('[data-who-list]')
+    var data = window.CHARTER_SERVICES
+    if (!root || !data) return
+
+    var count = find('[data-who="count"]')
+    if (count) count.textContent = String(data.companies.length)
+
+    for (var i = 0; i < data.companies.length; i += 1) {
+      root.append(oneCompany(data.companies[i]))
+    }
+  }
+
+  /** The word for a state, and the class that colours it. */
+  var STATE_WORD = {
+    live: 'live',
+    'written, not proven': 'written, never called',
+    'not built': 'not built',
+  }
+
+  function oneCompany(one) {
+    var card = make('section', 'who')
+
+    var head = make('div', 'who-head')
+    var title = make('div', 'who-title')
+    title.append(icon('globe'), part('who-name', one.company))
+    head.append(title)
+
+    var chips = make('div', 'who-chips')
+    chips.append(
+      make(
+        'span',
+        'who-state who-state-' + one.state.split(',')[0].replace(/\s+/g, '-'),
+        STATE_WORD[one.state] || one.state,
+      ),
+    )
+    chips.append(make('span', 'who-host', one.host))
+    chips.append(make('span', 'who-step', one.step === 0 ? 'every step' : 'step ' + one.step))
+    head.append(chips)
+
+    card.append(head)
+    card.append(make('p', 'who-job', one.job))
+
+    var columns = make('div', 'who-columns')
+    columns.append(oneColumn('What Charter sends them', one.whatWeSend))
+    columns.append(oneColumn('What comes back', one.whatComesBack))
+    columns.append(oneColumn('What it never uses', one.neverUsed, 'who-never'))
+    card.append(columns)
+
+    if (one.stillNotTrue) {
+      var note = make('p', 'who-note')
+      note.append(part('who-note-label', 'Still not true. '), part('', one.stillNotTrue))
+      card.append(note)
+    }
+
+    var foot = make('div', 'who-foot')
+    if (one.seeItYourself) {
+      var run = make('div', 'who-run')
+      run.append(part('who-run-label', 'See it yourself'), make('code', '', one.seeItYourself))
+      foot.append(run)
+    }
+    var where = make('div', 'who-code')
+    where.append(part('who-run-label', 'The code'))
+    for (var j = 0; j < one.code.length; j += 1) {
+      where.append(make('code', '', one.code[j]))
+    }
+    foot.append(where)
+    card.append(foot)
+
+    return card
+  }
+
+  function oneColumn(heading, lines, extra) {
+    var column = make('div', 'who-column' + (extra ? ' ' + extra : ''))
+    column.append(make('h3', 'who-column-head', heading))
+    var list = make('ul', 'who-lines')
+    for (var i = 0; i < lines.length; i += 1) {
+      list.append(make('li', '', lines[i]))
+    }
+    column.append(list)
+    return column
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
      8c. WHAT IS IN THE PACKET, AND WHOSE DOCUMENTS WERE READ
      ══════════════════════════════════════════════════════════════════════════ */
 
@@ -1805,6 +1899,7 @@
   fillFindings()
   fillStages()
   fillServices()
+  fillWhoItUses()
   fillAgreement()
   fillPacket()
   fillFlow()

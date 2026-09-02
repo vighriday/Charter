@@ -156,6 +156,11 @@
           Is it real
           <span class="tab-count" data-run="verify.findingCount"></span>
         </button>
+        <button class="tab" role="tab" data-tab="services" aria-selected="false">
+          <svg viewBox="0 0 24 24"><use href="#i-globe" /></svg>
+          Who it uses
+          <span class="tab-count" data-who="count"></span>
+        </button>
         <button class="tab" role="tab" data-tab="yours" aria-selected="false">
           <svg viewBox="0 0 24 24"><use href="#i-person" /></svg>
           Run yours
@@ -942,6 +947,64 @@
         </div>
       </section>
 
+      <!-- ══════════════════════════════════════════ 7. WHO IT USES ══ -->
+      <section class="view" data-view="services" hidden>
+        <div class="wrap">
+          <div class="view-head">
+            <div class="eyebrow">
+              <svg viewBox="0 0 24 24"><use href="#i-globe" /></svg>
+              every outside company
+            </div>
+            <h2 class="t-h1">
+              Every company Charter talks to, what it sends them, and whether that has actually
+              happened.
+            </h2>
+            <div class="gap-s"></div>
+            <p class="lede quiet">
+              This page is generated from the code that runs. Nothing on it was written by hand,
+              and a check fails the build the moment the page and the code disagree. So the
+              awkward parts cannot quietly fall off it.
+            </p>
+          </div>
+
+          <div class="gap-m"></div>
+
+          <div class="who-key">
+            <p class="t-body">
+              <b>Live</b> means it really happens in a run, and there is a command below that does
+              it in front of you.
+            </p>
+            <p class="t-body">
+              <b>Written, not proven</b> means the code exists, it is tested, and it has never met
+              their server. That is not the same thing as working, and this project learned the
+              difference the hard way: one of these clients sat here for weeks looking finished
+              and was wrong in three separate ways at once. Wrong address, wrong request, wrong
+              answer read back. Every one of them was invisible to a test suite that passed,
+              because the tests handed the code an answer of the shape it already expected. The
+              first real call found all three in ten minutes.
+            </p>
+            <p class="t-body">
+              <b>Not built</b> means there is no code for it at all. It is on the list anyway,
+              because a list you can only trust when something is missing from it is not a list.
+            </p>
+          </div>
+
+          <div class="gap-m"></div>
+          <div data-who-list></div>
+
+          <div class="gap"></div>
+
+          <h2 class="t-head">Why the refusals are on this page.</h2>
+          <div class="gap-s"></div>
+          <p class="t-body">
+            Every company above sells more than Charter touches, and one of them sells face
+            analysis. Saying which parts are refused is more useful than saying which parts are
+            used, because the second is a feature list and the first is a boundary. So each one
+            says what it will not do, and why.
+          </p>
+        </div>
+      </section>
+
       <!-- ═════════════════════════════════════════════════ 7. RUN YOUR OWN ══ -->
       <section class="view" data-view="yours" hidden>
         <div class="wrap" data-panel>
@@ -1082,6 +1145,7 @@ npm run serve</pre>
       </div>
     </footer>
 
+    <script src="services.js"></script>
     <script src="demo.js"></script>
     <script src="panel.js"></script>
   </body>
