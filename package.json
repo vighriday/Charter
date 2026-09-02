@@ -30,7 +30,8 @@
     "site:check": "node scripts/check-site.mjs",
     "fonts": "node scripts/fonts.mjs",
     "serve": "tsx src/serve/server.ts",
-    "foxit:proof": "tsx src/vendors/foxit-proof.ts"
+    "foxit:proof": "tsx src/vendors/foxit-proof.ts",
+    "nutrient:proof": "tsx src/vendors/nutrient-proof.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",
