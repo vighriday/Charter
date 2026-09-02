@@ -180,6 +180,69 @@ describe('asking the owners something', () => {
         expect(outcome.events[0]?.payload['question']).toBe('Who is putting in the oven?')
       })
   })
+
+  describe('putting a question somebody has already answered back on the screen', () => {
+    // WHAT HAPPENED, ON THE DEPLOYED SITE, WITH NOTHING TO STOP IT.
+    //
+    // A run spent its entire first stage asking one question twice, then another
+    // twice, and ran out of the day's model requests without ever reaching step
+    // two. The person answered every time and every answer was written down. There
+    // was no rule here at all, so the question came back anyway.
+    //
+    // It is the same shape as the web address loop in this file: something is
+    // already known, nothing checks whether it is already known, and the run goes
+    // round until a counter stops it. This one is the worst of them, because the
+    // others waste a lookup that costs nothing and this one wastes a person.
+    const answered = (question: string, answer: string) => facts({ answers: [{ question, answer }] })
+
+    it('refuses it, and hands back what the person actually said', () => {
+      const why = askQuestion.whyThisMustNotRun?.(
+        { question: 'What would you like to call the shop?', why: 'It goes on the paperwork.' },
+        answered('What would you like to call the shop?', 'Two Spokes Bicycle Repair'),
+      )
+      expect(why).toContain('already been asked')
+      // The answer comes back with the refusal. A refusal that only says no leaves
+      // the model with the same gap and it asks again in slightly different words.
+      expect(why).toContain('Two Spokes Bicycle Repair')
+    })
+
+    it('does not care about capitals, spacing, or the question mark', () => {
+      const why = askQuestion.whyThisMustNotRun?.(
+        { question: '  what   would you like to CALL the shop  ', why: 'Same question.' },
+        answered('What would you like to call the shop?', 'Two Spokes Bicycle Repair'),
+      )
+      expect(why).toContain('already been asked')
+    })
+
+    it('allows a question nobody has been asked yet', () => {
+      expect(
+        askQuestion.whyThisMustNotRun?.(
+          { question: 'Who runs the shop day to day?', why: 'It decides who signs what.' },
+          answered('What would you like to call the shop?', 'Two Spokes Bicycle Repair'),
+        ),
+      ).toBeNull()
+    })
+
+    it('allows a different question that happens to share words', () => {
+      // The rule matches the whole question and not a few words of it, so asking
+      // about a second thing is never mistaken for asking about the first again.
+      expect(
+        askQuestion.whyThisMustNotRun?.(
+          { question: 'What would you like to call the second shop?', why: 'There are two.' },
+          answered('What would you like to call the shop?', 'Two Spokes Bicycle Repair'),
+        ),
+      ).toBeNull()
+    })
+
+    it('allows anything when nothing has been answered at all', () => {
+      expect(
+        askQuestion.whyThisMustNotRun?.(
+          { question: 'What is the business called?', why: 'It goes on the paperwork.' },
+          facts(),
+        ),
+      ).toBeNull()
+    })
+  })
 })
 
 describe('writing down what the owners said', () => {

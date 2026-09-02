@@ -89,6 +89,35 @@ export const askQuestion: Tool = {
   },
   reversible: true,
   costsMoney: false,
+  whyThisMustNotRun(args: JsonObject, facts): string | null {
+    // ASKING A PERSON SOMETHING THEY HAVE ALREADY ANSWERED.
+    //
+    // This had no rule at all, and on the deployed site a run spent its whole
+    // first stage asking the same question twice, then a second question twice,
+    // then ran out of the day's model requests without reaching step two. The
+    // person answered every time. The answers were written down every time. The
+    // question came back anyway.
+    //
+    // It is the same shape as two other faults found today: something is already
+    // known, nothing checks whether it is already known, and the run goes round
+    // until a counter somewhere stops it. Of the three this is the worst, because
+    // the other two waste a free lookup and this one wastes a person.
+    //
+    // The refusal carries the answer back. A refusal that only says no leaves the
+    // model with the same gap it was trying to fill, and it asks again in slightly
+    // different words. Handing back what the person said closes the gap.
+    const asked = normalisedQuestion(text(args, 'question'))
+    if (asked === '') return null
+
+    const already = facts.answers.find((one) => normalisedQuestion(one.question) === asked)
+    if (already === undefined) return null
+
+    return (
+      `That has already been asked, and it was answered: "${already.answer}". ` +
+      `Asking it again puts the same question back in front of somebody who has ` +
+      `already answered it. Use their answer, or ask about something else.`
+    )
+  },
   async run(args: JsonObject): Promise<ToolOutcome> {
     const question = text(args, 'question')
     return {
@@ -96,6 +125,26 @@ export const askQuestion: Tool = {
       events: [{ kind: 'question.asked', payload: { question, why: text(args, 'why') } }],
     }
   },
+}
+
+/**
+ * A question reduced to the part that decides whether it is the same question.
+ *
+ * Case, spacing and the punctuation at the end are dropped, so "What is it called?"
+ * and "what is it called" are one question asked twice rather than two questions.
+ *
+ * Deliberately not cleverer than that. Two questions that mean the same thing in
+ * different words are left alone: refusing those needs judgement about meaning,
+ * and a wrong refusal there would stop the run asking something it genuinely
+ * needs. The literal repeat is the one that was actually observed, and it is the
+ * one that is safe to catch.
+ */
+function normalisedQuestion(question: string): string {
+  return question
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[?.!,;:'"]+$/g, '')
+    .trim()
 }
 
 /**
