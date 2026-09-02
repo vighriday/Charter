@@ -13,6 +13,7 @@ import { emptyCase, type CaseFacts } from '../src/stages/facts.js'
 import { buildRegistry, specsFor, toolFor, catalogue } from '../src/tools/registry.js'
 import { ALL_TOOLS } from '../src/tools/stage-tools.js'
 import { DEFAULT_ROUTES } from '../src/model/router.js'
+import { DEFAULT_SETTINGS } from '../src/settings.js'
 
 /**
  * The stage machine, and the invariants it exists to hold.
@@ -670,5 +671,46 @@ describe('reading identity documents, and who decides what a person sees', () =>
 
   it('carries nobody personal details to a model in this stage', () => {
     expect(STAGES.verify.sensitivity).toBe('public')
+  })
+})
+
+describe('the ceiling on turns, against what each stage says it needs', () => {
+  // WHAT WENT WRONG, AND WHERE IT SHOWED UP.
+  //
+  // Every stage carries the number of model turns its author decided it needs,
+  // and one setting puts a ceiling over all of them. The smaller of the two wins,
+  // on purpose: a setting that could RAISE a safety limit would not be a safety
+  // limit at all.
+  //
+  // The ceiling defaulted to 12. The stage that writes the ownership agreement
+  // asks for 20, because it is the stage that asks a person the awkward questions
+  // and writes the document around the answers. So it silently got 12, and on the
+  // deployed site a real run stopped part way through step four with no packet and
+  // a message about a limit nobody had chosen for it.
+  //
+  // A default tighter than the strictest stage is not a safety net. It is a quiet
+  // override of a decision somebody made deliberately, in a file they were not
+  // looking at.
+
+  it('never starts out tighter than the most any stage asks for', () => {
+    const hungriest = Math.max(...Object.values(STAGES).map((stage) => stage.maxTurns))
+    expect(DEFAULT_SETTINGS.maxTurnsPerStage).toBeGreaterThanOrEqual(hungriest)
+  })
+
+  it('leaves every stage able to use the number it asked for', () => {
+    for (const stage of Object.values(STAGES)) {
+      const allowed = Math.min(stage.maxTurns, DEFAULT_SETTINGS.maxTurnsPerStage)
+      expect(allowed, `${stage.name} asked for ${stage.maxTurns} and may use ${allowed}`).toBe(
+        stage.maxTurns,
+      )
+    }
+  })
+
+  it('still lets the setting bring a stage down, which is the point of it', () => {
+    // The rule this must never break: the setting may only ever make a stage stop
+    // sooner. If somebody sets it to 5, every stage stops at 5.
+    for (const stage of Object.values(STAGES)) {
+      expect(Math.min(stage.maxTurns, 5)).toBeLessThanOrEqual(5)
+    }
   })
 })
