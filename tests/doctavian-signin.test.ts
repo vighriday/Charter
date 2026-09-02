@@ -28,6 +28,7 @@ import {
   PORT,
   PROVIDER,
   codeIn,
+  isTheirServiceUp,
   makeSecret,
   signInAddress,
 } from '../src/vendors/doctavian-signin.js'
@@ -86,6 +87,42 @@ describe('the address a person is sent to', () => {
 
   it('asks to come back to this machine', () => {
     expect(url.searchParams.get('redirect_uri')).toBe(`http://localhost:${PORT}/callback`)
+  })
+})
+
+describe('asking whether their service is up, before opening a browser at it', () => {
+  // Their demonstration service goes down for minutes at a time. Without this
+  // check the first thing a person sees is a browser tab full of raw error text
+  // saying GATEWAY_TIMEOUT, which reads as something they did wrong.
+  const answering = (status: number, body = '') =>
+    (async () => new Response(body, { status })) as unknown as typeof fetch
+
+  it('counts a redirect as up, because that is what a working sign-in does', async () => {
+    expect((await isTheirServiceUp('https://x.invalid', answering(302))).up).toBe(true)
+  })
+
+  it('counts their gateway timing out as down, and keeps what it said', async () => {
+    const asked = await isTheirServiceUp(
+      'https://x.invalid',
+      answering(504, '{"code":"GATEWAY_TIMEOUT"}'),
+    )
+    expect(asked.up).toBe(false)
+    expect(asked.said).toContain('GATEWAY_TIMEOUT')
+  })
+
+  it('counts a page that is not a redirect as down', async () => {
+    // A 200 here would mean it answered with something other than a sign-in,
+    // which is not a sign-in service working.
+    expect((await isTheirServiceUp('https://x.invalid', answering(200))).up).toBe(false)
+  })
+
+  it('says what went wrong rather than throwing when nothing answered at all', async () => {
+    const nothing = (async () => {
+      throw new Error('connection refused')
+    }) as unknown as typeof fetch
+    const asked = await isTheirServiceUp('https://x.invalid', nothing)
+    expect(asked.up).toBe(false)
+    expect(asked.said).toContain('connection refused')
   })
 })
 

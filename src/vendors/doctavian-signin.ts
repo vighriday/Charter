@@ -119,6 +119,43 @@ export function codeIn(address: string): string | null {
   }
 }
 
+/**
+ * Is their sign-in service answering, before a browser is opened at it?
+ *
+ * WHY THIS IS WORTH A SEPARATE STEP
+ *
+ * Their demonstration service is not always up. When it is not, the address
+ * below answers 504, and without this check the first thing a person sees is a
+ * browser tab full of raw error text with the word GATEWAY_TIMEOUT in it. That
+ * looks like something they did wrong, and it is not: it is somebody else's
+ * server having a bad minute.
+ *
+ * A working sign-in address answers by sending the browser onward to Microsoft.
+ * So "did it answer with a redirect" is the whole test, it costs one request,
+ * and it needs no credential.
+ *
+ * Deliberately does NOT follow the redirect. Following it would ask Microsoft
+ * for a sign-in page, which is a real person's business and not ours to poke.
+ */
+export async function isTheirServiceUp(
+  address: string,
+  fetcher: typeof fetch = fetch,
+): Promise<{ readonly up: boolean; readonly said: string }> {
+  try {
+    const response = await fetcher(address, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(30_000),
+    })
+    if (response.status >= 300 && response.status < 400) {
+      return { up: true, said: `it answered ${response.status}` }
+    }
+    const text = await response.text().catch(() => '')
+    return { up: false, said: `it answered ${response.status}: ${text.slice(0, 200)}` }
+  } catch (error) {
+    return { up: false, said: error instanceof Error ? error.message : String(error) }
+  }
+}
+
 /** What a sign-in gives back. */
 export interface Tokens {
   /** Works for about an hour. Used for calling the service right now. */
@@ -249,6 +286,35 @@ async function main(): Promise<void> {
   const address = signInAddress({ baseUrl, clientId, scope, fingerprint, comingBackTo })
 
   say('Doctavian needs a person to sign in once. This does that, and nothing else.')
+  say()
+
+  // Asked before a browser is opened. Their demonstration service goes down for
+  // minutes at a time, and without this the first thing a person sees is a tab
+  // full of GATEWAY_TIMEOUT, which reads as their own mistake.
+  //
+  // Three tries, because it has come back within a minute every time so far.
+  say('Checking their service is answering.')
+  let up = await isTheirServiceUp(address)
+  for (let tries = 2; !up.up && tries <= 3; tries += 1) {
+    say(`  Not yet: ${up.said}`)
+    say(`  Waiting twenty seconds, then trying again (${tries} of 3).`)
+    await new Promise((wake) => setTimeout(wake, 20_000))
+    up = await isTheirServiceUp(address)
+  }
+
+  if (!up.up) {
+    say()
+    say('Their sign-in service is not answering, so no browser was opened.')
+    say(`  ${up.said}`)
+    say()
+    say('This is their demonstration environment and it goes down for a few minutes')
+    say('at a time. Nothing is wrong at this end and nothing was sent anywhere.')
+    say('Run this again shortly.')
+    process.exitCode = 1
+    return
+  }
+
+  say('  Answering.')
   say()
   say('Opening your browser. If it does not open, paste this:')
   say()
