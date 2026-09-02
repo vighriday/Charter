@@ -109,7 +109,7 @@ interface Sheet {
   y: number
 }
 
-interface Pens {
+export interface Pens {
   readonly body: PDFFont
   readonly bold: PDFFont
 }
