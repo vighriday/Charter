@@ -425,19 +425,59 @@ export class Runs {
     run.recordText = `${written.join('\n')}\n`
     if (!run.files.includes('record.jsonl')) run.files.push('record.jsonl')
 
+    // ---- and the attestation, IF the key it needs can be read ---------------
+    //
+    // WHY THIS IS ALLOWED TO FAIL WITHOUT TAKING THE RUN WITH IT
+    //
+    // A visitor typed their business idea in, answered five questions, waited
+    // several minutes, and watched Charter work. All of that is finished and
+    // saved by the time this line is reached. The attestation is one extra file
+    // that lets somebody check the record later.
+    //
+    // It used to throw. A hosting service with a mistyped key turned a finished
+    // run into "Stopped: the attestation private key could not be read. It should
+    // be a PKCS#8 PEM block", which is the last thing a person sees after doing
+    // all that, and it threw away the record and the packet they had earned.
+    //
+    // Found on the deployed site, by running one. A run that worked, ending in a
+    // sentence about PEM blocks.
+    //
+    // So: the record and the packet always survive. If there is no usable key,
+    // the run finishes and says in plain words that it has no attestation and
+    // what that costs. Which is the same rule the rest of this project follows —
+    // say what is missing, do not pretend, and do not throw away work over it.
     const head = await readHead(db, run.id)
-    const ours = privateKeyFromEnv()
-    const keys = ours === undefined ? generateKeyPair() : undefined
-    const privateKeyPem = ours ?? (keys as NonNullable<typeof keys>).privateKeyPem
+    try {
+      const ours = privateKeyFromEnv()
+      const keys = ours === undefined ? generateKeyPair() : undefined
+      const privateKeyPem = ours ?? (keys as NonNullable<typeof keys>).privateKeyPem
 
-    run.attestationText = `${JSON.stringify(
-      attest(
-        { runId: run.id, head: head.head, count: head.count, attestedAt: clock().toISOString() },
-        privateKeyPem,
-      ),
-      null,
-      2,
-    )}\n`
-    if (!run.files.includes('attestation.json')) run.files.push('attestation.json')
+      run.attestationText = `${JSON.stringify(
+        attest(
+          { runId: run.id, head: head.head, count: head.count, attestedAt: clock().toISOString() },
+          privateKeyPem,
+        ),
+        null,
+        2,
+      )}\n`
+      if (!run.files.includes('attestation.json')) run.files.push('attestation.json')
+    } catch (problem) {
+      run.attestationText = null
+      run.lines.push({
+        at: clock().getTime(),
+        kind: 'note',
+        text: 'This run has no attestation, and everything else it made is here.',
+        extra: [
+          'An attestation is one short signed file saying where the record ended. ' +
+            'Without it you can still check that every step of the record links to ' +
+            'the one before it, which is most of what it is for. What you cannot ' +
+            'check is whether steps were removed from the END, because a shortened ' +
+            'chain is still a valid chain.',
+          `The key this needed could not be read: ${
+            problem instanceof Error ? problem.message : String(problem)
+          }`,
+        ],
+      })
+    }
   }
 }
