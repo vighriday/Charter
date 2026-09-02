@@ -62,11 +62,31 @@ export function joinHere(options: { readonly whyNotTheService: string }): Docume
         }
       }
 
-      const joined = await PDFDocument.create()
+      // updateMetadata: false is the whole of the paragraph below working.
+      //
+      // pdf-lib otherwise writes the CURRENT time into the file as its
+      // modification date, which quietly undoes the dates set just after this.
+      // Joining the same parts twice produced two files one byte apart, and a
+      // packet whose fingerprint changes every time it is built cannot be
+      // compared to anything, which is most of what this project is for.
+      //
+      // The test that caught it had been passing by luck: two joins in the same
+      // second produce the same second.
+      const joined = await PDFDocument.create({ updateMetadata: false })
 
       // Taken from the first document rather than from the clock. See the note at
       // the top: a joined file that changes every time cannot be compared.
-      const first = await PDFDocument.load(toBytes((parts[0] as DocumentPart).bytes))
+      // updateMetadata: false here too, and this is the one that actually bit.
+      //
+      // Loading a document ALSO restamps its modification date to now, by
+      // default. So the date read out of the first part on the next line was not
+      // the date that part was made: it was the moment we opened it. Copying that
+      // into the joined file made the join depend on the clock after all, and the
+      // fix one line up looked like it had worked because each part on its own
+      // had become steady.
+      const first = await PDFDocument.load(toBytes((parts[0] as DocumentPart).bytes), {
+        updateMetadata: false,
+      })
       joined.setCreationDate(first.getCreationDate() ?? new Date(0))
       joined.setModificationDate(first.getModificationDate() ?? new Date(0))
       joined.setProducer('Charter')
@@ -75,7 +95,7 @@ export function joinHere(options: { readonly whyNotTheService: string }): Docume
       if (title !== undefined && title !== '') joined.setTitle(title)
 
       for (const part of parts) {
-        const source = await PDFDocument.load(toBytes(part.bytes))
+        const source = await PDFDocument.load(toBytes(part.bytes), { updateMetadata: false })
         const pages = await joined.copyPages(source, source.getPageIndices())
         for (const page of pages) joined.addPage(page)
       }

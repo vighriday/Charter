@@ -9,7 +9,7 @@ replay one real run step by step, and the eighth lets you put in your own
 business and watch Charter work on it, stopping to ask you every time a real
 decision comes up.
 
-![tests](https://img.shields.io/badge/tests-1%2C272%20passing-2f6f4e)
+![tests](https://img.shields.io/badge/tests-1%2C278%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
 ![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
@@ -243,7 +243,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,272 tests
+npm test          # 1,278 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -520,7 +520,7 @@ answer is 658, which is what this one said on 30 August.
 | --- | --- |
 | Canonical text form, so a fingerprint reproduces on any machine (RFC 8785) | **built, 26 tests** <!-- tests/canonical.test.ts --> |
 | The chained record, and the checker that names the first broken link | **built, 25 tests** <!-- tests/chain.test.ts --> |
-| Attestation over the head of the record (Ed25519, Node's own cryptography) | **built, 22 tests** <!-- tests/attestation.test.ts --> |
+| Attestation over the head of the record (Ed25519, Node's own cryptography), and telling you what is wrong with a key that will not read without ever repeating the key | **built, 28 tests** <!-- tests/attestation.test.ts --> |
 | Append-only rules enforced inside PostgreSQL, not by our code | **built, 24 tests** <!-- tests/log.test.ts --> |
 | Record-and-replay, so the whole thing runs with no credentials | **built, 19 tests** <!-- tests/cache.test.ts --> |
 | Model adapter — two verbs, never combined; replies kept exactly as they arrived | **built, 88 tests** <!-- tests/gemini.test.ts tests/groq.test.ts tests/router.test.ts --> |

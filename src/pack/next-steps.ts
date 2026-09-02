@@ -94,7 +94,9 @@ export interface NextStepsContents {
  * joined file is what gets sealed, so the seal covers everything the owners read.
  */
 export async function buildNextStepsDocument(contents: NextStepsContents): Promise<Uint8Array> {
-  const document = await PDFDocument.create()
+  // See the note in src/pack/join.ts. Without this, pdf-lib puts the current time
+  // over the dates set below, and the same contents build to different bytes.
+  const document = await PDFDocument.create({ updateMetadata: false })
   const pens: Pens = {
     body: await document.embedFont(StandardFonts.Helvetica),
     bold: await document.embedFont(StandardFonts.HelveticaBold),

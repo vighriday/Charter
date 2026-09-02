@@ -417,7 +417,11 @@ export class PackBuilder {
  * caller rather than hidden in here.
  */
 export async function buildPackDocument(contents: PackContents): Promise<WrittenPack> {
-  const document = await PDFDocument.create()
+  const document = await PDFDocument.create({
+    // See the note in src/pack/join.ts: without this the same pack built twice
+    // differs, because pdf-lib stamps the current time over the dates set here.
+    updateMetadata: false,
+  })
   const pens: Pens = {
     body: await document.embedFont(StandardFonts.Helvetica),
     bold: await document.embedFont(StandardFonts.HelveticaBold),

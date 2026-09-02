@@ -233,16 +233,40 @@ describe('joining the packet together without an account', () => {
     expect(joined.joinedBy).toContain('nothing to join')
   })
 
-  it('joins to the same bytes every time', async () => {
-    const first = await buildNextStepsDocument(contents())
-    const second = await buildNextStepsDocument(contents({ companyName: 'Another Co' }))
-    const parts = [
-      { name: 'one', bytes: first },
-      { name: 'two', bytes: second },
-    ]
+  it('joins to the same bytes every time, even a second later', async () => {
+    // THIS TEST USED TO PASS BY LUCK, AND THE LUCK WAS THE CLOCK.
+    //
+    // It joined twice in a row and compared. Two joins in the same second stamp
+    // the same second, so it passed almost always and failed whenever the two
+    // landed either side of a tick. What it was really asserting was "the clock
+    // did not move", not "the join does not depend on the clock".
+    //
+    // The bug underneath was real and had two halves. pdf-lib writes the current
+    // time into a document as its modification date when it CREATES one, and
+    // again when it LOADS one. The second half is the nasty one: the joined file
+    // takes its date from the first part, so opening that part restamped it, and
+    // the date copied across was the moment of opening rather than the moment the
+    // part was made.
+    //
+    // Why it matters here more than in most projects: this whole thing rests on
+    // fingerprints. A packet whose bytes change every time it is built has a
+    // fingerprint that changes every time it is built, and cannot be compared to
+    // anything, checked against a record, or approved by name.
+    //
+    // So the clock is made to move, on purpose, between the two builds.
+    const build = async () => {
+      const first = await buildNextStepsDocument(contents())
+      const second = await buildNextStepsDocument(contents({ companyName: 'Another Co' }))
+      return await service.join([
+        { name: 'one', bytes: first },
+        { name: 'two', bytes: second },
+      ])
+    }
 
-    const once = await service.join(parts)
-    const twice = await service.join(parts)
+    const once = await build()
+    await new Promise((wake) => setTimeout(wake, 1100))
+    const twice = await build()
+
     expect(Buffer.from(once.bytes).equals(Buffer.from(twice.bytes))).toBe(true)
   })
 

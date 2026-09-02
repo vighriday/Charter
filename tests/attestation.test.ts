@@ -8,6 +8,7 @@ import {
   describeAttestation,
   AttestationError,
   type RecordHead,
+  whatIsWrongWith,
 } from '../src/record/attestation.js'
 import { fingerprint } from '../src/record/canonical.js'
 
@@ -25,6 +26,46 @@ const head = (over: Partial<RecordHead> = {}): RecordHead => ({
   count: '12',
   attestedAt: '2026-08-27T09:15:00.000Z',
   ...over,
+})
+
+describe('saying what is wrong with a key that would not read', () => {
+  // A key pasted into a hosting company's dashboard came out unreadable, and the
+  // message said only what a correct key looks like. That is no help when you are
+  // staring at a field you believe you filled in correctly.
+  it('says when there is nothing there at all', () => {
+    expect(whatIsWrongWith('')).toBe('it is empty')
+    expect(whatIsWrongWith('   \n  ')).toBe('it is empty')
+  })
+
+  it('says when the first line is missing', () => {
+    expect(whatIsWrongWith('MC4CAQAwBQYDK2VwBCIEIA')).toMatch(/does not start with/)
+  })
+
+  it('says when it was cut short', () => {
+    expect(whatIsWrongWith('-----BEGIN PRIVATE KEY-----\nMC4CAQAw')).toMatch(/cut short/)
+  })
+
+  it('says when the line breaks were eaten', () => {
+    // The commonest one. A dashboard field is a single line, so the breaks have
+    // to be written out and put back before the key is read.
+    const flat = '-----BEGIN PRIVATE KEY-----MC4CAQAw-----END PRIVATE KEY-----'
+    expect(whatIsWrongWith(flat)).toMatch(/all on one line/)
+  })
+
+  it('says when the quotation marks came along with it', () => {
+    expect(
+      whatIsWrongWith('"-----BEGIN PRIVATE KEY-----\nMC4C\n-----END PRIVATE KEY-----"'),
+    ).toMatch(/quotation marks/)
+  })
+
+  it('never repeats any part of the key itself', () => {
+    // A message about a secret that quotes the secret ends up in a log.
+    const secret = 'SUPERSECRETKEYMATERIAL'
+    const said = whatIsWrongWith(`-----BEGIN PRIVATE KEY-----
+${secret}
+-----END PRIVATE KEY-----`)
+    expect(said).not.toContain(secret)
+  })
 })
 
 describe('making a keypair', () => {

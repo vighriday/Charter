@@ -177,6 +177,51 @@ export const NO_PRIVATE_KEY =
   'the middle, or reordered; what it cannot detect on its own is entries removed ' +
   'from the end, and closing that is exactly what the attestation is for.'
 
+/**
+ * What is wrong with a key that would not read, without printing the key.
+ *
+ * WHY THIS EXISTS
+ *
+ * A key pasted into a hosting company's dashboard came out unreadable, and the
+ * message said only what a correct key looks like. That is no help at all when
+ * you are staring at a field you believe you filled in correctly: it does not say
+ * whether the thing you pasted was empty, or missing its first line, or had its
+ * line breaks eaten on the way in.
+ *
+ * So this says which of those it is. It reports only shapes and lengths, never
+ * any part of the key itself, because a message about a secret that quotes the
+ * secret ends up in a log.
+ */
+export function whatIsWrongWith(pem: string): string {
+  const value = pem.trim()
+  if (value === '') return 'it is empty'
+
+  const notes: string[] = []
+  if (!value.includes('-----BEGIN PRIVATE KEY-----')) {
+    notes.push(
+      'it does not start with -----BEGIN PRIVATE KEY----- (a key with no header ' +
+        'is a key nothing can read)',
+    )
+  }
+  if (!value.includes('-----END PRIVATE KEY-----')) {
+    notes.push('it has no -----END PRIVATE KEY----- line, so it may have been cut short')
+  }
+  if (!value.includes('\n')) {
+    notes.push(
+      'it is all on one line with no breaks in it, and a PEM block needs them. ' +
+        'Write them as a backslash followed by n, and they are put back before the ' +
+        'key is read',
+    )
+  }
+  if (/^["']|["']$/.test(value)) {
+    notes.push('it still has quotation marks around it')
+  }
+
+  return notes.length === 0
+    ? `it is ${value.length} characters and looks like a PEM block, but is not one this can read`
+    : notes.join('; ')
+}
+
 function loadPrivate(pem: string): KeyObject {
   let key: KeyObject
   try {
@@ -184,7 +229,8 @@ function loadPrivate(pem: string): KeyObject {
   } catch {
     throw new AttestationError(
       'the attestation private key could not be read. It should be a PKCS#8 PEM block, ' +
-        'the kind that starts with -----BEGIN PRIVATE KEY-----',
+        `the kind that starts with -----BEGIN PRIVATE KEY-----. What is wrong with this ` +
+        `one: ${whatIsWrongWith(pem)}`,
     )
   }
   if (key.asymmetricKeyType !== 'ed25519') {
