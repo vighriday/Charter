@@ -101,7 +101,21 @@ export const BOUNDARIES: readonly Boundary[] = [
     // approved, reads that approval out of the append-only record rather than
     // being handed it, and is itself unreachable from anything the model can
     // trigger.
-    mayReach: ['src/case/send-for-signature.ts'],
+    //
+    // The second file was added on 2 September 2026, and this rule caught it the
+    // moment it appeared, from a dynamic import that a simpler check would have
+    // missed. It is `npm run services:live`: a command a person types, which asks
+    // every outside company whether it will answer right now. It reaches this
+    // folder to attempt ONE thing — signing in — because a sign-in is free, is
+    // the step that fails when a key is wrong, and is the only way to answer the
+    // question honestly.
+    //
+    // It creates nothing, sends nothing to anybody, and cannot sign. It is a
+    // command, not a tool: no tool list mentions it and nothing the model can
+    // trigger imports it, which is what the first rule in this file checks
+    // separately. Permission granted deliberately and in the open, which is the
+    // whole point of having to write a line here.
+    mayReach: ['src/case/send-for-signature.ts', 'src/vendors/roll-call.ts'],
   },
   {
     name: 'the human consent path',
