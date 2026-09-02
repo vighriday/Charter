@@ -108,8 +108,16 @@ services:
         sync: false
       - key: NUTRIENT_EXTRACTION_KEY
         sync: false
-      - key: NUTRIENT_PROCESSOR_KEY
-        sync: false
+      #
+      # NUTRIENT_PROCESSOR_KEY is deliberately NOT here, and that is worth a line
+      # rather than a silence. That company sells two products. The one above
+      # reads the fields off an identity document, which is what Charter needs.
+      # The other one edits documents, and its free output carries a watermark
+      # reading "For Evaluation Purposes Only" stamped across every page.
+      #
+      # A formation pack with those words across it is not a document anybody can
+      # sign. So it is not asked for here at all, because a setting nobody is
+      # offered is a setting nobody fills in by accident at two in the morning.
       - key: FOXIT_PDF_CLIENT_ID
         sync: false
       - key: FOXIT_PDF_CLIENT_SECRET
