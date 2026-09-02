@@ -2,7 +2,7 @@
 
 **From idea to legally alive.**
 
-![tests](https://img.shields.io/badge/tests-1%2C133%20passing-2f6f4e)
+![tests](https://img.shields.io/badge/tests-1%2C258%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
 ![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
@@ -111,6 +111,57 @@ middle breaks every link after it and the checker names the exact entry. The one
 thing a chain cannot catch on its own is entries removed from the **end**, because a
 shortened chain is still a valid chain — which is what the attestation is for, and
 why it is drawn separately.
+
+---
+
+## What it looks like
+
+Five real screens from `npm run serve`. Nothing here is a mockup, a mock-up of a
+mockup, or a picture arranged to look better than the thing. Every number in them
+was produced by the run the page ships with, and every one of these pages is on
+your own machine thirty seconds after `npm install`.
+
+![The front page. A headline reading 'It does the paperwork. You do the signing.' Beside it, 154 small squares, each one step of a real run, with seven of them marked as needing a person.](site/shots/01-what-it-is.png)
+
+**The front page.** Each of those 154 squares is one step of one real run, and its
+pattern is drawn from that step's own fingerprint — change anything about a step
+and its square changes shape. The blue ones are the seven places the software
+stopped and waited for a person. The four numbers underneath are counted, not
+typed: the test count comes from running the tests while the page is being built,
+and if one had failed the page would not exist.
+
+![A step-by-step record. One line reads 'was not allowed to'. A few lines later a card says 'The web address costs money. Charter cannot give itself permission to spend it', with a button offering up to twenty-five dollars.](site/shots/02-it-stops-for-a-person.png)
+
+**The moment the whole project is about.** Read down: the software tries to buy a
+web address during the wrong step and is refused. It corrects itself, asks a person
+for permission instead, and stops. It cannot grant itself that permission — there
+is no tool that grants one, and the code that writes one is not reachable from
+anything the model can trigger, which a test proves by following every import in
+the project. Two lines below the card, the software says **no to a person**,
+because the answer they gave named a different job.
+
+![The finished formation pack, its text shown beside a list of what is inside it: the ownership agreement, what Charter was asked to do and would not, each owner's identity document, and where the owners sign.](site/shots/03-the-file.png)
+
+**What it actually made.** One file, and the words on the left were read back out of
+the finished PDF rather than typed onto the page. It ends on a blank line, because
+the signatures are not the software's to make. The pack says so in its own first
+paragraph: nothing in it has been signed, and this software is not able to do that.
+
+![A page headed 'Do not believe any of this. Break it.' listing eight questions the checker asks, seven answered yes and one answered with a question mark.](site/shots/04-break-it.png)
+
+**The page that argues against itself.** Eight questions, run inside your own
+browser against files you can download. Seven come back yes. The eighth comes back
+`[ ? ]` — has anybody outside Charter confirmed this record existed at the time it
+claims? Nobody has. That one stays a question mark rather than being quietly
+dropped, because a checklist that only shows the questions it passes is an advert.
+
+![A card for SerpApi marked LIVE, with three columns: what Charter sends them, what comes back, and what it never uses.](site/shots/05-who-it-uses.png)
+
+**Every outside company, including what we refuse to use.** Nine of them, each with
+three columns, and the third is the one a feature list would never have. Each is
+marked **live**, **written but never called**, or **not built** — three fixed words,
+enforced by a test, so a vaguer fourth one cannot appear. Nothing may be called live
+without naming a command a stranger can run to prove it.
 
 ---
 

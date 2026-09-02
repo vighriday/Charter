@@ -183,6 +183,14 @@ const EXPECTED = [
   // them, and an invitation to check something that is not there is worse than
   // no invitation. They are rewritten by npm run site:data, never edited.
   /^site\/(index\.html|charter\.css|demo\.js|panel\.js|mark\.svg|llms\.txt)$/,
+  // services.js is generated from src/vendors/who-does-what.ts by npm run
+  // services, and the build fails if the page and the code disagree. It is
+  // committed because the page must need nothing from anybody once it is open.
+  /^site\/services\.js$/,
+  // Screenshots of the page above, taken from a real run of it, shown in the
+  // readme. Not mockups: the numbers in them came out of the run this
+  // repository ships, and anybody can take the same pictures with npm run serve.
+  /^site\/shots\/[a-z0-9-]+\.png$/,
   /^site\/run\.(js|json)$/,
   /^site\/(record\.jsonl|pack\.pdf|attestation\.json)$/,
   /^site\/fonts\/([a-z0-9-]+\.woff2|LICENSE\.md)$/,

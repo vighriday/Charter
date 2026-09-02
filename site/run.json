@@ -3549,13 +3549,13 @@
       "kind": "turn.started",
       "actor": "model",
       "stage": "assemble",
-      "at": "2026-08-28T09:03:01.000Z",
-      "fingerprint": "68eb2dc726a2",
+      "at": "2026-08-28T09:03:02.000Z",
+      "fingerprint": "740924742449",
       "detail": "turn 1. It may: join everything into one file and stamp it",
       "refusal": false,
       "payloadHash": "2c9a1bb76d25cf69aeda04ea77be8a98029a38bd5ec0a6972fce16494a2af1d7",
       "prevHash": "042c1dcca37c303fe2210a06034eae564d5b1ae831ea4a755f58a3a1bb6ac632",
-      "hash": "68eb2dc726a23b1db2d12d72881f7c0a6e288a70c509c0a49f9babe160dd3b92",
+      "hash": "740924742449825404dc8a1de75e0b488e09225c4174d4914e45a1d6feb349c0",
       "payload": {
         "turn": "1",
         "stage": "assemble",
@@ -3571,13 +3571,13 @@
       "kind": "model.answered",
       "actor": "model",
       "stage": "assemble",
-      "at": "2026-08-28T09:03:02.000Z",
-      "fingerprint": "9719f298cbc1",
+      "at": "2026-08-28T09:03:03.000Z",
+      "fingerprint": "bfa7f47f6817",
       "detail": "decided to join everything into one file and stamp it, from answers written out in advance",
       "refusal": false,
       "payloadHash": "7845c2c97b0abd9d28e7b93172c02d5bb245818258b733ec2e50590f950c1b76",
-      "prevHash": "68eb2dc726a23b1db2d12d72881f7c0a6e288a70c509c0a49f9babe160dd3b92",
-      "hash": "9719f298cbc1d0a75170ff526dd2db5989565944ccf9d5c2bae111da1b9cb3c7",
+      "prevHash": "740924742449825404dc8a1de75e0b488e09225c4174d4914e45a1d6feb349c0",
+      "hash": "bfa7f47f6817dcb1fceb01ca459682b09f963532703af173568d838e4d0ce913",
       "payload": {
         "raw": {
           "chose": "assemble_pack",
@@ -3597,23 +3597,26 @@
       "kind": "tool.ran",
       "actor": "model",
       "stage": "assemble",
-      "at": "2026-08-28T09:03:03.000Z",
-      "fingerprint": "610929e3489c",
+      "at": "2026-08-28T09:03:04.000Z",
+      "fingerprint": "7d64cd756cb1",
       "detail": "join everything into one file and stamp it",
       "refusal": false,
-      "payloadHash": "3398680aaae24a22a781c0e78b4a1619c96f944bb340418e439275a3c474c8a8",
-      "prevHash": "9719f298cbc1d0a75170ff526dd2db5989565944ccf9d5c2bae111da1b9cb3c7",
-      "hash": "610929e3489c2eb6776c770e242c4271076009571d14e4faca66feedbe75a082",
+      "payloadHash": "5c7c77de98e694d8d0168afa83f7c4c779de0c304e49e944c73cc3ccd46592e7",
+      "prevHash": "bfa7f47f6817dcb1fceb01ca459682b09f963532703af173568d838e4d0ce913",
+      "hash": "7d64cd756cb10f46f782e805319a65a6d7629a03d398f77c5c42293b3fbf7869",
       "payload": {
         "args": {},
         "tool": "assemble_pack",
         "result": {
           "sealed": "yes",
-          "sizeBytes": "18452",
-          "fingerprint": "c762b26eb8d477cec1003a9c0cf09b204b4509297d3b6b7d74a7ce802c34e309",
+          "sizeBytes": "22128",
+          "fingerprint": "e16013f027db0c727a079513b8f6d96e828d025b44d02cb2f468569ac026d9f3",
+          "documentsJoined": "2",
+          "missingFromPack": "0",
           "permissionLevel": "2",
           "refusedInThisRun": "0",
-          "wouldRefuseAfterSealing": "8"
+          "wouldRefuseAfterSealing": "8",
+          "textCheckedByAnotherProgram": "no"
         }
       }
     },
@@ -3623,13 +3626,13 @@
       "kind": "pack.sealed",
       "actor": "system",
       "stage": "assemble",
-      "at": "2026-08-28T09:03:04.000Z",
-      "fingerprint": "b0b998a13d30",
-      "detail": "finished and stamped the file, fingerprint c762b26eb8d4",
+      "at": "2026-08-28T09:03:05.000Z",
+      "fingerprint": "022201414ab6",
+      "detail": "finished and stamped the file, fingerprint e16013f027db",
       "refusal": false,
-      "payloadHash": "849fb372f1e83c9a528855cddbbd50dcb36e16b37543a89cf46ad34abd889fec",
-      "prevHash": "610929e3489c2eb6776c770e242c4271076009571d14e4faca66feedbe75a082",
-      "hash": "b0b998a13d30c5ec6a8a92143a6e0ee9350621ad52a3e8b2fcd6717c455ea428",
+      "payloadHash": "abaf7c8f2e78f08c8fe3dc8f9de06f0db98dd08b125775676ad5f43b2f74e91e",
+      "prevHash": "7d64cd756cb10f46f782e805319a65a6d7629a03d398f77c5c42293b3fbf7869",
+      "hash": "022201414ab6a1a0445dde77b526f257fd72a4a6c68413f1ee13758432544700",
       "payload": {
         "parts": [
           "the ownership agreement",
@@ -3637,10 +3640,23 @@
           "each owner's identity document, and which values a person checked",
           "where the owners sign"
         ],
-        "sizeBytes": "18452",
-        "certificate": "3089e1ab51087940e44a4d58a94d7f50048eeeed7d53fee3fb4e4c06b35fce55",
-        "fingerprint": "c762b26eb8d477cec1003a9c0cf09b204b4509297d3b6b7d74a7ce802c34e309",
+        "joinedBy": "Charter's own code, with no account and no network. A real join, not a stand-in",
+        "sizeBytes": "22128",
+        "certificate": "52d3ab111611afed888196d303a9861b80839efe80de816100678e183d290e36",
+        "fingerprint": "e16013f027db0c727a079513b8f6d96e828d025b44d02cb2f468569ac026d9f3",
+        "joinedParts": [
+          "the formation pack",
+          "what you must still do yourself"
+        ],
+        "madeSmallerBy": "nobody. This run is replaying answers recorded in advance, so nothing was sent anywhere.",
+        "textReadBackBy": "nobody. The pack's text was not read back, so nothing here says it was checked. This run is replaying answers recorded in advance, so nothing was sent anywhere.",
         "permissionLevel": "2",
+        "notFoundInThePack": [],
+        "lookedForInThePack": [
+          "Rivera Sisters Baking Co",
+          "Ana Rivera",
+          "Lucia Rivera"
+        ],
         "refusedAfterSealing": [],
         "wouldRefuseAfterSealing": [
           {
@@ -3675,7 +3691,8 @@
             "why": "removes a password. rewrites the file, so the fingerprint would no longer match.",
             "operation": "pdf_remove_password"
           }
-        ]
+        ],
+        "textWasCheckedByAnotherProgram": "no"
       }
     },
     {
@@ -3684,13 +3701,13 @@
       "kind": "stage.entered",
       "actor": "system",
       "stage": "boundary",
-      "at": "2026-08-28T09:03:05.000Z",
-      "fingerprint": "5ede0118fe07",
+      "at": "2026-08-28T09:03:06.000Z",
+      "fingerprint": "dca7f723c921",
       "detail": "moved to step 7 of 8",
       "refusal": false,
       "payloadHash": "47a65ee70e48d588c7dc33f6c42802a3e13ad9f75f9d3dbc518f47daafbaec10",
-      "prevHash": "b0b998a13d30c5ec6a8a92143a6e0ee9350621ad52a3e8b2fcd6717c455ea428",
-      "hash": "5ede0118fe073b0a2e940b539522c102894a1b4d26316cd58eed9e39b8a9ed62",
+      "prevHash": "022201414ab6a1a0445dde77b526f257fd72a4a6c68413f1ee13758432544700",
+      "hash": "dca7f723c9215cc7408eb45cd8705ec59e76b5f16836a01bae451b10c98910cc",
       "payload": {
         "to": "boundary",
         "from": "assemble",
@@ -3703,21 +3720,21 @@
       "kind": "signature.approved",
       "actor": "human",
       "stage": null,
-      "at": "2026-08-28T09:03:07.000Z",
-      "fingerprint": "ff1755c49285",
+      "at": "2026-08-28T09:03:08.000Z",
+      "fingerprint": "2f53e5c83b01",
       "detail": "Ana Rivera said yes to sending this exact file",
       "refusal": false,
       "humanAct": {
         "button": "Approve sending the packet",
         "why": "This is the boundary. Stage seven has no tools at all, and the packet does not move until a person names it by its fingerprint and approves."
       },
-      "payloadHash": "ada2b47ff638f2fba74492665be0be46e9e9cd0a98fdbb1e8ae2600876c65065",
-      "prevHash": "5ede0118fe073b0a2e940b539522c102894a1b4d26316cd58eed9e39b8a9ed62",
-      "hash": "ff1755c49285acaac4cf6c5d0b042c682774486bff6e485b51e21665c6430013",
+      "payloadHash": "f22602c92ae9ebae711bb2e1ecfaf6bd6f92b5070cd151d661a3d6f5063544d9",
+      "prevHash": "dca7f723c9215cc7408eb45cd8705ec59e76b5f16836a01bae451b10c98910cc",
+      "hash": "2f53e5c83b0125540fab2d045cba53626f73e3a7090bbb33e5e08c1b858e81d2",
       "payload": {
-        "approvedAt": "2026-08-28T09:03:06.000Z",
+        "approvedAt": "2026-08-28T09:03:07.000Z",
         "approvedBy": "Ana Rivera",
-        "packFingerprint": "c762b26eb8d477cec1003a9c0cf09b204b4509297d3b6b7d74a7ce802c34e309"
+        "packFingerprint": "e16013f027db0c727a079513b8f6d96e828d025b44d02cb2f468569ac026d9f3"
       }
     },
     {
@@ -3726,13 +3743,13 @@
       "kind": "stage.entered",
       "actor": "system",
       "stage": "publish",
-      "at": "2026-08-28T09:03:08.000Z",
-      "fingerprint": "a31dbfd4b9b3",
+      "at": "2026-08-28T09:03:09.000Z",
+      "fingerprint": "58290ba72ab6",
       "detail": "moved to step 8 of 8",
       "refusal": false,
       "payloadHash": "c071ce044655a871562abced3534a6594dcb4b23dcb6369ec08e14ae4ac6202d",
-      "prevHash": "ff1755c49285acaac4cf6c5d0b042c682774486bff6e485b51e21665c6430013",
-      "hash": "a31dbfd4b9b31987437a94a88b46b45031eeb80d22884fe993883576ad824a4c",
+      "prevHash": "2f53e5c83b0125540fab2d045cba53626f73e3a7090bbb33e5e08c1b858e81d2",
+      "hash": "58290ba72ab6833286462c7a1f1931dab43e7e63575cb6ee1b50a5791987813a",
       "payload": {
         "to": "publish",
         "from": "boundary",
@@ -3745,13 +3762,13 @@
       "kind": "turn.started",
       "actor": "model",
       "stage": "publish",
-      "at": "2026-08-28T09:03:10.000Z",
-      "fingerprint": "0e47118fcc59",
+      "at": "2026-08-28T09:03:11.000Z",
+      "fingerprint": "71ae674c2195",
       "detail": "turn 1. It may: draw the shop picture; put the website online",
       "refusal": false,
       "payloadHash": "d64ed44f638178a5865b9d97cc399b65a2d9e15f8e557de2aa6e119c4f39356f",
-      "prevHash": "a31dbfd4b9b31987437a94a88b46b45031eeb80d22884fe993883576ad824a4c",
-      "hash": "0e47118fcc5998fbd0c799485c9cd524c46b77d03395d7422569e4de28a1ad4a",
+      "prevHash": "58290ba72ab6833286462c7a1f1931dab43e7e63575cb6ee1b50a5791987813a",
+      "hash": "71ae674c219545ed436ed9dfa2777d65bd09448b107a555ec52914dc1fb91b3e",
       "payload": {
         "turn": "1",
         "stage": "publish",
@@ -3768,13 +3785,13 @@
       "kind": "model.answered",
       "actor": "model",
       "stage": "publish",
-      "at": "2026-08-28T09:03:11.000Z",
-      "fingerprint": "f139b864e875",
+      "at": "2026-08-28T09:03:12.000Z",
+      "fingerprint": "45f3cb93dea5",
       "detail": "decided to draw the shop picture, from answers written out in advance",
       "refusal": false,
       "payloadHash": "663f9a14ef90eb058185b77f40c40141ffcfa97da93efec4fb60e2458b8e7a11",
-      "prevHash": "0e47118fcc5998fbd0c799485c9cd524c46b77d03395d7422569e4de28a1ad4a",
-      "hash": "f139b864e875ac4d7dca3ccefc9ab9b8907b76a41b779596c0b9d52d2101da52",
+      "prevHash": "71ae674c219545ed436ed9dfa2777d65bd09448b107a555ec52914dc1fb91b3e",
+      "hash": "45f3cb93dea58d956249fcc12ad6abd2948819b71b9b0ebe62a7380b4b6c03bc",
       "payload": {
         "raw": {
           "chose": "draw_storefront",
@@ -3794,13 +3811,13 @@
       "kind": "tool.ran",
       "actor": "model",
       "stage": "publish",
-      "at": "2026-08-28T09:03:12.000Z",
-      "fingerprint": "89aed94d1c0e",
+      "at": "2026-08-28T09:03:13.000Z",
+      "fingerprint": "546b2f6e4416",
       "detail": "draw the shop picture",
       "refusal": false,
       "payloadHash": "915903c06d0db3a239a0bf304fe6e28c0dfe3c76e0ac4a3421b5266b1d10b2d1",
-      "prevHash": "f139b864e875ac4d7dca3ccefc9ab9b8907b76a41b779596c0b9d52d2101da52",
-      "hash": "89aed94d1c0eda6bdd98cfe64b5d3a12fef0ed310846e579a62fb1234ba822d1",
+      "prevHash": "45f3cb93dea58d956249fcc12ad6abd2948819b71b9b0ebe62a7380b4b6c03bc",
+      "hash": "546b2f6e441622848e6563a5bc91e33396f1280a4c506752ea48acdf7dac4d9d",
       "payload": {
         "args": {},
         "tool": "draw_storefront",
@@ -3817,13 +3834,13 @@
       "kind": "storefront.drawn",
       "actor": "system",
       "stage": "publish",
-      "at": "2026-08-28T09:03:13.000Z",
-      "fingerprint": "48dff58890dc",
+      "at": "2026-08-28T09:03:14.000Z",
+      "fingerprint": "18b11d91143c",
       "detail": "drew the shop picture from the owners' own words, and nothing else",
       "refusal": false,
       "payloadHash": "a1c07c0772364971bbb0cf86fae0a6cfc38fd2bbe32adab029530b2502e10093",
-      "prevHash": "89aed94d1c0eda6bdd98cfe64b5d3a12fef0ed310846e579a62fb1234ba822d1",
-      "hash": "48dff58890dc180b7e6073b19af57dd4e1bcd5f87ecdfc9632b116e9328b77b7",
+      "prevHash": "546b2f6e441622848e6563a5bc91e33396f1280a4c506752ea48acdf7dac4d9d",
+      "hash": "18b11d91143ce3515dd37ab3d21da0ef1426bb2bf31a5d761c67358da8ffd16e",
       "payload": {
         "url": "prepared:storefront",
         "shape": "1664x928",
@@ -3839,13 +3856,13 @@
       "kind": "turn.started",
       "actor": "model",
       "stage": "publish",
-      "at": "2026-08-28T09:03:15.000Z",
-      "fingerprint": "f53bba80dde6",
+      "at": "2026-08-28T09:03:16.000Z",
+      "fingerprint": "c32f21e24f50",
       "detail": "turn 2. It may: draw the shop picture; put the website online",
       "refusal": false,
       "payloadHash": "e29e83bdcc27d2961dabe126a7c7f2bdb6b420a2b57e9dad515e65191932696d",
-      "prevHash": "48dff58890dc180b7e6073b19af57dd4e1bcd5f87ecdfc9632b116e9328b77b7",
-      "hash": "f53bba80dde69b21273ac3fdda84ce5bd74dcc0905cb9f97f84e9db9d4536457",
+      "prevHash": "18b11d91143ce3515dd37ab3d21da0ef1426bb2bf31a5d761c67358da8ffd16e",
+      "hash": "c32f21e24f504f0cc78003763a27b56af2c81aa23659bcccfc98931be63987a0",
       "payload": {
         "turn": "2",
         "stage": "publish",
@@ -3862,13 +3879,13 @@
       "kind": "model.answered",
       "actor": "model",
       "stage": "publish",
-      "at": "2026-08-28T09:03:16.000Z",
-      "fingerprint": "3fefbadf7f14",
+      "at": "2026-08-28T09:03:17.000Z",
+      "fingerprint": "b4f8284f8585",
       "detail": "decided to put the website online, from answers written out in advance",
       "refusal": false,
       "payloadHash": "7c0aebc3e01c0610894d23afa8c3cd7552b3da50135ab343041492eb41bf6635",
-      "prevHash": "f53bba80dde69b21273ac3fdda84ce5bd74dcc0905cb9f97f84e9db9d4536457",
-      "hash": "3fefbadf7f141ccb15c0757cfa07e2390524369453db009e49d23f636b86ac4f",
+      "prevHash": "c32f21e24f504f0cc78003763a27b56af2c81aa23659bcccfc98931be63987a0",
+      "hash": "b4f8284f8585cedced03a6c050d59e8482d091de59419a41fbeaeb7f97f243e7",
       "payload": {
         "raw": {
           "chose": "publish_site",
@@ -3888,13 +3905,13 @@
       "kind": "tool.ran",
       "actor": "model",
       "stage": "publish",
-      "at": "2026-08-28T09:03:17.000Z",
-      "fingerprint": "8c94c359978e",
+      "at": "2026-08-28T09:03:18.000Z",
+      "fingerprint": "5c050d320d36",
       "detail": "put the website online",
       "refusal": false,
       "payloadHash": "39fc44745b79f80c9c23c0307ed3039a976c9fcaee8c7c7f567ce8dc5a5715af",
-      "prevHash": "3fefbadf7f141ccb15c0757cfa07e2390524369453db009e49d23f636b86ac4f",
-      "hash": "8c94c359978ea15467817b609075977200f9a0fa05d154fbbeec8fcfa102bca5",
+      "prevHash": "b4f8284f8585cedced03a6c050d59e8482d091de59419a41fbeaeb7f97f243e7",
+      "hash": "5c050d320d3634e521d5f1eb31ea9e24b68b6e256e26e0f5c952b12a45806fc3",
       "payload": {
         "args": {},
         "tool": "publish_site",
@@ -3911,13 +3928,13 @@
       "kind": "site.published",
       "actor": "system",
       "stage": "publish",
-      "at": "2026-08-28T09:03:18.000Z",
-      "fingerprint": "83adb4c9b7ae",
+      "at": "2026-08-28T09:03:19.000Z",
+      "fingerprint": "243fc343a429",
       "detail": "live at https://riverasistersbakingco.com",
       "refusal": false,
       "payloadHash": "0ce46e5aa29e6de20e1b8313c3ff0619ed67d124d2f7467c28c4de2d14867594",
-      "prevHash": "8c94c359978ea15467817b609075977200f9a0fa05d154fbbeec8fcfa102bca5",
-      "hash": "83adb4c9b7ae21063c1988e9831c125303ec7179eb689af4fd086d95c259f97c",
+      "prevHash": "5c050d320d3634e521d5f1eb31ea9e24b68b6e256e26e0f5c952b12a45806fc3",
+      "hash": "243fc343a42900d7870aae626f25eace76d7b58d0d95257d6c4859b775f136e2",
       "payload": {
         "liveAt": "https://riverasistersbakingco.com",
         "address": "riverasistersbakingco.com"
@@ -4077,8 +4094,8 @@
     }
   ],
   "pack": {
-    "fingerprint": "c762b26eb8d477cec1003a9c0cf09b204b4509297d3b6b7d74a7ce802c34e309",
-    "sizeBytes": "18452",
+    "fingerprint": "e16013f027db0c727a079513b8f6d96e828d025b44d02cb2f468569ac026d9f3",
+    "sizeBytes": "22128",
     "permissionLevel": "2",
     "parts": [
       "the ownership agreement",
@@ -4216,11 +4233,53 @@
         "— but a signature is a process executed or adopted BY A PERSON, with the intent to sign. Forming may be",
         "delegated. The signature is the act of a person, and a machine has no intent to lend it.",
         "Ana Rivera",
-        "________________________________ Date: ______________",
+        "Date",
         "Lucia Rivera",
-        "________________________________ Date: ______________",
+        "Date",
         "Rivera Sisters Baking Co — Formation Pack",
         "Page 3 of 3"
+      ],
+      [
+        "What you must still do yourself",
+        "Signing this packet does not create Rivera Sisters Baking Co. Nothing in this packet has been sent to any",
+        "government office, and Charter did not send it. Your company does not exist until the office below has",
+        "accepted a filing that you make.",
+        "Read this page before you sign anything. It is the shortest page in the packet and it is the one that decides",
+        "whether the rest of it is worth anything.",
+        "The filing",
+        "Office",
+        "the Texas Secretary of State",
+        "Form",
+        "Certificate of Formation, Limited Liability Company (Form 205)",
+        "Read it here",
+        "sos.texas.gov",
+        "You file this yourself, with the Texas Secretary of State. Charter has not filed it, cannot file it, and will not file it.",
+        "Charter deliberately does not print the fee, the processing time, or the list of what the form requires. Those",
+        "change. A number that was right on the day this packet was sealed and wrong on the day you read it is worse",
+        "than no number at all, so read them on the office’s own page above.",
+        "What this packet is, and what it is not",
+        "• It is the agreement between the owners about how they own the business together. That agreement is",
+        "between you, not between you and the state, and it takes effect when you sign it.",
+        "• It is not a filing, not a registration, and not legal advice. Charter is software. It prepared documents; it did",
+        "not advise anybody.",
+        "• Nothing in it has been signed. Charter sealed the file, which fixes what it contains, and vouched for its own",
+        "record of how it was made. A seal is not a signature. Only the people named on the cover sign this, and",
+        "only by their own hand.",
+        "• A web address, riverasistersbakingco.com, was registered for you during this run. That is a real",
+        "registration with a real registrar and it renews on their schedule, not ours. It has nothing to do with whether",
+        "the company exists.",
+        "The order to do things in",
+        "• Read the whole packet. Every owner reads it, not one owner for everybody.",
+        "• Sign it. All 2 of you: Ana Rivera, Lucia Rivera. A packet signed by some of the owners is not the deal the",
+        "packet describes.",
+        "• File the Certificate of Formation, Limited Liability Company (Form 205) with the Texas Secretary of State,",
+        "yourself.",
+        "• Keep the signed packet. The agreement is the company’s own record of who contributed what, and the law",
+        "reads that record when the owners disagree.",
+        "If anything in this packet is wrong, do not sign it. A sealed packet can be thrown away and prepared again at",
+        "no cost. A signed one is an agreement.",
+        "Rivera Sisters Baking Co — Formation Pack",
+        "Page 1 of 1"
       ]
     ]
   },
@@ -4447,11 +4506,11 @@
   },
   "genesis": "6cba86f1867aead7f409fc61fd6609f96dd7a8cc095f7578ddabe208ccc03634",
   "attestation": {
-    "head": "83adb4c9b7ae21063c1988e9831c125303ec7179eb689af4fd086d95c259f97c",
+    "head": "243fc343a42900d7870aae626f25eace76d7b58d0d95257d6c4859b775f136e2",
     "count": "154",
     "keyId": "e9882545fba024e54fdbb93088300da8ff3d2e6455089726b05b48f82559249b"
   },
-  "tests": 1113,
+  "tests": 1258,
   "verify": {
     "findings": [
       {
@@ -4467,12 +4526,12 @@
       {
         "question": "Does the stamp cover the whole file?",
         "answer": "yes",
-        "detail": "All 18452 bytes are inside the sealed range."
+        "detail": "All 22128 bytes are inside the sealed range."
       },
       {
         "question": "Is this the same file the diary describes?",
         "answer": "yes",
-        "detail": "Both are c762b26eb8d477ce…"
+        "detail": "Both are e16013f027db0c72…"
       },
       {
         "question": "Does every step in the diary match the one before it?",
@@ -4520,9 +4579,16 @@
     {
       "name": "identity",
       "kind": "stand-in",
-      "why": "Documents recorded in advance, because this is a replay. No real person’s ID is involved. It gives back answers recorded in advance and has no way of reaching the internet at all, so a missing answer stops the run rather than quietly becoming a real call.",
+      "why": "Documents recorded in advance, because this is a replay. No real person’s ID is involved and nothing was sent anywhere. It gives back answers recorded in advance and has no way of reaching the internet at all, so a missing answer stops the run rather than quietly becoming a real call.",
       "company": "Nutrient",
       "host": "nutrient.io"
+    },
+    {
+      "name": "documents",
+      "kind": "stand-in",
+      "why": "The pack is joined here instead, which is a real join and not a pretend one: every page is copied across and the file can be opened and signed. What does not happen is the finished pack being read back by anybody other than the program that wrote it. This run is replaying answers recorded in advance, so nothing was sent anywhere.",
+      "company": "Foxit",
+      "host": "developer-api.foxit.com"
     },
     {
       "name": "publishing",
@@ -4534,11 +4600,11 @@
     {
       "name": "imagery",
       "kind": "stand-in",
-      "why": "Drawing the shop picture is not connected to the real service yet. The words it would send are the owners' own, taken from the diary, so you can see exactly what would have been drawn. No photograph of anybody is ever sent, and that company's face and skin tools are not used anywhere in this project.",
+      "why": "Nothing is drawn, because this is a replay. The words it would have sent are the owners' own, taken from the record, so a run shows exactly what would have been drawn. No photograph of anybody is ever sent, and that company's face and skin tools are not used anywhere in this project.",
       "company": "Perfect Corp",
       "host": "yce.perfectcorp.com"
     }
   ],
   "anchor": "Not attempted, because REPLAY_MODE is true and this run reached no network at all. Run with REPLAY_MODE=false to ask an authority to stamp the head of the record.",
-  "generatedAt": "2026-08-28T09:03:21.000Z"
+  "generatedAt": "2026-08-28T09:03:22.000Z"
 }

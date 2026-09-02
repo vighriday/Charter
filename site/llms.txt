@@ -29,9 +29,9 @@ THE RUN, COUNTED
        8  stages
        0  tools in the boundary stage
       15  articles in the agreement
-   18452  bytes in the sealed packet
+   22128  bytes in the sealed packet
        2  PDF permission level
-    1113  tests
+    1258  tests
 
 ----------------------------------------------------------------------
 
@@ -183,13 +183,16 @@ THE OUTSIDE SERVICES
     Answers recorded in advance, because this is a replay. Nothing is registered and nobody is charged. It gives back answers recorded in advance and has no way of reaching the internet at all, so a missing answer stops the run rather than quietly becoming a real call.
 
   Nutrient (nutrient.io), the identity: stand-in
-    Documents recorded in advance, because this is a replay. No real person’s ID is involved. It gives back answers recorded in advance and has no way of reaching the internet at all, so a missing answer stops the run rather than quietly becoming a real call.
+    Documents recorded in advance, because this is a replay. No real person’s ID is involved and nothing was sent anywhere. It gives back answers recorded in advance and has no way of reaching the internet at all, so a missing answer stops the run rather than quietly becoming a real call.
+
+  Foxit (developer-api.foxit.com), the documents: stand-in
+    The pack is joined here instead, which is a real join and not a pretend one: every page is copied across and the file can be opened and signed. What does not happen is the finished pack being read back by anybody other than the program that wrote it. This run is replaying answers recorded in advance, so nothing was sent anywhere.
 
   not built yet, the publishing: stand-in
     Putting the website online is not built yet. The file itself is put together and stamped by Charter’s own code and never goes through anybody else, so the only thing standing in here is the website going live.
 
   Perfect Corp (yce.perfectcorp.com), the imagery: stand-in
-    Drawing the shop picture is not connected to the real service yet. The words it would send are the owners' own, taken from the diary, so you can see exactly what would have been drawn. No photograph of anybody is ever sent, and that company's face and skin tools are not used anywhere in this project.
+    Nothing is drawn, because this is a replay. The words it would have sent are the owners' own, taken from the record, so a run shows exactly what would have been drawn. No photograph of anybody is ever sent, and that company's face and skin tools are not used anywhere in this project.
 
 
 ----------------------------------------------------------------------

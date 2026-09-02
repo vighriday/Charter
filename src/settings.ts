@@ -851,6 +851,18 @@ export const COMPANY_BEHIND: Readonly<Record<string, CompanyBehindAService>> = {
     host: 'yce.perfectcorp.com',
     section: 'PERFECT CORP — draws the new business’s first storefront picture',
   },
+  // The reversible work on the pack: joining the parts into one file, making it
+  // smaller, and reading the words back out of the finished thing.
+  //
+  // All of it happens BEFORE the seal, and that order is the point. Once the pack
+  // is sealed, their own engine refuses to modify it and answers "no permission."
+  // Two programs enforcing the same rule, neither told about the other.
+  documents: {
+    company: 'Foxit',
+    host: 'developer-api.foxit.com',
+    section:
+      'FOXIT — does the reversible work on the pack, and separately carries it to a person to sign',
+  },
 }
 
 /**
