@@ -103,6 +103,51 @@ export interface PackContents {
   readonly stampedAt: Date
 }
 
+/**
+ * Where one owner signs, in the finished document.
+ *
+ * WHY THE PACK HAS TO REPORT THIS
+ *
+ * A signing service places a signature in one of three ways: it finds marks in the
+ * document text, it finds form fields already there, or it is told coordinates.
+ * There is deliberately no fourth way meaning "decide for yourself", because that
+ * is the setting that produces a signing screen with nothing required on it, where
+ * a person can reach "Finish" without ever having signed. A system whose whole
+ * argument is that only a person signs, producing an unsigned document while every
+ * screen says it worked, is the worst failure available to it.
+ *
+ * Charter draws the signature lines itself, so it is the only thing that knows
+ * where they are. It says so here rather than leaving anybody to guess.
+ *
+ * MEASURED FROM THE TOP, NOT THE BOTTOM
+ *
+ * A PDF measures up from the bottom of the page. Every signing service measures
+ * down from the top. Converting once, here, where the line was actually drawn, is
+ * the only place the conversion can be checked against something real.
+ */
+export interface SignatureSpot {
+  /** Whose line this is, spelled as the agreement spells it. */
+  readonly owner: string
+  /** Which page, counting from one. */
+  readonly page: number
+  /** Distance from the left edge, in points. */
+  readonly x: number
+  /** Distance from the TOP edge, in points. */
+  readonly y: number
+  readonly width: number
+  readonly height: number
+}
+
+/** Everything writing the pack produced. */
+export interface WrittenPack {
+  readonly bytes: Uint8Array
+  /** Where each owner signs. Never empty in a finished pack. */
+  readonly signWhere: readonly SignatureSpot[]
+  readonly pages: number
+  /** The size of every page, so a service measuring in its own units can scale. */
+  readonly pageSize: { readonly width: number; readonly height: number }
+}
+
 /** A page being written, and where the next line goes. */
 interface Sheet {
   readonly page: PDFPage
@@ -142,6 +187,7 @@ export function wrap(text: string, font: PDFFont, size: number, width: number): 
 
 export class PackBuilder {
   private readonly sheets: Sheet[] = []
+  private readonly spots: SignatureSpot[] = []
 
   constructor(
     private readonly document: PDFDocument,
@@ -249,6 +295,71 @@ export class PackBuilder {
     return this.sheets.length
   }
 
+  /** Every signature line drawn so far, in the order they were drawn. */
+  get signatureSpots(): readonly SignatureSpot[] {
+    return this.spots
+  }
+
+  /**
+   * Draw one owner's signature line, and remember where it went.
+   *
+   * The remembering is the point. Anything else that needed to know where the
+   * signature goes would have to work it out again from the same layout rules,
+   * and two copies of a layout calculation is one copy too many — the copy that
+   * drifts puts a signature box in the middle of a paragraph.
+   */
+  signatureLine(owner: string): void {
+    // Kept on one page. A signature line split across a page break is a line
+    // somebody signs above and a date they write on the next sheet.
+    this.room(LINE * 3)
+    const sheet = this.sheet
+
+    sheet.page.drawText(owner, {
+      x: MARGIN,
+      y: sheet.y,
+      size: 10,
+      font: this.pens.bold,
+      color: INK,
+    })
+
+    const left = MARGIN + 150
+    const width = 220
+    const height = 22
+
+    sheet.page.drawLine({
+      start: { x: left, y: sheet.y - 4 },
+      end: { x: left + width, y: sheet.y - 4 },
+      thickness: 0.75,
+      color: RULE,
+    })
+    sheet.page.drawText('Date', {
+      x: left + width + 20,
+      y: sheet.y,
+      size: 10,
+      font: this.pens.body,
+      color: QUIET,
+    })
+    sheet.page.drawLine({
+      start: { x: left + width + 52, y: sheet.y - 4 },
+      end: { x: PAGE.width - MARGIN, y: sheet.y - 4 },
+      thickness: 0.75,
+      color: RULE,
+    })
+
+    this.spots.push({
+      owner,
+      page: this.sheets.length,
+      x: left,
+      // Turned round here, once, where the line was really drawn. A PDF measures
+      // up from the bottom and every signing service measures down from the top.
+      y: PAGE.height - sheet.y - height + 6,
+      width,
+      height,
+    })
+
+    sheet.y -= LINE
+  }
+
   /**
    * Write the foot of every page, once the number of pages is finally known.
    *
@@ -305,7 +416,7 @@ export class PackBuilder {
  * order — write, then seal, then fingerprint the sealed bytes — is visible in the
  * caller rather than hidden in here.
  */
-export async function buildPackDocument(contents: PackContents): Promise<Uint8Array> {
+export async function buildPackDocument(contents: PackContents): Promise<WrittenPack> {
   const document = await PDFDocument.create()
   const pens: Pens = {
     body: await document.embedFont(StandardFonts.Helvetica),
@@ -498,7 +609,7 @@ export async function buildPackDocument(contents: PackContents): Promise<Uint8Ar
 
   for (const owner of data.owners) {
     pack.gap(LINE * 2)
-    pack.row(owner.fullName, '________________________________     Date: ______________')
+    pack.signatureLine(owner.fullName)
   }
 
   // Last, because the total cannot be known until the last page exists. A document
@@ -506,5 +617,10 @@ export async function buildPackDocument(contents: PackContents): Promise<Uint8Ar
   // nothing at all.
   pack.footEveryPage(data.companyName)
 
-  return document.save()
+  return {
+    bytes: await document.save(),
+    signWhere: pack.signatureSpots,
+    pages: pack.pageCount,
+    pageSize: { width: PAGE.width, height: PAGE.height },
+  }
 }

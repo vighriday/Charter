@@ -1255,7 +1255,7 @@ export const assemblePack: Tool = {
       missing: check.missing,
     }))
 
-    const document = await buildPackDocument({
+    const written = await buildPackDocument({
       caseId: context.caseId,
       agreement: prepared.data,
       explanation: prepared.explanation,
@@ -1295,7 +1295,7 @@ export const assemblePack: Tool = {
     // rewriting operation all would.
     pack.run('pdf_merge')
     const joined = await context.services.documents.join([
-      { name: 'the formation pack', bytes: document },
+      { name: 'the formation pack', bytes: written.bytes },
       { name: 'what you must still do yourself', bytes: nextSteps },
     ])
 

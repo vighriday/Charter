@@ -77,7 +77,7 @@ async function main(): Promise<void> {
   // ---- 1. the two documents --------------------------------------------------
   const agreement: AgreementData = sampleAgreement()
 
-  const packBody = await buildPackDocument({
+  const written = await buildPackDocument({
     caseId: 'foxit-proof',
     agreement,
     explanation: ['This packet was built to check the document service, and nothing else.'],
@@ -95,11 +95,14 @@ async function main(): Promise<void> {
     stampedAt: STAMPED_AT,
   })
 
-  say(`1. wrote two documents: ${packBody.length} and ${nextSteps.length} bytes`)
+  say(
+    `1. wrote two documents: ${written.bytes.length} and ${nextSteps.length} bytes, ` +
+      `with ${written.signWhere.length} signature lines on page ${written.signWhere[0]?.page ?? 0}`,
+  )
 
   // ---- 2. join ----------------------------------------------------------------
   const joined = await service.join([
-    { name: 'the formation pack', bytes: packBody },
+    { name: 'the formation pack', bytes: written.bytes },
     { name: 'what you must still do yourself', bytes: nextSteps },
   ])
   say(`2. joined by ${joined.joinedBy}: ${joined.bytes.length} bytes`)

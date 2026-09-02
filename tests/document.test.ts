@@ -142,7 +142,7 @@ let bytes: Uint8Array
 let text: string
 
 beforeAll(async () => {
-  bytes = await buildPackDocument(contents)
+  bytes = (await buildPackDocument(contents)).bytes
   text = wordsIn(bytes)
 }, 60_000)
 
@@ -186,7 +186,7 @@ describe('the pack is a real document', () => {
     // people building the same pack from the same record must get the same
     // document, or nothing downstream can be compared.
     const again = await buildPackDocument(contents)
-    expect(Buffer.from(again).equals(Buffer.from(bytes))).toBe(true)
+    expect(Buffer.from(again.bytes).equals(Buffer.from(bytes))).toBe(true)
   })
 })
 
@@ -238,9 +238,38 @@ describe('what the pack says', () => {
     expect(await readable()).toContain('a limit nobody can check is not a limit')
   })
 
-  it('gives every owner somewhere to sign', async () => {
+  it('gives every owner somewhere to sign, and says where it put it', async () => {
+    // The pack is the only thing that knows where the signature lines are, because
+    // it is the thing that draws them. Anything else that needed to know would
+    // have to work it out from the same layout rules, and the copy that drifts
+    // puts a signature box in the middle of a paragraph.
+    const written = await buildPackDocument(contents)
     const said = await readable()
-    expect(said).toContain('Date: ______________')
+
+    expect(said, 'a place to write the date').toContain('Date')
+
+    expect(written.signWhere.map((one) => one.owner)).toEqual(['Ana Rivera', 'Ben Rivera'])
+
+    for (const spot of written.signWhere) {
+      expect(spot.page, `${spot.owner} is on a real page`).toBeGreaterThanOrEqual(1)
+      expect(spot.page).toBeLessThanOrEqual(written.pages)
+      expect(spot.width, `${spot.owner} has somewhere to sign`).toBeGreaterThan(0)
+      expect(spot.height).toBeGreaterThan(0)
+
+      // Measured from the TOP, the way every signing service measures. A box
+      // placed off the page is a signing screen with nothing on it.
+      expect(spot.y).toBeGreaterThan(0)
+      expect(spot.y + spot.height).toBeLessThan(written.pageSize.height)
+      expect(spot.x + spot.width).toBeLessThan(written.pageSize.width)
+    }
+  })
+
+  it('puts both owners on the same page as each other', async () => {
+    // Two owners signing on two different sheets is two documents as far as
+    // anybody handling paper is concerned.
+    const written = await buildPackDocument(contents)
+    const pages = new Set(written.signWhere.map((one) => one.page))
+    expect(pages.size).toBe(1)
   })
 })
 
@@ -282,7 +311,7 @@ describe('when a required value was never produced', () => {
         },
       ],
     })
-    const said = wordsIn(short)
+    const said = wordsIn(short.bytes)
 
     expect(said).toContain('did not produce')
     expect(said).toContain('needs a clearer document')
@@ -297,7 +326,7 @@ describe('when something was refused while the pack was being made', () => {
         { operation: 'pdf_watermark', why: 'The pack is sealed, and stamping every page rewrites it.' },
       ],
     })
-    const said = wordsIn(withRefusal)
+    const said = wordsIn(withRefusal.bytes)
 
     expect(said).toContain('Asked for while this pack was being assembled')
     expect(said).toContain('pdf_watermark')
