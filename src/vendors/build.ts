@@ -57,6 +57,7 @@ import { buildSpecimenDocument, SPECIMEN_KIND } from '../identity/specimen.js'
 import { foxitDocuments } from './foxit.js'
 import { joinHere } from '../pack/join.js'
 import { namecomRegistrar } from './namecom.js'
+import { perfectCorpImagery } from './perfectcorp.js'
 import { webSearch } from './search.js'
 import { nutrientIdentityReader, type FoundDocument } from './nutrient.js'
 import type { Fetcher } from './http.js'
@@ -298,18 +299,49 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
 
   // ---- drawing the storefront ------------------------------------------------
   //
-  // Always the stand-in today, and said plainly. The words it would send are the
-  // owners' own, read from the record, so what a run shows is exactly what would
-  // have been drawn.
-  const imagery: Chosen<ImageryService> = {
-    service: preparedImagery(),
-    kind: 'stand-in',
-    why:
-      'Drawing the shop picture is not connected to the real service yet. The words ' +
-      'it would send are the owners\' own, taken from the diary, so you can see ' +
-      'exactly what would have been drawn. No photograph of anybody is ever sent, ' +
-      'and that company\'s face and skin tools are not used anywhere in this project.',
-  }
+  // A business formed this morning owns no photographs. The one thing it has is
+  // the sentence its owners typed, which is already in the record because it is
+  // what started the legal work, so that is what gets drawn.
+  //
+  // Two values, not one. Their sign-in wants proof that the caller holds the
+  // arrangement, made by encrypting the key and the current time with a public
+  // key they issue beside it.
+  const pictureKey = held('PERFECTCORP_API_KEY')
+  // Line breaks spelled out, put back before the key is read. A settings file
+  // usually cannot hold real ones, and a key missing them fails with a message
+  // about the key rather than about the file it came out of.
+  const picturePublicKey = held('PERFECTCORP_PUBLIC_KEY').replace(/\\n/g, '\n')
+  const canDraw = pictureKey !== '' && picturePublicKey !== ''
+
+  const imagery: Chosen<ImageryService> =
+    replaying || !canDraw
+      ? {
+          service: preparedImagery(),
+          kind: 'stand-in',
+          why:
+            (replaying
+              ? 'Nothing is drawn, because this is a replay. '
+              : 'PERFECTCORP_API_KEY and PERFECTCORP_PUBLIC_KEY are not both set. ') +
+            "The words it would have sent are the owners' own, taken from the " +
+            'record, so a run shows exactly what would have been drawn. No ' +
+            "photograph of anybody is ever sent, and that company's face and skin " +
+            'tools are not used anywhere in this project.',
+        }
+      : {
+          service: perfectCorpImagery({
+            apiKey: pictureKey,
+            publicKeyPem: picturePublicKey,
+            ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
+          }),
+          kind: 'real',
+          why:
+            "One picture, drawn from the owners' own sentence about their business " +
+            'and from nothing else. It is asked for the place with nobody in it and ' +
+            'no lettering: invented people would be staff the business does not ' +
+            'employ, and invented lettering would be a sign saying something nobody ' +
+            'chose. No photograph of anybody is ever sent, and that company’s face ' +
+            'and skin tools are absent from every tool list.',
+        }
 
   return {
     search: search.service,

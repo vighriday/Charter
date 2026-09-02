@@ -141,6 +141,10 @@ const NOT_BUILT_VENDOR =
   'the client that would talk to this company. Every outside service is answered ' +
   'today by a stand-in holding recorded answers, with no path to the network at all.'
 
+/** What the picture service is, honestly, until somebody has run it. */
+const PICTURE_NOT_PROVEN =
+  'a client that is written, tested, and has never once been called. See above.'
+
 const NOT_BUILT_STORAGE =
   'the file store and the publishing client. The finished pack is held in memory ' +
   'and the website is published by a stand-in today.'
@@ -623,15 +627,45 @@ export const SETTINGS: readonly Setting[] = [
     what: [
       'Redeem a key at yce.perfectcorp.com/api-console/en/redeem-code/',
       '',
-      'Used only to turn the owner’s own description of their business into imagery for',
-      'the website Charter publishes. Nothing is uploaded and no photograph is ever',
-      'sent. Their face and skin tools are not used and are absent from every tool',
-      'list. Optional — leave it blank and the site publishes without imagery.',
+      'THE CLIENT IS WRITTEN AND HAS NEVER BEEN CALLED, because there is no key for',
+      'it yet. Put one here, put the public key they issue beside it below, and run:',
+      '',
+      '    npm run picture:proof',
+      '',
+      'Until that prints the address of a picture, the honest word for this is',
+      '"written, not proven", and this file and the website both use that word.',
+      '',
+      'Used only to turn the owners’ own description of their business into one',
+      'picture for the website Charter publishes. No photograph of anybody is ever',
+      'sent. Their face analysis, skin analysis and face swapping are absent from',
+      'every tool list and unreachable from anything the model can trigger.',
+      '',
+      'Optional. Leave it blank and a run says plainly what it would have drawn.',
     ],
     kind: 'secret',
     example: '',
     readBy: null,
-    notYetBuilt: NOT_BUILT_VENDOR,
+    notYetBuilt: PICTURE_NOT_PROVEN,
+  },
+  {
+    name: 'PERFECTCORP_PUBLIC_KEY',
+    section: 'PERFECT CORP — draws the new business’s first storefront picture',
+    what: [
+      'The public key issued beside the key above, in the console.',
+      '',
+      'Their sign-in is unusual and this is why it needs two values. Most services',
+      'take a key in a header. This one wants proof that the caller holds the',
+      'arrangement: the key and the current time, encrypted with this public key.',
+      'The time is in it, so an old block is refused and a leaked one is worth',
+      'nothing shortly afterwards.',
+      '',
+      'Paste it exactly as they give it, beginning -----BEGIN PUBLIC KEY-----, with',
+      'the line breaks written as \n if your .env file cannot hold real ones.',
+    ],
+    kind: 'secret',
+    example: '',
+    readBy: null,
+    notYetBuilt: PICTURE_NOT_PROVEN,
   },
 
   // ---- storage and hosting --------------------------------------------------

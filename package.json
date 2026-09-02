@@ -34,7 +34,8 @@
     "nutrient:proof": "tsx src/vendors/nutrient-proof.ts",
     "esign:proof": "tsx src/sign/esign-proof.ts",
     "services": "node scripts/services.mjs",
-    "services:check": "node scripts/services.mjs --check"
+    "services:check": "node scripts/services.mjs --check",
+    "picture:proof": "tsx src/vendors/picture-proof.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",
