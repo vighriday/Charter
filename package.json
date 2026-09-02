@@ -15,7 +15,7 @@
     "keys:generate": "tsx src/record/generate-keys.ts",
     "db:migrate": "tsx src/db/migrate.ts",
     "record:demo": "tsx src/record/demo.ts",
-    "check": "npm run git:check && npm run words:check && npm run typecheck && npm run test && npm run catalogue:check && npm run readme:check && npm run settings:check && npm run site:check",
+    "check": "npm run git:check && npm run words:check && npm run typecheck && npm run test && npm run catalogue:check && npm run readme:check && npm run settings:check && npm run services:check && npm run site:check",
     "start": "tsx src/case/live.ts",
     "agent:demo": "tsx src/case/demo.ts",
     "keys:classify": "tsx src/checks/classify.ts",
@@ -32,7 +32,9 @@
     "serve": "tsx src/serve/server.ts",
     "foxit:proof": "tsx src/vendors/foxit-proof.ts",
     "nutrient:proof": "tsx src/vendors/nutrient-proof.ts",
-    "esign:proof": "tsx src/sign/esign-proof.ts"
+    "esign:proof": "tsx src/sign/esign-proof.ts",
+    "services": "node scripts/services.mjs",
+    "services:check": "node scripts/services.mjs --check"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.17",
