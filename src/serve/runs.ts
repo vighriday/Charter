@@ -128,6 +128,52 @@ export function answerKind(question: string): Waiting['answerWith'] {
 /** How long a run may sit waiting for an answer nobody sends, in milliseconds. */
 export const PATIENCE_WITH_A_VISITOR = 10 * 60 * 1000
 
+/**
+ * Give a finished run's database back, or the second visitor takes the site down.
+ *
+ * Every run opens its own PostgreSQL engine, compiled to WebAssembly and living
+ * inside this process. That is what lets a stranger clone this project and run it
+ * with no database to sign up for and nothing to install, and it is not free: each
+ * one takes its own block of memory and holds it for as long as it stays open.
+ *
+ * Nothing used to close them. One run was fine. Starting a second one on the same
+ * machine ran the hosting plan out of memory, the process was killed in the middle
+ * of the request, and the visitor got a 502 from the hosting company rather than
+ * anything this program could say for itself. It was found by running two real
+ * businesses one after the other against the deployed site and noticing that the
+ * site's own uptime had gone back to zero.
+ *
+ * Closing is safe at the end of a run and nowhere earlier. By the time a run ends,
+ * every ending has already read the whole database out into ordinary memory — the
+ * record, the packet and the attestation are held on the run itself, and that is
+ * what the pages and the downloads are served from. Nothing reads the database
+ * after this point.
+ *
+ * A close that fails is written down and does not end the run. Whoever was
+ * watching has already done the work and their files are already safe, so taking
+ * their run away over a database that would not shut politely would be a second
+ * mistake on top of the first.
+ */
+export async function giveTheDatabaseBack(
+  run: { db: Database | null; readonly lines: Line[] },
+  now: () => number,
+): Promise<void> {
+  const opened = run.db
+  run.db = null
+  if (opened === null) return
+
+  await opened.close().catch((problem: unknown) => {
+    run.lines.push({
+      at: now(),
+      kind: 'note',
+      text:
+        'This run finished, and its database did not close cleanly afterwards. ' +
+        'Everything it produced is here and unaffected.',
+      extra: [problem instanceof Error ? problem.message : String(problem)],
+    })
+  })
+}
+
 export interface RunnerOptions {
   readonly settings: Settings
   readonly env?: Record<string, string | undefined>
@@ -411,6 +457,8 @@ export class Runs {
     } finally {
       run.finished = true
       run.waiting = null
+
+      await giveTheDatabaseBack(run, this.now)
       this.options.onEnded?.()
     }
   }

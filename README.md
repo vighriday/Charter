@@ -9,7 +9,7 @@ replay one real run step by step, and the eighth lets you put in your own
 business and watch Charter work on it, stopping to ask you every time a real
 decision comes up.
 
-![tests](https://img.shields.io/badge/tests-1%2C278%20passing-2f6f4e)
+![tests](https://img.shields.io/badge/tests-1%2C282%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
 ![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
@@ -243,7 +243,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,278 tests
+npm test          # 1,282 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -541,7 +541,7 @@ answer is 658, which is what this one said on 30 August.
 | The live run: bringing your own idea, and the five places it stops and waits for you | **built, 6 tests** <!-- tests/live.test.ts --> |
 | Reading typed answers without losing any of them, so the whole run can be driven from a written-out list rather than only by hand | **built, 7 tests** <!-- tests/keyboard.test.ts --> |
 | The run panel on the website: anybody runs their own idea with our keys, and the limits that let it be open to everybody rather than to nobody | **built, 17 tests**, and the shipped number was wrong until the test did the arithmetic <!-- tests/limits.test.ts --> |
-| Who may read a run, and what a web address can reach. Reading somebody's run needs the same secret answering it does, because its record carries their names and every answer they gave. Also the one address that exists to be knocked on every few minutes so free hosting never puts the site to sleep in front of somebody, and the two ways of asking for a file: HEAD used to be refused, which meant a link to this site pasted into a chat produced no preview at all | **built, 28 tests** <!-- tests/serve.test.ts --> |
+| Who may read a run, and what a web address can reach. Reading somebody's run needs the same secret answering it does, because its record carries their names and every answer they gave. Also the one address that exists to be knocked on every few minutes so free hosting never puts the site to sleep in front of somebody, the two ways of asking for a file: HEAD used to be refused, which meant a link to this site pasted into a chat produced no preview at all; and giving a finished run its database back, because every run opens its own PostgreSQL engine inside the process and nothing used to close them, so the second run ran the hosting plan out of memory and the visitor got a 502 | **built, 32 tests** <!-- tests/serve.test.ts --> |
 | The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 26 tests** <!-- tests/document.test.ts --> |
 | Reading the words back out of the sealed file, so the website shows the document rather than its own copy of the document | **built, 12 tests** <!-- tests/pack-read.test.ts --> |
 | The same agreement as an editable Word file, so the owners can take it to somebody they trust before anybody signs anything | **built, 23 tests** <!-- tests/docx.test.ts --> |

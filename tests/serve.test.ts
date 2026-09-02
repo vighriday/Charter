@@ -35,7 +35,8 @@ import { describe, expect, it } from 'vitest'
 import { join, sep } from 'node:path'
 
 import { fileAsked, whereFrom, secretSent, isKnock, mayRead, typeFor } from '../src/serve/server.js'
-import { sameSecret, answerKind } from '../src/serve/runs.js'
+import { sameSecret, answerKind, giveTheDatabaseBack, type Line } from '../src/serve/runs.js'
+import type { Database } from '../src/db/driver.js'
 
 describe('the two ways of asking for a file', () => {
   // Found by asking the deployed site for each of its own downloads. Every one
@@ -215,5 +216,79 @@ describe('how a question should be answered', () => {
 
   it('treats everything else as words', () => {
     expect(answerKind('Who is putting in the van, and what is it worth?')).toBe('words')
+  })
+})
+
+describe('giving a finished run its database back', () => {
+  // THE BUG THIS EXISTS FOR, IN ONE SENTENCE.
+  //
+  // Every run opens its own PostgreSQL engine inside this process, nothing closed
+  // them, and the second run on a small hosting plan ran the machine out of memory
+  // and had the process killed underneath it. The visitor saw a 502 from the
+  // hosting company. It was found by running two real businesses one after the
+  // other against the deployed site and seeing the site's uptime back at zero.
+
+  /** A database that only records whether it was asked to close. */
+  const fakeDatabase = (onClose?: () => Promise<void>): Database & { closes: number } => {
+    const it = {
+      kind: 'built-in' as const,
+      closes: 0,
+      query: async () => ({ rows: [] }),
+      exec: async () => undefined,
+      transaction: async <T,>(work: (tx: Database) => Promise<T>): Promise<T> =>
+        await work(it as unknown as Database),
+      close: async (): Promise<void> => {
+        it.closes += 1
+        if (onClose !== undefined) await onClose()
+      },
+    }
+    return it as unknown as Database & { closes: number }
+  }
+
+  const now = (): number => 1_756_000_000_000
+
+  it('closes it, which is the whole point', async () => {
+    const db = fakeDatabase()
+    const run = { db: db as Database | null, lines: [] as Line[] }
+
+    await giveTheDatabaseBack(run, now)
+
+    expect(db.closes).toBe(1)
+  })
+
+  it('lets go of it, so a second ending cannot close it twice', async () => {
+    const db = fakeDatabase()
+    const run = { db: db as Database | null, lines: [] as Line[] }
+
+    await giveTheDatabaseBack(run, now)
+    await giveTheDatabaseBack(run, now)
+
+    expect(run.db).toBeNull()
+    expect(db.closes).toBe(1)
+  })
+
+  it('does nothing at all when a run never opened one', async () => {
+    const run = { db: null as Database | null, lines: [] as Line[] }
+    await expect(giveTheDatabaseBack(run, now)).resolves.toBeUndefined()
+    expect(run.lines).toEqual([])
+  })
+
+  it('says so and carries on when the database will not close', async () => {
+    // The visitor has already done the work and their files are already safe.
+    // Taking their finished run away over a database that would not shut politely
+    // would be a second mistake on top of the first.
+    const db = fakeDatabase(async () => {
+      throw new Error('the connection had already gone')
+    })
+    const run = { db: db as Database | null, lines: [] as Line[] }
+
+    await expect(giveTheDatabaseBack(run, now)).resolves.toBeUndefined()
+
+    expect(run.lines).toHaveLength(1)
+    expect(run.lines[0]?.text).toContain('did not close cleanly')
+    expect(run.lines[0]?.text).toContain('unaffected')
+    expect(run.lines[0]?.extra?.[0]).toContain('the connection had already gone')
+    // And it is still let go of, so the next ending does not try again.
+    expect(run.db).toBeNull()
   })
 })
