@@ -36,6 +36,8 @@ import { reviewDocument, explain } from '../identity/review.js'
 import { Pack, refusedAfterSealing } from '../pack/assemble.js'
 import type { AddressRecord } from './services.js'
 import { buildPackDocument } from '../pack/document.js'
+import { buildNextStepsDocument } from '../pack/next-steps.js'
+import { whatIsMissingFrom } from '../vendors/foxit.js'
 import { PERMISSION_FILL_IN_AND_SIGN_ONLY, sealPack } from '../seal/seal.js'
 import type { Tool, ToolContext, ToolOutcome, ToolEvent } from './registry.js'
 import type { CaseFacts } from '../stages/facts.js'
@@ -1233,8 +1235,6 @@ export const assemblePack: Tool = {
     ]
 
     const pack = new Pack()
-    pack.run('pdf_merge')
-    pack.run('pdf_tag')
 
     // The agreement is prepared again here rather than carried from stage four.
     //
@@ -1270,6 +1270,51 @@ export const assemblePack: Tool = {
       stampedAt: context.now(),
     })
 
+    // The second document. It says what Charter did NOT do, and it is the last
+    // thing the owners read before signing.
+    //
+    // Separate rather than a section, because it genuinely is a separate document
+    // and because that is what makes the joining below real work. If the join
+    // failed, the packet would visibly be missing its last pages rather than
+    // quietly missing a service call.
+    const nextSteps = await buildNextStepsDocument({
+      companyName: prepared.data.companyName,
+      state: prepared.data.state,
+      owners: prepared.data.owners.map((one) => one.fullName),
+      ...(context.facts.address?.registered === true && context.facts.address.candidate !== undefined
+        ? { addressRegistered: context.facts.address.candidate }
+        : { addressRegistered: undefined }),
+      stampedAt: context.now(),
+    })
+
+    // ---- join, shrink, read back, and only then seal -------------------------
+    //
+    // Every one of those is reversible and every one happens BEFORE the seal. That
+    // order is the rule this whole file exists to keep: once the pack is sealed,
+    // nothing that rewrites the file may run, and joining, shrinking and any other
+    // rewriting operation all would.
+    pack.run('pdf_merge')
+    const joined = await context.services.documents.join([
+      { name: 'the formation pack', bytes: document },
+      { name: 'what you must still do yourself', bytes: nextSteps },
+    ])
+
+    pack.run('pdf_compress')
+    const smaller = await context.services.documents.shrink(joined.bytes)
+
+    // Read the finished text back out, by a different program than the one that
+    // wrote it, and look for the things the pack must say. A check performed by
+    // the same code that produced the thing being checked is not really a check.
+    //
+    // When it did not happen, that is recorded as "not checked". Never as
+    // "checked and fine": those are different facts and only one is worth having.
+    const readBack = await context.services.documents.readBack(smaller.bytes)
+    const mustSay = [
+      prepared.data.companyName,
+      ...prepared.data.owners.map((one) => one.fullName),
+    ]
+    const missingFromPack = readBack.happened ? whatIsMissingFrom(readBack.text, mustSay) : []
+
     // Write, then SEAL, then fingerprint the sealed bytes. In that order, and
     // nothing that rewrites the file runs afterwards. A fingerprint of a file that
     // can still be rewritten proves only what the file used to be.
@@ -1277,7 +1322,7 @@ export const assemblePack: Tool = {
     // Permission level 2: filling in and signing, and nothing else. Level 1 would
     // stop the owners signing at all, which would make the pack useless for the one
     // thing it exists for. Level 3 would let content be added to the page.
-    const stamped = await sealPack(document, context.certificate, {
+    const stamped = await sealPack(smaller.bytes, context.certificate, {
       at: context.now(),
       reason:
         'Sealed by Charter. From this point only filling in and signing are ' +
@@ -1315,6 +1360,9 @@ export const assemblePack: Tool = {
         permissionLevel: String(PERMISSION_FILL_IN_AND_SIGN_ONLY),
         wouldRefuseAfterSealing: String(wouldRefuse.length),
         refusedInThisRun: String(didRefuse.length),
+        documentsJoined: String(joined.partNames.length),
+        textCheckedByAnotherProgram: readBack.happened ? 'yes' : 'no',
+        missingFromPack: String(missingFromPack.length),
       },
       events: [
         {
@@ -1330,6 +1378,17 @@ export const assemblePack: Tool = {
             permissionLevel: String(PERMISSION_FILL_IN_AND_SIGN_ONLY),
             wouldRefuseAfterSealing: wouldRefuse as unknown as JsonValue,
             refusedAfterSealing: didRefuse as unknown as JsonValue,
+            // Which parts went in, and who joined them. The names of the
+            // documents, never their contents.
+            joinedParts: joined.partNames as unknown as JsonValue,
+            joinedBy: joined.joinedBy,
+            madeSmallerBy: smaller.shrunkBy,
+            // Whether anybody other than the writer read the pack back, and what
+            // was looked for. "no" is a real answer and means not checked.
+            textReadBackBy: readBack.readBy,
+            textWasCheckedByAnotherProgram: readBack.happened ? 'yes' : 'no',
+            lookedForInThePack: mustSay as unknown as JsonValue,
+            notFoundInThePack: missingFromPack as unknown as JsonValue,
           },
         },
       ],
