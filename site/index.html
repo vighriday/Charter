@@ -113,8 +113,19 @@
 
         <span class="bar-status">
           <i class="bar-dot"></i>
+          <!--
+            "you are at", not "waiting at".
+
+            This number is where the READER is in the recorded run, which moves
+            when they scroll or drag the bar. It was labelled "waiting at", which
+            reads as a status of the software rather than a position on a page,
+            and the collision is worse here than almost anywhere: waiting is a
+            real thing this run does seven times, when it stops and will not go
+            on until a person answers. Somebody opening the page cold saw
+            "waiting at step 4" and reasonably asked whether it was stuck.
+          -->
           example: a bakery in Texas &middot; <span data-run="totalEntries"></span> steps
-          &middot; waiting at step <span data-run="here"></span>
+          &middot; you are at step <span data-run="here"></span>
         </span>
 
         <span class="bar-actions">
