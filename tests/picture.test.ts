@@ -34,6 +34,7 @@ import forge from 'node-forge'
 
 import {
   perfectCorpImagery,
+  asPem,
   describeThePicture,
   proofOfKey,
   firstUrlIn,
@@ -113,6 +114,40 @@ describe('what is actually asked for', () => {
 
   it('does not mind how the owners spaced their sentence', () => {
     expect(describeThePicture('  a bike shop  ')).toContain('a bike shop.')
+  })
+})
+
+describe('the public key, in whatever shape their console handed it over', () => {
+  // Found with a real key in hand. Their console gives the key as one long run of
+  // letters and numbers with no wrapper and no line breaks, and every encryption
+  // library expects the wrapper. A key copied out correctly failed to parse, and
+  // the error a person saw was about bad formatting, which reads as "you copied
+  // it wrong". Both shapes are accepted now, so nobody has to know any of that.
+  const bare = PUBLIC_PEM.replace(/-----[A-Z ]+-----/g, '').replace(/\s+/g, '')
+
+  it('takes it with the wrapper already on, and changes nothing', () => {
+    expect(asPem(PUBLIC_PEM)).toBe(PUBLIC_PEM.trim())
+  })
+
+  it('takes it bare, and puts the wrapper back', () => {
+    const wrapped = asPem(bare)
+    expect(wrapped.startsWith('-----BEGIN PUBLIC KEY-----\n')).toBe(true)
+    expect(wrapped.trimEnd().endsWith('-----END PUBLIC KEY-----')).toBe(true)
+  })
+
+  it('produces a key the encryption library actually accepts', () => {
+    // The only check that matters. The shape looking right and the shape parsing
+    // are different facts, and this asserts the second one.
+    const opened = pair.privateKey.decrypt(
+      forge.util.decode64(proofOfKey(KEY, bare, AT)),
+      'RSAES-PKCS1-V1_5',
+    )
+    expect(opened).toBe(`${KEY};${AT}`)
+  })
+
+  it('does not mind how the bare form was wrapped when it was pasted', () => {
+    const acrossLines = (bare.match(/.{1,40}/g) ?? []).join('\n')
+    expect(asPem(acrossLines)).toBe(asPem(bare))
   })
 })
 

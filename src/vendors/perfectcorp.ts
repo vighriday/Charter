@@ -99,8 +99,44 @@ export interface PerfectCorpOptions {
  * written down: their service refuses an old block, so one that leaked is worth
  * nothing shortly afterwards.
  */
+/**
+ * Put a public key into the shape the encryption library insists on.
+ *
+ * WHY THIS FUNCTION EXISTS AT ALL
+ *
+ * A public key is usually written in a wrapper called PEM: a line saying
+ * `-----BEGIN PUBLIC KEY-----`, the key itself as a long run of letters and
+ * numbers broken into 64-character lines, and a matching `-----END-----` line.
+ * Every library expects that wrapper.
+ *
+ * Perfect Corp's console does not give you that. It gives you the long run of
+ * letters and numbers on its own, with no wrapper and no line breaks, and their
+ * own examples add the wrapper in the calling code without mentioning it. So a
+ * key copied straight out of their console, correctly, fails to parse — and the
+ * error a person sees is about invalid formatting, which sounds like they copied
+ * it wrong.
+ *
+ * We found this the first time we called them with a real key. It is the same
+ * lesson as everywhere else in this folder: a client that has never been called
+ * is a guess, and the guess here was that a company issuing a public key issues
+ * it in the form everything else uses.
+ *
+ * So: if the wrapper is already there, leave it alone. If it is not, add it.
+ * Both forms are accepted, which means nobody has to know any of the above.
+ */
+export function asPem(publicKey: string): string {
+  const trimmed = publicKey.trim()
+  if (trimmed.includes('BEGIN PUBLIC KEY')) return trimmed
+
+  // Every kind of whitespace removed first, so a key pasted across several lines
+  // and a key pasted on one line become the same thing.
+  const body = trimmed.replace(/\s+/g, '')
+  const lines = body.match(/.{1,64}/g) ?? []
+  return `-----BEGIN PUBLIC KEY-----\n${lines.join('\n')}\n-----END PUBLIC KEY-----\n`
+}
+
 export function proofOfKey(apiKey: string, publicKeyPem: string, atMilliseconds: number): string {
-  const key = forge.pki.publicKeyFromPem(publicKeyPem.trim())
+  const key = forge.pki.publicKeyFromPem(asPem(publicKeyPem))
   // RSAES-PKCS1-v1_5, which is what their own examples use. Written out rather
   // than left to a default, because the two common paddings are not compatible
   // and the failure is a refusal that says nothing about which one was wrong.

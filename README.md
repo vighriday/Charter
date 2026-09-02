@@ -180,7 +180,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,254 tests
+npm test          # 1,258 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -409,7 +409,7 @@ answer is 658, which is what this one said on 30 August.
 | The page in the packet saying what Charter did NOT do, and the join that puts it there | **built, 17 tests.** It never guesses at a filing office and never prints a fee <!-- tests/pack-join.test.ts --> |
 | The identity document Charter writes for itself, so nobody is ever asked to upload a real one | **built, 10 tests** and read live by the real reading service <!-- tests/specimen.test.ts --> |
 | Carrying the sealed packet to the owners to sign, from a folder no tool can reach | **built, 21 tests.** NEVER CALLED — their eSign product issues its own key pair. `npm run esign:proof` gets to exactly that line and says which one to fetch <!-- tests/esign.test.ts --> |
-| Drawing the new business's first picture from the owners' own words, with nobody in it and no lettering | **built, 16 tests.** NEVER CALLED — no key yet. `npm run picture:proof` <!-- tests/picture.test.ts --> |
+| Drawing the new business's first picture from the owners' own words, with nobody in it and no lettering | **built, 20 tests.** The key is redeemed and the first real call was refused: their console hands out a key and a public key, and the sign-in wants a client identifier that is neither. Their public key also arrives without the wrapper every encryption library expects, which is now put back for you <!-- tests/picture.test.ts --> |
 | The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document <!-- tests/seal.test.ts --> |
 | The checker a stranger runs against a finished pack | **built, 19 tests.** `npm run verify` <!-- tests/verify.test.ts --> |
 | An outside timestamp over the end of the record, from an authority that is not us — and the refusal of one that is about somebody else's record | **built, 27 tests** <!-- tests/anchor.test.ts --> |
