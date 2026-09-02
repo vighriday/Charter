@@ -34,8 +34,29 @@
 import { describe, expect, it } from 'vitest'
 import { join, sep } from 'node:path'
 
-import { fileAsked, whereFrom, secretSent } from '../src/serve/server.js'
+import { fileAsked, whereFrom, secretSent, isKnock } from '../src/serve/server.js'
 import { sameSecret, answerKind } from '../src/serve/runs.js'
+
+describe('somebody knocking to keep the site awake', () => {
+  // Free hosting sleeps after about fifteen minutes with nothing to do, and
+  // waking it takes most of a minute. Something outside knocks every few minutes
+  // so that a stranger who opens the link never meets a blank screen.
+  it('recognises both names for the door', () => {
+    // /healthz is what hosting services and uptime checkers try first. The other
+    // is here because every other address in this program begins /api/, so it is
+    // what somebody reading the code would guess.
+    expect(isKnock('/healthz')).toBe(true)
+    expect(isKnock('/api/health')).toBe(true)
+  })
+
+  it('is not confused by anything else', () => {
+    expect(isKnock('/')).toBe(false)
+    expect(isKnock('/api/limits')).toBe(false)
+    expect(isKnock('/api/runs')).toBe(false)
+    expect(isKnock('/healthz/../api/runs')).toBe(false)
+    expect(isKnock('/healthzzz')).toBe(false)
+  })
+})
 
 describe('the secret a request carried', () => {
   it('reads it out of the authorization header', () => {

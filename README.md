@@ -2,7 +2,7 @@
 
 **From idea to legally alive.**
 
-![tests](https://img.shields.io/badge/tests-1%2C260%20passing-2f6f4e)
+![tests](https://img.shields.io/badge/tests-1%2C262%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
 ![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
@@ -231,7 +231,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,260 tests
+npm test          # 1,262 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -303,6 +303,75 @@ The limits in `src/serve/limits.ts` are what make it safe to leave open: six run
 a day between everybody, two per person, one at a time. Those numbers come from
 the smallest allowance behind it — 250 web searches a month — and the page says
 so when it turns somebody away.
+
+### The exact steps, on Render
+
+[`render.yaml`](render.yaml) is the whole configuration, in the repository, so
+that what is running can be read rather than guessed at. Render calls it a
+Blueprint.
+
+1. **New → Blueprint** on Render, and pick this repository. It reads
+   `render.yaml` and offers to create one web service called `charter`.
+2. **Fill in the keys it asks for.** Every one of them is marked `sync: false` in
+   that file, which means Render must ask a person for it and it is never written
+   down in the repository. At minimum: `GEMINI_API_KEY` and `GROQ_API_KEY`.
+   Without them the page still opens and every replay tab works; only the tab
+   where a visitor runs their own idea says plainly that it cannot.
+3. **Deploy.** The build runs `npm ci && npm run check`, so the whole test suite
+   has to pass before anything goes live. A failing test is a failed deploy, on
+   purpose, because the front page states the test count as a fact.
+4. **Open the address it gives you and add `/healthz`.** It should answer
+   `{"awake":true, ...}`. That is the door the next step knocks on.
+
+Two settings in that file are the ones that keep this from costing anybody
+anything: `REGISTRAR_ENV=test` points the registrar at its free sandbox, which
+answers exactly like the real thing and registers nothing, and
+`SPEND_REAL_MONEY=false` is the second hand on the lever — switching the first to
+live is refused unless this is changed too. A visitor watches the price be
+checked and watches the run stop and ask for permission, which is the part worth
+seeing.
+
+### Keeping it awake, which on free hosting is the whole game
+
+A free service sleeps after about fifteen minutes with nothing to do, and waking
+it takes most of a minute. Someone who opens the link, sees a blank screen and
+waits will not wait twice. Everything else here is about being checkable by a
+stranger who turns up unannounced, and a stranger who turns up to a blank screen
+has checked nothing.
+
+So something outside has to knock, and there are **two knockers**, because one is
+not enough.
+
+**The first, and the one that actually keeps time.** An outside uptime service.
+[cron-job.org](https://cron-job.org) is free and will ask every minute;
+[UptimeRobot](https://uptimerobot.com) is free and asks every five. Either way,
+point it at `https://your-address/healthz`, expect a `200`, and that is the whole
+setup. Two minutes of work.
+
+**The second, which lives in this repository.**
+[`.github/workflows/keep-awake.yml`](.github/workflows/keep-awake.yml) asks every
+five minutes from GitHub, needs no account anywhere, and costs nothing because
+GitHub does not bill public repositories for it. Set one thing: the repository's
+**Settings → Secrets and variables → Actions → Variables**, a variable named
+`SITE_URL`, holding the deployed address.
+
+That one is deliberately the backstop rather than the main knocker. GitHub runs
+scheduled jobs on a best-effort basis and delays them under load, sometimes by
+twenty minutes — documented behaviour, and exactly the size of gap that lets a
+service fall asleep. It knocks three times before it gives up, gives the first
+knock ninety seconds because that is the one waking the machine, and fails loudly
+if the address is not set, rather than quietly succeeding at nothing.
+
+**How to tell it is working.** `/healthz` reports how many seconds the program has
+been running. Ask it twice, an hour apart: a number that kept climbing means it
+never slept. A number that reset to something small means it did, and the
+knocking is not keeping up.
+
+The door itself is cheap on purpose. It reads nothing, writes nothing, opens no
+database connection and calls no outside company, and it is answered **before**
+the visitor limits are consulted — a knock arriving every minute forever, counted
+against an allowance meant for people, would eat the whole day's runs before
+breakfast.
 
 ## The line this software will not cross
 
@@ -449,7 +518,7 @@ answer is 658, which is what this one said on 30 August.
 | The live run: bringing your own idea, and the five places it stops and waits for you | **built, 6 tests** <!-- tests/live.test.ts --> |
 | Reading typed answers without losing any of them, so the whole run can be driven from a written-out list rather than only by hand | **built, 7 tests** <!-- tests/keyboard.test.ts --> |
 | The run panel on the website: anybody runs their own idea with our keys, and the limits that let it be open to everybody rather than to nobody | **built, 17 tests**, and the shipped number was wrong until the test did the arithmetic <!-- tests/limits.test.ts --> |
-| Who may read a run, and what a web address can reach. Reading somebody's run needs the same secret answering it does, because its record carries their names and every answer they gave | **built, 20 tests** <!-- tests/serve.test.ts --> |
+| Who may read a run, and what a web address can reach. Reading somebody's run needs the same secret answering it does, because its record carries their names and every answer they gave. Also the one address that exists to be knocked on every few minutes, so free hosting never puts the site to sleep in front of somebody | **built, 22 tests** <!-- tests/serve.test.ts --> |
 | The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 26 tests** <!-- tests/document.test.ts --> |
 | Reading the words back out of the sealed file, so the website shows the document rather than its own copy of the document | **built, 12 tests** <!-- tests/pack-read.test.ts --> |
 | The same agreement as an editable Word file, so the owners can take it to somebody they trust before anybody signs anything | **built, 23 tests** <!-- tests/docx.test.ts --> |

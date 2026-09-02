@@ -1,0 +1,139 @@
+# How to put Charter on the internet, written down instead of clicked.
+#
+# WHAT THIS FILE IS
+#
+# Render is a hosting company. This file tells it what to build and how to run
+# it, so that putting Charter online is one action rather than a person
+# remembering twenty settings in a web form. Render calls this a Blueprint: point
+# it at this repository and it reads this file.
+#
+# WHY A FILE AND NOT THE WEB FORM
+#
+# The same reason the tool list and the settings file are generated rather than
+# typed: a setting nobody can read is a setting nobody can check. Everything here
+# is in the repository, so anybody can see exactly what is running and with what
+# limits.
+#
+# WHAT IS NOT IN HERE, ON PURPOSE
+#
+# No keys. Not one. Every secret below says `sync: false`, which means a person
+# types it into Render's own dashboard and it never appears in a file. A key in a
+# repository is a key that has leaked, and this repository is public.
+#
+# THE ONE THING TO KNOW ABOUT FREE HOSTING
+#
+# A free service goes to sleep after about fifteen minutes with nothing to do,
+# and waking it takes most of a minute. A judge who opens the page and waits
+# fifty seconds in front of a blank screen has already decided what they think.
+#
+# So something outside knocks every few minutes. The knockers are described in
+# .github/workflows/keep-awake.yml. They knock on /healthz, which reads nothing,
+# writes nothing, calls no outside company, and is answered before the visitor
+# limits are consulted so that a knock never eats an allowance meant for people.
+
+services:
+  - type: web
+    name: charter
+    runtime: node
+    plan: free
+    region: oregon
+
+    # Everything the tests check, and then the build. If a single test fails this
+    # never deploys, which is the same rule the website's own front page states.
+    buildCommand: npm ci && npm run check
+    startCommand: npm run serve
+
+    # Render asks this address whether the service is alive. Same address the
+    # outside knockers use, and deliberately the cheapest thing this program can
+    # answer.
+    healthCheckPath: /healthz
+
+    # One machine. Charter holds each run's secret in memory for as long as that
+    # run is waiting for its owner to answer, so a second machine would mean a
+    # visitor's answer arriving at the one that never asked the question.
+    numInstances: 1
+
+    autoDeploy: true
+
+    # A disk the database can live on, so a finished run is still there after a
+    # deploy. Without it the database is in memory and every restart forgets
+    # everything, which is survivable for a demonstration and awful for a judge
+    # who comes back an hour later to the record they were shown.
+    #
+    # Render's free plan does not include disks. If this is deployed on the free
+    # plan, delete this block and CHARTER_DB_PATH below: the program runs in
+    # memory and says so, rather than failing.
+    disk:
+      name: charter-data
+      mountPath: /var/data
+      sizeGB: 1
+
+    envVars:
+      # ---- where the program is running ---------------------------------------
+      - key: NODE_VERSION
+        value: 22.16.0
+
+      # Setting PORT is what tells the program it is hosted rather than running on
+      # somebody's laptop, so it listens for the whole internet instead of only
+      # for itself. Render sets this on its own; it is written here so nobody
+      # reading has to guess why the behaviour changes.
+      - key: PORT
+        value: 10000
+
+      - key: CHARTER_DB_PATH
+        value: /var/data/charter
+
+      # ---- the two models, which every step needs ------------------------------
+      #
+      # sync: false means a person types this into Render's dashboard. It is never
+      # in this file and never in this repository.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+
+      # ---- the outside companies ------------------------------------------------
+      - key: SERPAPI_KEY
+        sync: false
+      - key: NAMECOM_USERNAME_TEST
+        sync: false
+      - key: NAMECOM_TOKEN_TEST
+        sync: false
+      - key: NUTRIENT_EXTRACTION_KEY
+        sync: false
+      - key: NUTRIENT_PROCESSOR_KEY
+        sync: false
+      - key: FOXIT_PDF_CLIENT_ID
+        sync: false
+      - key: FOXIT_PDF_CLIENT_SECRET
+        sync: false
+      - key: PERFECTCORP_API_KEY
+        sync: false
+
+      # The key that vouches for Charter's own record, so a visitor can download
+      # their run and check it on their own machine. Its public half is in this
+      # repository on purpose; this is the other half and it is typed in by hand.
+      - key: ATTESTATION_PRIVATE_KEY
+        sync: false
+
+      # ---- how a run behaves in public -------------------------------------------
+      #
+      # False, so a visitor gets a real run on their own idea rather than a replay
+      # of the bakery with their name on it.
+      - key: REPLAY_MODE
+        value: 'false'
+
+      # THE TWO SETTINGS THAT KEEP THIS FROM COSTING ANYBODY ANYTHING.
+      #
+      # The registrar has a free sandbox that answers exactly like the real thing
+      # and registers nothing. That is what the public site talks to. The second
+      # setting is the other hand on the lever: switching the first to live is
+      # refused unless this one is also changed, which is deliberate, because the
+      # mistake it prevents is an ordinary typo that spends real money.
+      #
+      # A visitor watches the price be checked and watches the run stop and ask
+      # for permission, which is the part worth seeing.
+      - key: REGISTRAR_ENV
+        value: test
+      - key: SPEND_REAL_MONEY
+        value: 'false'

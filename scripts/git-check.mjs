@@ -164,6 +164,11 @@ const EXPECTED = [
   /^README\.md$/, /^TOOLS\.md$/, /^LICENSE$/, /^\.gitignore$/, /^\.gitattributes$/,
   /^package(-lock)?\.json$/, /^tsconfig(\.[a-z]+)?\.json$/,
   /^vitest\.config\.ts$/, /^next\.config\.[cm]?[jt]s$/,
+  // How the site is hosted, written down instead of clicked into a web form, so
+  // that what is running can be read by anybody. It contains no keys: every
+  // secret in it is marked as something the hosting company must ask a person
+  // for, and this check would catch it if that were ever untrue.
+  /^render\.yaml$/,
   /^src\//, /^tests?\//, /^scripts\//, /^public\//, /^migrations\//,
   /^\.github\//, /^keys\/[^/]+\.pub$/, /^keys\/README\.md$/, /^\.env\.example$/,
   /^fixtures\//, /^templates\//,

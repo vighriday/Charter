@@ -1,0 +1,107 @@
+# Knocking on the door so the site is never asleep when somebody arrives.
+#
+# THE PROBLEM THIS SOLVES
+#
+# Free hosting puts a service to sleep when nobody has asked it for anything for
+# about fifteen minutes. Waking it takes most of a minute: the machine has to be
+# found, the program started, and the first request waits for all of it.
+#
+# That minute is the whole problem. A judge opens the link, sees a blank screen,
+# waits, and decides. They will not wait twice. Everything else in this project
+# is about being checkable by a stranger who arrives without warning, and a
+# stranger who arrives to a blank screen has checked nothing.
+#
+# WHY THERE ARE TWO KNOCKERS AND NOT ONE
+#
+# This file is one of them, and it is the SECOND one on purpose.
+#
+# GitHub runs scheduled jobs on a best-effort basis. Under load it delays them,
+# sometimes by fifteen or twenty minutes, and occasionally it skips one. That is
+# documented behaviour, not a fault, and it is exactly the gap that lets a
+# service fall asleep. So a job here asking every five minutes really means
+# "usually every five minutes, sometimes every twenty-five".
+#
+# The FIRST knocker is therefore an outside uptime service, which exists to do
+# only this and does it on time. Setting one up takes two minutes and is written
+# out in the readme. This file is the backstop: it lives in the repository, needs
+# no account anywhere, and keeps working if somebody forgets to renew the other.
+#
+# Two unreliable knockers on different schedules miss far less than one, and this
+# one costs nothing at all: GitHub does not bill public repositories for these.
+#
+# WHAT IT ACTUALLY DOES
+#
+# Asks /healthz, which reads nothing, writes nothing, opens no database
+# connection and calls no outside company. It answers from what the process
+# already knows. Something is going to ask this every few minutes forever, so
+# what it touches matters.
+#
+# HOW TO SEE IT WORKING
+#
+# The answer carries how many seconds the program has been running. A number that
+# keeps climbing across separate runs of this job means the service never slept.
+# A number that keeps resetting to something small means it did, and the knocking
+# is not keeping up.
+
+name: keep the site awake
+
+on:
+  schedule:
+    # Every five minutes, which is the shortest GitHub allows, and read as a
+    # request rather than a promise. See the note above about delays.
+    - cron: '*/5 * * * *'
+  # So a person can knock by hand right before showing it to somebody.
+  workflow_dispatch:
+
+# If a knock is somehow still running when the next is due, let it finish and
+# skip the new one rather than piling them up.
+concurrency:
+  group: keep-awake
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  knock:
+    runs-on: ubuntu-latest
+    # A knock that hangs should not hold a runner for six hours.
+    timeout-minutes: 5
+
+    steps:
+      - name: Knock, and say what came back
+        env:
+          # Set this in the repository's settings, under Variables, to the
+          # address of the deployed site. It is not a secret: it is the same
+          # address printed on the submission. If it is empty this job says so
+          # and stops, rather than quietly succeeding at nothing, which is the
+          # failure that lets a service sleep for a week unnoticed.
+          SITE: ${{ vars.SITE_URL }}
+        run: |
+          set -u
+          if [ -z "${SITE}" ]; then
+            echo "SITE_URL is not set, so there is nothing to knock on."
+            echo "Set it under Settings -> Secrets and variables -> Actions -> Variables."
+            exit 1
+          fi
+
+          # Three tries. The first one after a real sleep is the slow one,
+          # because it is the one waking the machine up, so it is given longer
+          # than the others and a failure is only a failure after all three.
+          for attempt in 1 2 3; do
+            echo "--- knock ${attempt} of 3"
+            body=$(curl --silent --show-error --location \
+                        --max-time 90 \
+                        --write-out '\nHTTP %{http_code} in %{time_total}s\n' \
+                        "${SITE%/}/healthz") && {
+              echo "${body}"
+              case "${body}" in
+                *'"awake":true'*) echo "It is awake."; exit 0 ;;
+              esac
+              echo "It answered, but not with the word this expects."
+            }
+            sleep 15
+          done
+
+          echo "Three knocks and no proper answer. The site may be down, not merely asleep."
+          exit 1

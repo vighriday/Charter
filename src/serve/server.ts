@@ -148,6 +148,25 @@ function sendJson(response: ServerResponse, status: number, body: unknown): void
   response.end(text)
 }
 
+/**
+ * Is this request just somebody knocking to keep the service awake?
+ *
+ * Free hosting puts a service to sleep when nobody has asked it for anything for
+ * a while, and waking it takes the best part of a minute. So something outside
+ * knocks every few minutes. `/healthz` is the name almost every hosting service
+ * and uptime checker expects; `/api/health` is here because the rest of this
+ * program's own addresses begin `/api/`, and somebody looking for it will try
+ * that first.
+ *
+ * Written as its own function so that a test can hold one thing in place: a knock
+ * is answered BEFORE the visitor limits are consulted. A knock arriving every few
+ * minutes forever, counted against an allowance meant for people, would use the
+ * whole day's runs before breakfast.
+ */
+export function isKnock(path: string): boolean {
+  return path === '/healthz' || path === '/api/health'
+}
+
 export interface ServerOptions {
   readonly port?: number
   readonly host?: string
@@ -191,6 +210,38 @@ export async function start(options: ServerOptions = {}): Promise<{ readonly por
     const url = request.url ?? '/'
     const path = url.split('?')[0] ?? '/'
     const visitor = limits.code(whereFrom(request.headers, request.socket.remoteAddress ?? ''))
+
+    // ---- is this thing awake -------------------------------------------------
+    //
+    // WHY THIS EXISTS
+    //
+    // Free hosting puts a service to sleep when nobody has asked it for anything
+    // for a while, and waking it up again takes the best part of a minute. A judge
+    // who opens the page and waits fifty seconds for a blank screen has already
+    // formed an opinion. So something outside has to knock on the door every few
+    // minutes, and this is the door.
+    //
+    // WHY IT IS THIS CHEAP
+    //
+    // It reads nothing, writes nothing, opens no database connection and calls no
+    // outside company. That is deliberate: something is going to call this every
+    // few minutes forever, and anything it touched would be touched every few
+    // minutes forever too. It answers from what the process already knows.
+    //
+    // It is also outside the visitor limits on purpose. A knock on the door is
+    // not a run, and counting it would eat an allowance meant for people.
+    if (isKnock(path)) {
+      sendJson(response, 200, {
+        awake: true,
+        // Seconds this process has been up. A number that keeps climbing is how
+        // somebody can tell the pinging is working, rather than the service
+        // sleeping and being woken by whoever happened to look.
+        upForSeconds: Math.round(process.uptime()),
+        runsGoingNow: limits.goingNow(),
+        replaying: settings.replaying,
+      })
+      return
+    }
 
     // ---- what the limits are, and where this visitor stands ------------------
     if (path === '/api/limits') {
