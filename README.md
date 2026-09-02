@@ -2,7 +2,7 @@
 
 **From idea to legally alive.**
 
-![tests](https://img.shields.io/badge/tests-1%2C258%20passing-2f6f4e)
+![tests](https://img.shields.io/badge/tests-1%2C260%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
 ![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
@@ -231,7 +231,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,258 tests
+npm test          # 1,260 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -460,7 +460,7 @@ answer is 658, which is what this one said on 30 August.
 | The page in the packet saying what Charter did NOT do, and the join that puts it there | **built, 17 tests.** It never guesses at a filing office and never prints a fee <!-- tests/pack-join.test.ts --> |
 | The identity document Charter writes for itself, so nobody is ever asked to upload a real one | **built, 10 tests** and read live by the real reading service <!-- tests/specimen.test.ts --> |
 | Carrying the sealed packet to the owners to sign, from a folder no tool can reach | **built, 21 tests.** NEVER CALLED — their eSign product issues its own key pair. `npm run esign:proof` gets to exactly that line and says which one to fetch <!-- tests/esign.test.ts --> |
-| Drawing the new business's first picture from the owners' own words, with nobody in it and no lettering | **built, 20 tests.** The key is redeemed and the first real call was refused: their console hands out a key and a public key, and the sign-in wants a client identifier that is neither. Their public key also arrives without the wrapper every encryption library expects, which is now put back for you <!-- tests/picture.test.ts --> |
+| Drawing the new business's first picture from the owners' own words, with nobody in it and no lettering | **built, 22 tests** and live. `npm run picture:proof` draws one and prints where it is. The two refusals go in the separate description of what must NOT appear, because writing "no people" into what you want is a known way to get people, and their prompt rewriting is turned off so the sentence drawn is the owners' own <!-- tests/picture.test.ts --> |
 | The seal that sets the pack's permission level | **built, 22 tests**, on a real multi-page document <!-- tests/seal.test.ts --> |
 | The checker a stranger runs against a finished pack | **built, 19 tests.** `npm run verify` <!-- tests/verify.test.ts --> |
 | An outside timestamp over the end of the record, from an authority that is not us — and the refusal of one that is about somebody else's record | **built, 27 tests** <!-- tests/anchor.test.ts --> |

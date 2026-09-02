@@ -155,9 +155,10 @@ window.CHARTER_SERVICES = {
       "host": "yce.perfectcorp.com",
       "job": "Draws the first picture for the new business’s website, from the owners’ own words.",
       "step": 8,
-      "state": "written, not proven",
+      "state": "live",
       "whatWeSend": [
-        "The sentence the owners typed when they described their business, which is already in the record because it started the legal work.",
+        "The sentence the owners typed when they described their business, which is already in the record because it started the legal work. Word for word: their prompt rewriting is turned off, because a rewrite makes it a picture of what a model thought the owners meant.",
+        "Separately, a list of what must NOT be in the picture. That is where the refusals go, because writing \"no people\" into the description of what you want is a known way to get people.",
         "Never a photograph of anybody."
       ],
       "whatComesBack": [
@@ -165,14 +166,14 @@ window.CHARTER_SERVICES = {
       ],
       "neverUsed": [
         "Their face analysis, skin analysis and face swapping. None of it appears in any tool list, none is reachable from anything the model can trigger, and a business formation tool has no business touching anybody’s face.",
-        "Inventing people or lettering. The picture is asked for with nobody in it and no words in it: invented people would be staff the business does not employ, and invented lettering would be a sign saying something nobody chose, on a business that has just spent an hour being careful about its wording."
+        "Inventing people or lettering. The picture is asked for with nobody in it and no words in it: invented people would be staff the business does not employ, and invented lettering would be a sign saying something nobody chose, on a business that has just spent an hour being careful about its wording.",
+        "Their own prompt rewriting, which is on by default and is turned off here."
       ],
       "seeItYourself": "npm run picture:proof",
       "code": [
         "src/vendors/perfectcorp.ts",
         "src/vendors/build.ts"
-      ],
-      "stillNotTrue": "This client has never been called: there is no key for it yet. Their sign-in needs a key and the public key issued beside it, and every sign-in encrypts the key with the current time so an old one is refused. Until the command above prints the address of a picture, a run says plainly what it would have drawn."
+      ]
     },
     {
       "company": "Google, Gemini",
@@ -218,5 +219,5 @@ window.CHARTER_SERVICES = {
       ]
     }
   ],
-  "live": 6
+  "live": 7
 }

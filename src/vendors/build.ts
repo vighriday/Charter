@@ -303,15 +303,12 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
   // the sentence its owners typed, which is already in the record because it is
   // what started the legal work, so that is what gets drawn.
   //
-  // Two values, not one. Their sign-in wants proof that the caller holds the
-  // arrangement, made by encrypting the key and the current time with a public
-  // key they issue beside it.
+  // One value. This company runs two services with the same name: an older one
+  // that signs in by encrypting your key with a public key they issue, and the
+  // newer one their console now hands out keys for, which takes the key straight
+  // in a header like everybody else. This is the newer one.
   const pictureKey = held('PERFECTCORP_API_KEY')
-  // Line breaks spelled out, put back before the key is read. A settings file
-  // usually cannot hold real ones, and a key missing them fails with a message
-  // about the key rather than about the file it came out of.
-  const picturePublicKey = held('PERFECTCORP_PUBLIC_KEY').replace(/\\n/g, '\n')
-  const canDraw = pictureKey !== '' && picturePublicKey !== ''
+  const canDraw = pictureKey !== ''
 
   const imagery: Chosen<ImageryService> =
     replaying || !canDraw
@@ -321,7 +318,7 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
           why:
             (replaying
               ? 'Nothing is drawn, because this is a replay. '
-              : 'PERFECTCORP_API_KEY and PERFECTCORP_PUBLIC_KEY are not both set. ') +
+              : 'PERFECTCORP_API_KEY is not set. ') +
             "The words it would have sent are the owners' own, taken from the " +
             'record, so a run shows exactly what would have been drawn. No ' +
             "photograph of anybody is ever sent, and that company's face and skin " +
@@ -330,7 +327,6 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
       : {
           service: perfectCorpImagery({
             apiKey: pictureKey,
-            publicKeyPem: picturePublicKey,
             ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
           }),
           kind: 'real',

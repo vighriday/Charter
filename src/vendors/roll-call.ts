@@ -44,7 +44,7 @@ import { nutrientIdentityReader } from './nutrient.js'
 import { namecomRegistrar } from './namecom.js'
 import { webSearch } from './search.js'
 import { foxitDocuments } from './foxit.js'
-import { proofOfKey } from './perfectcorp.js'
+import { DRAW_PATH, IMAGERY_HOST } from './perfectcorp.js'
 import { ask, describeReply } from './http.js'
 
 const GREEN = '\x1b[32m'
@@ -216,19 +216,26 @@ const CHECKS: Readonly<Record<string, () => Promise<Outcome>>> = {
 
   async 'Perfect Corp'() {
     const key = held('PERFECTCORP_API_KEY')
-    const publicKey = held('PERFECTCORP_PUBLIC_KEY').replace(/\\n/g, '\n')
-    if (key === '' || publicKey === '') return NO_KEY('PERFECTCORP_API_KEY and PERFECTCORP_PUBLIC_KEY')
+    if (key === '') return NO_KEY('PERFECTCORP_API_KEY')
 
     return attempt(async () => {
-      // The sign-in only. Drawing a picture costs credits and takes a minute, and
-      // the sign-in is the step that fails when a key is wrong.
-      const proof = proofOfKey(key, publicKey, Date.now())
-      const reply = await ask('https://yce-api-01.perfectcorp.com/s2s/v1.0/client/auth', {
+      // Deliberately an INCOMPLETE request for a picture. Drawing one costs
+      // credits and takes about a minute; this sends the same call with the model
+      // and the description left out. A wrong key is refused before anything is
+      // read, and a right key gets as far as complaining about the missing
+      // fields. So the answer is about the key, and it costs nothing.
+      const reply = await ask(`${IMAGERY_HOST}${DRAW_PATH}`, {
         method: 'POST',
-        body: { client_id: key, id_token: proof },
+        headers: { authorization: `Bearer ${key}` },
+        body: {},
       })
-      if (reply.kind !== 'ok') throw new Error(describeReply(reply))
-      return 'signed in. No picture was drawn'
+      if (reply.kind === 'ok') return 'the key was accepted. No picture was drawn'
+
+      const said = 'detail' in reply ? reply.detail : ''
+      if (reply.kind === 'refused' && reply.status === 400 && /required/i.test(said)) {
+        return 'the key was accepted. No picture was drawn'
+      }
+      throw new Error(describeReply(reply))
     })
   },
 

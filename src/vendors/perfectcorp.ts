@@ -21,32 +21,50 @@
  * A business formation tool has no business touching anybody's face, and the way
  * to make that true is to have no code that could.
  *
- * HOW THEIR SIGN-IN WORKS, WHICH IS UNUSUAL
+ * THE TWO REFUSALS, AND WHERE THEY ARE PUT
  *
- * Most services take a key in a header. This one does not. It gives out a key and
- * a public key, and every sign-in has to send proof that the caller holds the
- * matching arrangement: the caller encrypts its own key and the current time with
- * the public key, and sends the result. The service decrypts it, checks the key
- * matches and the time is recent, and hands back a token.
+ * Every picture is asked for with nobody in it and no lettering anywhere on it.
+ * Both are refusals rather than styling.
  *
- * The time is why it cannot be done once and written down. An old encrypted block
- * is refused, so a leaked one is worth nothing a few minutes later.
+ *   - A picture of a shop with invented people standing in it is a picture of
+ *     staff the business does not employ, on the website of a company formed this
+ *     morning.
+ *   - A picture with invented lettering on the window is a sign saying something
+ *     nobody chose, on a business that has just spent an hour being careful about
+ *     every word it puts in writing.
  *
- * WHAT IS NOT TRUE ABOUT THIS FILE YET
+ * Their service takes two separate descriptions: one for what the picture should
+ * contain, and one for what it must not. So the refusals go in the second, which
+ * is where a refusal belongs. Writing "no people" into the description of what
+ * you want is a known way to get people, because the description is read as a
+ * list of things to include.
  *
- * **It has never been called.** There is no key for it. This is written from their
- * published interface and it has not met their server.
+ * WHY THEIR PROMPT REWRITING IS TURNED OFF
  *
- * That sentence is here because the last client in this project that had never
- * been called was wrong in three separate ways at once — wrong endpoint, wrong
- * request, wrong reply shape — under a test suite that passed, and the first real
- * call found all three in ten minutes. Nothing in this project may describe this
- * as working until somebody has run `npm run picture:proof` and seen a picture.
- * Until then the honest word is "written, not proven", and that is the word the
- * settings file and the website both use.
+ * Their service will, by default, rewrite the description before drawing it, to
+ * add detail. It says so, and for most callers it is an improvement.
+ *
+ * It is turned off here, and this is the one setting in this file that is really
+ * a policy. The whole point is that the picture comes from the owners' own
+ * sentence. A rewrite makes it a picture of what a model thought they meant, and
+ * the record would then hold the owners' words beside a picture of something
+ * else. Charter would rather have a plainer picture that is honestly theirs.
+ *
+ * WHAT WE LEARNED BY ACTUALLY CALLING IT
+ *
+ * This company has two different services with the same name. The older one signs
+ * in by encrypting your key and the current time with a public key they issue.
+ * The newer one, which is the one their console now hands out keys for, takes the
+ * key straight in a header like everybody else. A client written from the older
+ * documentation authenticates against nothing, and the error it gets back names
+ * the credential rather than the service, which sends you looking in the wrong
+ * place for an afternoon.
+ *
+ * Same lesson as the rest of this folder, again: a client that has never been
+ * called is a guess. Nothing here may be described as working until somebody has
+ * run `npm run picture:proof` and seen the address of a real picture.
  */
 
-import forge from 'node-forge'
 import { ask, describeReply, type Fetcher, type Reply } from './http.js'
 import type { DrawnPicture, ImageryService } from '../tools/services.js'
 
@@ -56,6 +74,12 @@ export const IMAGERY_HOST = 'https://yce-api-01.perfectcorp.com'
 /** Their name, written once, so every record entry spells it the same way. */
 export const DRAWN_BY = 'Perfect Corp'
 
+/** Where a picture is asked for. Waiting on it uses this path plus the task. */
+export const DRAW_PATH = '/s2s/v2.0/task/text-to-image/youcam'
+
+/** The only model their newer service accepts on this path. */
+export const PICTURE_MODEL = 'youcam-image-v2'
+
 /** How long to wait for one answer. */
 const PATIENCE = 60_000
 
@@ -64,6 +88,31 @@ const DRAWING_PATIENCE = 180_000
 
 /** How long to wait between asking. */
 const BETWEEN_ASKS = 2_000
+
+/** Their limit on the description, in characters. Theirs, not ours. */
+export const MOST_WORDS = 800
+
+/**
+ * The shapes their service will draw, by the ordinary name for each shape.
+ *
+ * They are asked for as an exact width and height, and they refuse anything not
+ * on this list. Written out so that a caller says "4:3" and never has to know a
+ * number, and so that an unknown shape is caught here rather than by them.
+ */
+export const SIZES: Readonly<Record<string, string>> = {
+  '16:9': '1664*928',
+  '4:3': '1472*1104',
+  '1:1': '1328*1328',
+  '3:4': '1104*1472',
+  '9:16': '928*1664',
+}
+
+/** What a shape means to them, or null if it is not one they draw. */
+export function sizeFor(shape: string): string | null {
+  const asked = shape.trim().replace(/x/i, '*')
+  if (Object.values(SIZES).includes(asked)) return asked
+  return SIZES[shape.trim()] ?? null
+}
 
 export class CouldNotDraw extends Error {
   constructor(what: string, reply: Reply) {
@@ -76,10 +125,8 @@ export class CouldNotDraw extends Error {
 }
 
 export interface PerfectCorpOptions {
-  /** The key from their console. */
+  /** The key from their console. It goes straight into a header. */
   readonly apiKey: string
-  /** The public key they issue beside it, in the usual text form. */
-  readonly publicKeyPem: string
   readonly baseUrl?: string
   readonly fetcher?: Fetcher
   /** The clock, passed in so a test is exact and so the proof is repeatable. */
@@ -89,78 +136,29 @@ export interface PerfectCorpOptions {
 }
 
 /**
- * Build the proof that this caller holds the arrangement.
+ * What is actually asked for: the owners' own sentence, and nothing else.
  *
- * Their key and the current time, run together and encrypted with the public key
- * they issued. Written out here rather than hidden inside the client, because it
- * is the one part of this file somebody checking it would want to read.
- *
- * The time is in milliseconds and it is why this cannot be worked out once and
- * written down: their service refuses an old block, so one that leaked is worth
- * nothing shortly afterwards.
- */
-/**
- * Put a public key into the shape the encryption library insists on.
- *
- * WHY THIS FUNCTION EXISTS AT ALL
- *
- * A public key is usually written in a wrapper called PEM: a line saying
- * `-----BEGIN PUBLIC KEY-----`, the key itself as a long run of letters and
- * numbers broken into 64-character lines, and a matching `-----END-----` line.
- * Every library expects that wrapper.
- *
- * Perfect Corp's console does not give you that. It gives you the long run of
- * letters and numbers on its own, with no wrapper and no line breaks, and their
- * own examples add the wrapper in the calling code without mentioning it. So a
- * key copied straight out of their console, correctly, fails to parse — and the
- * error a person sees is about invalid formatting, which sounds like they copied
- * it wrong.
- *
- * We found this the first time we called them with a real key. It is the same
- * lesson as everywhere else in this folder: a client that has never been called
- * is a guess, and the guess here was that a company issuing a public key issues
- * it in the form everything else uses.
- *
- * So: if the wrapper is already there, leave it alone. If it is not, add it.
- * Both forms are accepted, which means nobody has to know any of the above.
- */
-export function asPem(publicKey: string): string {
-  const trimmed = publicKey.trim()
-  if (trimmed.includes('BEGIN PUBLIC KEY')) return trimmed
-
-  // Every kind of whitespace removed first, so a key pasted across several lines
-  // and a key pasted on one line become the same thing.
-  const body = trimmed.replace(/\s+/g, '')
-  const lines = body.match(/.{1,64}/g) ?? []
-  return `-----BEGIN PUBLIC KEY-----\n${lines.join('\n')}\n-----END PUBLIC KEY-----\n`
-}
-
-export function proofOfKey(apiKey: string, publicKeyPem: string, atMilliseconds: number): string {
-  const key = forge.pki.publicKeyFromPem(asPem(publicKeyPem))
-  // RSAES-PKCS1-v1_5, which is what their own examples use. Written out rather
-  // than left to a default, because the two common paddings are not compatible
-  // and the failure is a refusal that says nothing about which one was wrong.
-  const sealed = key.encrypt(`${apiKey};${atMilliseconds}`, 'RSAES-PKCS1-V1_5')
-  return forge.util.encode64(sealed)
-}
-
-/**
- * What is actually sent as the description of the picture.
- *
- * The owners' own sentence, and two instructions that are about the KIND of
- * picture rather than about its content: no people in it, and no lettering.
- *
- * Both are refusals rather than decoration. A picture of a shop with invented
- * people standing in it is a picture of staff the business does not employ. A
- * picture with invented lettering on the window is a sign saying something nobody
- * chose, on a business that has just spent an hour being careful about what it
- * says in writing.
+ * Trimmed, and cut at their limit if somebody wrote an essay. Nothing is added,
+ * because everything Charter wants to add is a refusal, and refusals go in the
+ * other description. See `whatToKeepOut`.
  */
 export function describeThePicture(ownersWords: string): string {
+  const said = ownersWords.trim()
+  return said.length <= MOST_WORDS ? said : said.slice(0, MOST_WORDS)
+}
+
+/**
+ * What must not be in the picture.
+ *
+ * Two refusals and a plain quality floor. The two refusals are the ones this
+ * project actually cares about and they are explained at the top of this file:
+ * no invented staff, and no invented signage. The rest is ordinary.
+ */
+export function whatToKeepOut(): string {
   return (
-    `${ownersWords.trim()}. ` +
-    'A photograph of the place itself, empty and open, with nobody in the picture ' +
-    'and no words, letters or signs anywhere in it.'
+    'people, faces, crowds, staff, customers, hands, ' +
+    'words, letters, text, signage, lettering, logos, watermarks, ' +
+    'low resolution, blurry, distorted'
   )
 }
 
@@ -169,76 +167,82 @@ export function perfectCorpImagery(options: PerfectCorpOptions): ImageryService 
   const clock = options.now ?? (() => Date.now())
   const betweenAsks = options.betweenAsks ?? BETWEEN_ASKS
   const drawingPatience = options.drawingPatience ?? DRAWING_PATIENCE
-
-  const send = (path: string, body: unknown, token: string | null, what: string) =>
-    ask(`${base}${path}`, {
-      method: 'POST',
-      headers: token === null ? {} : { authorization: `Bearer ${token}` },
-      body,
-      patience: PATIENCE,
-      ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
-    }).then((reply) => {
-      if (reply.kind !== 'ok') throw new CouldNotDraw(what, reply)
-      return reply.body
-    })
+  const carrying = { authorization: `Bearer ${options.apiKey}` }
 
   return {
     async draw(prompt: string, shape: string): Promise<DrawnPicture> {
       const words = describeThePicture(prompt)
-
-      // ---- sign in ------------------------------------------------------------
-      const signedIn = await send(
-        '/s2s/v1.0/client/auth',
-        {
-          client_id: options.apiKey,
-          id_token: proofOfKey(options.apiKey, options.publicKeyPem, clock()),
-        },
-        null,
-        'signing in',
-      )
-
-      const token = String(at(at(signedIn, 'result'), 'access_token') ?? '')
-      if (token === '') {
-        throw new CouldNotDraw('signing in', {
+      if (words === '') {
+        throw new CouldNotDraw('asking for the picture', {
           kind: 'refused',
-          status: 200,
-          detail: 'no access_token came back',
+          status: 0,
+          detail: 'the owners have not said what their business is, so there is nothing to draw',
+        })
+      }
+
+      const size = sizeFor(shape)
+      if (size === null) {
+        throw new CouldNotDraw('asking for the picture', {
+          kind: 'refused',
+          status: 0,
+          detail:
+            `"${shape}" is not a shape they draw. They draw ` +
+            `${Object.keys(SIZES).join(', ')}`,
         })
       }
 
       // ---- ask for the picture ------------------------------------------------
-      const started = await send(
-        '/s2s/v2.0/task/image-generator',
-        { request_id: 0, payload: { prompt: words, aspect_ratio: shape, output_count: 1 } },
-        token,
-        'asking for the picture',
-      )
+      const started = await ask(`${base}${DRAW_PATH}`, {
+        method: 'POST',
+        headers: carrying,
+        body: {
+          model: PICTURE_MODEL,
+          prompt: words,
+          negative_prompt: whatToKeepOut(),
+          size,
+          // See the note at the top of this file. This is a policy, not a tuning
+          // knob: the picture has to come from the owners' own sentence.
+          prompt_extend: false,
+        },
+        patience: PATIENCE,
+        ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
+      })
+      if (started.kind !== 'ok') throw new CouldNotDraw('asking for the picture', started)
 
-      const taskId = String(at(at(started, 'result'), 'task_id') ?? at(started, 'task_id') ?? '')
+      const taskId = String(
+        at(at(started.body, 'data'), 'task_id') ??
+          at(at(started.body, 'result'), 'task_id') ??
+          at(started.body, 'task_id') ??
+          '',
+      )
       if (taskId === '') {
         throw new CouldNotDraw('asking for the picture', {
           kind: 'unreadable',
-          status: 200,
+          status: started.status,
           detail: 'the reply carried no task to wait on',
         })
       }
 
       // ---- wait for it --------------------------------------------------------
+      //
+      // Their own guidance is explicit that a task nobody asks about can expire
+      // and still be charged for, so this keeps asking until it has an answer or
+      // its patience runs out, and never stops quietly.
       const startedAt = clock()
       for (;;) {
         await sleep(betweenAsks)
 
-        const reply = await ask(`${base}/s2s/v1.0/task/image-generator?task_id=${taskId}`, {
-          headers: { authorization: `Bearer ${token}` },
+        const reply = await ask(`${base}${DRAW_PATH}/${taskId}`, {
+          headers: carrying,
           patience: PATIENCE,
           ...(options.fetcher === undefined ? {} : { fetcher: options.fetcher }),
         })
         if (reply.kind !== 'ok') throw new CouldNotDraw('waiting for the picture', reply)
 
-        const result = at(reply.body, 'result') ?? reply.body
-        const status = String(at(result, 'status') ?? '')
+        const result = at(reply.body, 'data') ?? at(reply.body, 'result') ?? reply.body
+        const status = String(at(result, 'status') ?? at(result, 'task_status') ?? '')
 
-        if (status === 'success') {
+        if (status === 'success' || status === 'succeeded') {
           const url = firstUrlIn(result)
           if (url === null) {
             throw new CouldNotDraw('collecting the picture', {
@@ -261,8 +265,7 @@ export function perfectCorpImagery(options: PerfectCorpOptions): ImageryService 
         if (clock() - startedAt > drawingPatience) {
           throw new CouldNotDraw('drawing the picture', {
             kind: 'never-arrived',
-            detail:
-              `it was still "${status}" after ${Math.round(drawingPatience / 1000)} seconds`,
+            detail: `it was still "${status}" after ${Math.round(drawingPatience / 1000)} seconds`,
           })
         }
       }
@@ -301,7 +304,6 @@ export function firstUrlIn(body: unknown): string | null {
     return null
   }
   if (body === null || typeof body !== 'object') return null
-
   for (const value of Object.values(body as Record<string, unknown>)) {
     const found = firstUrlIn(value)
     if (found !== null) return found

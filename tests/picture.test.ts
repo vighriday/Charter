@@ -9,46 +9,49 @@
  * building, and that sentence is already in the record, because it is what started
  * the legal work.
  *
- * THE TWO THINGS CHECKED HARDEST
+ * THE THREE THINGS CHECKED HARDEST
  *
- * **What is added to the owners' words, and why.** The picture is asked for with
- * nobody in it and no lettering. Both are refusals rather than styling. A picture
- * of a shop with invented people in it is a picture of staff the business does not
- * employ. A picture with invented lettering on the window is a sign saying
- * something nobody chose, on a business that has just spent an hour being careful
- * about what it says in writing.
+ * **That the owners' own sentence survives, untouched.** Not a summary of it, not
+ * a model's words about them. If the sentence they typed is not what was sent, the
+ * picture is of something else. This is also why their prompt rewriting is turned
+ * off, and a test below asserts that it stays off.
  *
- * **That the owners' own sentence survives.** Not a summary of it, not a model's
- * words about them. If the sentence they typed does not appear in what was sent,
- * the picture is of something else.
+ * **Where the two refusals are put.** The picture is asked for with nobody in it
+ * and no lettering, and both are refusals rather than styling. A picture of a shop
+ * with invented people in it is a picture of staff the business does not employ. A
+ * picture with invented lettering on the window is a sign saying something nobody
+ * chose. Their service takes a separate description of what must NOT appear, so
+ * the refusals go there. Writing "no people" into the description of what you want
+ * is a known way to get people.
+ *
+ * **That a shape nobody draws is refused here, not by them.** They accept five
+ * exact sizes and refuse the rest, so a wrong one is caught before it is sent.
  *
  * WHAT THIS DOES NOT PROVE
  *
- * That it works against their service. It has never been called, because there is
- * no key. Nothing in this project may say otherwise until somebody has run
- * npm run picture:proof and seen the address of a picture.
+ * That it works against their service. Nothing in this project may say otherwise
+ * until somebody has run npm run picture:proof and seen the address of a picture.
  */
 
 import { describe, expect, it } from 'vitest'
-import forge from 'node-forge'
 
 import {
   perfectCorpImagery,
-  asPem,
   describeThePicture,
-  proofOfKey,
+  whatToKeepOut,
   firstUrlIn,
+  sizeFor,
   CouldNotDraw,
   DRAWN_BY,
+  DRAW_PATH,
+  MOST_WORDS,
+  PICTURE_MODEL,
+  SIZES,
 } from '../src/vendors/perfectcorp.js'
 
 const BASE = 'https://pictures.example.invalid'
-const KEY = 'a-key-that-is-not-real'
+const KEY = 'sk-a-key-that-is-not-real'
 const AT = 1_756_000_000_000
-
-/** A key pair made here, so nothing real is involved and nothing is committed. */
-const pair = forge.pki.rsa.generateKeyPair({ bits: 1024 })
-const PUBLIC_PEM = forge.pki.publicKeyToPem(pair.publicKey)
 
 function pretendNetwork(answers: Readonly<Record<string, unknown>>): {
   readonly fetcher: (url: string, init: RequestInit) => Promise<Response>
@@ -66,11 +69,20 @@ function pretendNetwork(answers: Readonly<Record<string, unknown>>): {
         headers: (init.headers ?? {}) as Record<string, string>,
       })
 
-      const found = Object.entries(answers).find(([part]) => url.includes(part))
-      return new Response(JSON.stringify(found === undefined ? { error: 'nothing here' } : found[1]), {
-        status: found === undefined ? 404 : 200,
-        headers: { 'content-type': 'application/json' },
-      })
+      // Longest match first, so that waiting on a task is told apart from asking
+      // for one: the two addresses share a prefix and the shorter one would
+      // otherwise answer both.
+      const found = Object.entries(answers)
+        .sort(([a], [b]) => b.length - a.length)
+        .find(([part]) => url.includes(part))
+
+      return new Response(
+        JSON.stringify(found === undefined ? { error: 'nothing here' } : found[1]),
+        {
+          status: found === undefined ? 404 : 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      )
     },
   }
 }
@@ -78,7 +90,6 @@ function pretendNetwork(answers: Readonly<Record<string, unknown>>): {
 const service = (fetcher: (url: string, init: RequestInit) => Promise<Response>) =>
   perfectCorpImagery({
     apiKey: KEY,
-    publicKeyPem: PUBLIC_PEM,
     baseUrl: BASE,
     fetcher,
     now: () => AT,
@@ -87,84 +98,88 @@ const service = (fetcher: (url: string, init: RequestInit) => Promise<Response>)
   })
 
 const FINISHED = {
-  '/client/auth': { result: { access_token: 'a-token' } },
-  '/s2s/v2.0/task/image-generator': { result: { task_id: 'task-1' } },
-  '/s2s/v1.0/task/image-generator': {
-    result: { status: 'success', results: [{ url: 'https://pictures.example.invalid/one.png' }] },
+  [`${DRAW_PATH}/task-1`]: {
+    status: 200,
+    data: { status: 'success', results: [{ url: 'https://pictures.example.invalid/one.png' }] },
   },
+  [DRAW_PATH]: { status: 200, data: { task_id: 'task-1' } },
 }
 
 describe('what is actually asked for', () => {
   it('keeps the owners’ own sentence, word for word', () => {
     const said = describeThePicture('A neighbourhood bakery in East Austin, open early')
-    expect(said).toContain('A neighbourhood bakery in East Austin, open early')
+    expect(said).toBe('A neighbourhood bakery in East Austin, open early')
   })
 
+  it('adds nothing at all to it', () => {
+    // Everything Charter wants to say is a refusal, and refusals belong in the
+    // other description. Anything added here would be words the owners did not
+    // write, in a picture of their business.
+    expect(describeThePicture('a bike shop')).toBe('a bike shop')
+  })
+
+  it('does not mind how the owners spaced their sentence', () => {
+    expect(describeThePicture('  a bike shop  ')).toBe('a bike shop')
+  })
+
+  it('cuts a very long description at their own limit', () => {
+    expect(describeThePicture('x'.repeat(MOST_WORDS + 200))).toHaveLength(MOST_WORDS)
+  })
+})
+
+describe('what is refused', () => {
   it('asks for nobody in the picture', () => {
     // Invented people in a photograph of a shop are staff the business does not
     // employ, on the website of a company formed this morning.
-    expect(describeThePicture('a bike shop')).toMatch(/nobody in the picture/)
+    expect(whatToKeepOut()).toMatch(/people/)
+    expect(whatToKeepOut()).toMatch(/faces/)
   })
 
   it('asks for no lettering anywhere in it', () => {
     // Invented lettering on a window is a sign saying something nobody chose, on
     // a business that has just spent an hour being careful about its wording.
-    expect(describeThePicture('a bike shop')).toMatch(/no words, letters or signs/)
+    expect(whatToKeepOut()).toMatch(/words/)
+    expect(whatToKeepOut()).toMatch(/signage/)
   })
 
-  it('does not mind how the owners spaced their sentence', () => {
-    expect(describeThePicture('  a bike shop  ')).toContain('a bike shop.')
-  })
-})
+  it('puts the refusals in the description of what must NOT appear', async () => {
+    const net = pretendNetwork(FINISHED)
+    await service(net.fetcher).draw('a neighbourhood bakery', '4:3')
 
-describe('the public key, in whatever shape their console handed it over', () => {
-  // Found with a real key in hand. Their console gives the key as one long run of
-  // letters and numbers with no wrapper and no line breaks, and every encryption
-  // library expects the wrapper. A key copied out correctly failed to parse, and
-  // the error a person saw was about bad formatting, which reads as "you copied
-  // it wrong". Both shapes are accepted now, so nobody has to know any of that.
-  const bare = PUBLIC_PEM.replace(/-----[A-Z ]+-----/g, '').replace(/\s+/g, '')
-
-  it('takes it with the wrapper already on, and changes nothing', () => {
-    expect(asPem(PUBLIC_PEM)).toBe(PUBLIC_PEM.trim())
-  })
-
-  it('takes it bare, and puts the wrapper back', () => {
-    const wrapped = asPem(bare)
-    expect(wrapped.startsWith('-----BEGIN PUBLIC KEY-----\n')).toBe(true)
-    expect(wrapped.trimEnd().endsWith('-----END PUBLIC KEY-----')).toBe(true)
-  })
-
-  it('produces a key the encryption library actually accepts', () => {
-    // The only check that matters. The shape looking right and the shape parsing
-    // are different facts, and this asserts the second one.
-    const opened = pair.privateKey.decrypt(
-      forge.util.decode64(proofOfKey(KEY, bare, AT)),
-      'RSAES-PKCS1-V1_5',
+    const sent = net.asked[0]?.body as { prompt: string; negative_prompt: string }
+    expect(sent.prompt).toBe('a neighbourhood bakery')
+    expect(sent.negative_prompt).toMatch(/people/)
+    expect(sent.prompt, 'a refusal in the positive description is a way to get it').not.toMatch(
+      /people/,
     )
-    expect(opened).toBe(`${KEY};${AT}`)
-  })
-
-  it('does not mind how the bare form was wrapped when it was pasted', () => {
-    const acrossLines = (bare.match(/.{1,40}/g) ?? []).join('\n')
-    expect(asPem(acrossLines)).toBe(asPem(bare))
   })
 })
 
-describe('proving the caller holds the arrangement', () => {
-  it('encrypts the key and the time together, so an old block is useless', () => {
-    const proof = proofOfKey(KEY, PUBLIC_PEM, AT)
-    const opened = pair.privateKey.decrypt(forge.util.decode64(proof), 'RSAES-PKCS1-V1_5')
-    expect(opened).toBe(`${KEY};${AT}`)
+describe('the shapes they will draw', () => {
+  it('turns an ordinary name for a shape into their exact size', () => {
+    expect(sizeFor('4:3')).toBe(SIZES['4:3'])
+    expect(sizeFor('16:9')).toBe(SIZES['16:9'])
   })
 
-  it('produces something different every time the clock moves', () => {
-    expect(proofOfKey(KEY, PUBLIC_PEM, AT)).not.toBe(proofOfKey(KEY, PUBLIC_PEM, AT + 1))
+  it('takes their own exact size straight through', () => {
+    expect(sizeFor('1472*1104')).toBe('1472*1104')
+    expect(sizeFor('1472x1104')).toBe('1472*1104')
+  })
+
+  it('gives back nothing for a shape they do not draw', () => {
+    expect(sizeFor('7:5')).toBeNull()
+    expect(sizeFor('1920x1080')).toBeNull()
+  })
+
+  it('refuses that shape here rather than sending it', async () => {
+    const net = pretendNetwork(FINISHED)
+    await expect(service(net.fetcher).draw('a bakery', '7:5')).rejects.toThrow(/not a shape/)
+    expect(net.asked, 'nothing was sent').toHaveLength(0)
   })
 })
 
 describe('drawing one picture', () => {
-  it('signs in, asks, waits, and gives back where the picture is', async () => {
+  it('asks, waits, and gives back where the picture is', async () => {
     const net = pretendNetwork(FINISHED)
     const drawn = await service(net.fetcher).draw('a neighbourhood bakery', '4:3')
 
@@ -172,48 +187,49 @@ describe('drawing one picture', () => {
     expect(drawn.drawnBy).toBe(DRAWN_BY)
     expect(drawn.shape).toBe('4:3')
     // The exact words that produced it, kept so the record can show both.
-    expect(drawn.fromWords).toContain('a neighbourhood bakery')
+    expect(drawn.fromWords).toBe('a neighbourhood bakery')
   })
 
-  it('sends the owners’ words and nothing about anybody', async () => {
+  it('names the one model they accept, rather than leaving it to a default', async () => {
     const net = pretendNetwork(FINISHED)
-    await service(net.fetcher).draw('a neighbourhood bakery', '4:3')
-
-    const asked = net.asked.find((one) => one.url.includes('/s2s/v2.0/task'))
-    const payload = (asked?.body as { payload: { prompt: string } }).payload
-    expect(payload.prompt).toContain('a neighbourhood bakery')
-    expect(payload.prompt).toContain('nobody in the picture')
+    await service(net.fetcher).draw('a bakery', '4:3')
+    expect((net.asked[0]?.body as { model: string }).model).toBe(PICTURE_MODEL)
   })
 
-  it('carries the token on everything after the sign-in', async () => {
+  it('turns their prompt rewriting OFF, which is a policy and not a setting', async () => {
+    // Their service will happily rewrite the description to add detail. That
+    // would make it a picture of what a model thought the owners meant, while the
+    // record holds the owners' own sentence beside it.
+    const net = pretendNetwork(FINISHED)
+    await service(net.fetcher).draw('a bakery', '4:3')
+    expect((net.asked[0]?.body as { prompt_extend: boolean }).prompt_extend).toBe(false)
+  })
+
+  it('carries the key on every call', async () => {
     const net = pretendNetwork(FINISHED)
     await service(net.fetcher).draw('a bakery', '4:3')
 
-    const signIn = net.asked[0]
-    expect(signIn?.headers['authorization'], 'the sign-in itself carries none').toBeUndefined()
-    for (const later of net.asked.slice(1)) {
-      expect(later.headers['authorization']).toBe('Bearer a-token')
+    expect(net.asked.length).toBeGreaterThan(1)
+    for (const one of net.asked) {
+      expect(one.headers['authorization']).toBe(`Bearer ${KEY}`)
     }
   })
 
-  it('says so when the sign-in came back without a token', async () => {
-    const net = pretendNetwork({ '/client/auth': { result: {} } })
-    await expect(service(net.fetcher).draw('a bakery', '4:3')).rejects.toThrow(/no access_token/)
+  it('refuses when the owners have not said what their business is', async () => {
+    const net = pretendNetwork(FINISHED)
+    await expect(service(net.fetcher).draw('   ', '4:3')).rejects.toThrow(/nothing to draw/)
+    expect(net.asked).toHaveLength(0)
   })
 
   it('says so when there is no task to wait on', async () => {
-    const net = pretendNetwork({
-      '/client/auth': { result: { access_token: 'a-token' } },
-      '/s2s/v2.0/task/image-generator': { result: {} },
-    })
+    const net = pretendNetwork({ [DRAW_PATH]: { status: 200, data: {} } })
     await expect(service(net.fetcher).draw('a bakery', '4:3')).rejects.toThrow(/no task to wait on/)
   })
 
   it('gives up honestly when it is still drawing', async () => {
     const net = pretendNetwork({
-      '/client/auth': { result: { access_token: 'a-token' } },
-      '/s2s/v2.0/task/image-generator': { result: { task_id: 'task-1' } },
-      '/s2s/v1.0/task/image-generator': { result: { status: 'running' } },
+      [`${DRAW_PATH}/task-1`]: { status: 200, data: { status: 'running' } },
+      [DRAW_PATH]: { status: 200, data: { task_id: 'task-1' } },
     })
 
     // A clock that moves, so the patience really runs out. With a clock that
@@ -222,7 +238,6 @@ describe('drawing one picture', () => {
     let ticking = AT
     const patient = perfectCorpImagery({
       apiKey: KEY,
-      publicKeyPem: PUBLIC_PEM,
       baseUrl: BASE,
       fetcher: net.fetcher,
       now: () => (ticking += 25),
@@ -235,9 +250,8 @@ describe('drawing one picture', () => {
 
   it('reports their failure in their own words', async () => {
     const net = pretendNetwork({
-      '/client/auth': { result: { access_token: 'a-token' } },
-      '/s2s/v2.0/task/image-generator': { result: { task_id: 'task-1' } },
-      '/s2s/v1.0/task/image-generator': { result: { status: 'error', error: 'quota exceeded' } },
+      [`${DRAW_PATH}/task-1`]: { status: 200, data: { status: 'error', error: 'quota exceeded' } },
+      [DRAW_PATH]: { status: 200, data: { task_id: 'task-1' } },
     })
 
     const failure = await service(net.fetcher)
@@ -250,9 +264,8 @@ describe('drawing one picture', () => {
 
   it('says so when it finished without saying where the picture is', async () => {
     const net = pretendNetwork({
-      '/client/auth': { result: { access_token: 'a-token' } },
-      '/s2s/v2.0/task/image-generator': { result: { task_id: 'task-1' } },
-      '/s2s/v1.0/task/image-generator': { result: { status: 'success', results: [] } },
+      [`${DRAW_PATH}/task-1`]: { status: 200, data: { status: 'success', results: [] } },
+      [DRAW_PATH]: { status: 200, data: { task_id: 'task-1' } },
     })
     await expect(service(net.fetcher).draw('a bakery', '4:3')).rejects.toThrow(
       /without saying where the picture is/,

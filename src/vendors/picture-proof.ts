@@ -3,20 +3,20 @@
  *
  * WHAT THIS RUNS
  *
- *   1. builds the proof that this caller holds the arrangement, from the key and
- *      the current time
- *   2. signs in with it
- *   3. asks for one picture, from a sentence somebody typed about their business
- *   4. waits for it, and prints where it is
+ *   1. asks for one picture, from a sentence somebody typed about their business
+ *   2. waits for it
+ *   3. prints where it is
  *
- * It also prints the exact words that were sent, before sending them, so that
+ * It also prints both descriptions that were sent, before sending them, so that
  * somebody can see what was asked for rather than only what came back.
  *
  * WHY IT EXISTS
  *
- * Because a client nobody has called is a guess. The last one in this project that
- * had never been called was wrong three separate ways at once, under a test suite
- * that passed, and the first real call found all three in ten minutes.
+ * Because a client nobody has called is a guess. This one was written against
+ * their older service, which signs in by encrypting your key with a public key
+ * they issue. Their console now hands out keys for a newer service that takes the
+ * key straight in a header. The old client authenticated against nothing, and the
+ * error blamed the credential rather than the service.
  *
  * WHAT IS NEVER SENT
  *
@@ -29,12 +29,12 @@
  */
 
 import { loadEnvFile } from '../settings.js'
-import { describeThePicture, perfectCorpImagery } from './perfectcorp.js'
+import { describeThePicture, perfectCorpImagery, whatToKeepOut } from './perfectcorp.js'
 
 /** What gets drawn when nobody says otherwise. A made up business. */
 const DEFAULT_WORDS = 'A small neighbourhood bakery on a corner in East Austin, open early'
 
-function say(line: string): void {
+function say(line = ''): void {
   process.stdout.write(`${line}\n`)
 }
 
@@ -42,15 +42,12 @@ async function main(): Promise<void> {
   loadEnvFile()
 
   const apiKey = (process.env['PERFECTCORP_API_KEY'] ?? '').trim()
-  // Line breaks spelled out, put back before the key is read. See the note in
-  // src/vendors/build.ts: a settings file usually cannot hold real ones.
-  const publicKeyPem = (process.env['PERFECTCORP_PUBLIC_KEY'] ?? '').trim().replace(/\\n/g, '\n')
 
-  if (apiKey === '' || publicKeyPem === '') {
-    say('PERFECTCORP_API_KEY and PERFECTCORP_PUBLIC_KEY must both be set.')
-    say('')
-    say('Redeem a key at yce.perfectcorp.com/api-console/en/redeem-code/ and copy the')
-    say('public key they issue beside it. Nothing was sent anywhere.')
+  if (apiKey === '') {
+    say('PERFECTCORP_API_KEY is not set.')
+    say()
+    say('Redeem a key at yce.perfectcorp.com/api-console, then copy it from the')
+    say('API keys page. Nothing was sent anywhere.')
     process.exitCode = 1
     return
   }
@@ -58,23 +55,29 @@ async function main(): Promise<void> {
   const ownersWords = process.argv.slice(2).join(' ').trim() || DEFAULT_WORDS
 
   say(`The owners said: ${ownersWords}`)
-  say('')
-  say('What is actually sent:')
+  say()
+  say('What the picture must contain:')
   say(`  ${describeThePicture(ownersWords)}`)
-  say('')
+  say()
+  say('What the picture must NOT contain:')
+  say(`  ${whatToKeepOut()}`)
+  say()
   say(
-    '  The two additions are refusals, not styling. Invented people in the picture ' +
-      'would be staff the business does not employ. Invented lettering would be a ' +
-      'sign saying something nobody chose.',
+    '  The first two of those are refusals, not styling. Invented people in the ' +
+      'picture would be staff the business does not employ. Invented lettering ' +
+      'would be a sign saying something nobody chose.',
   )
-  say('')
+  say()
+  say('  Their prompt rewriting is turned off, so the sentence drawn is the one')
+  say('  the owners typed and not a model’s improvement of it.')
+  say()
 
-  const service = perfectCorpImagery({ apiKey, publicKeyPem })
+  const service = perfectCorpImagery({ apiKey })
   const drawn = await service.draw(ownersWords, '4:3')
 
   say(`Drawn by ${drawn.drawnBy}, shape ${drawn.shape}`)
   say(`  ${drawn.url}`)
-  say('')
+  say()
   say(
     'No photograph of anybody was sent. That company’s face analysis, skin analysis ' +
       'and face swapping are absent from every tool list in this project and cannot ' +
