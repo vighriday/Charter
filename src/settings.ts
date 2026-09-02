@@ -214,6 +214,10 @@ const doctavian = (
   }
 })
 
+/** What the eSign half is, honestly, until somebody has run it against a server. */
+const ESIGN_NOT_PROVEN =
+  'a client that is written, tested, and has never once been called. See above.'
+
 const foxit = (
   [
     ['FOXIT_PDF_BASE_URL', 'text'],
@@ -223,31 +227,64 @@ const foxit = (
     ['FOXIT_ESIGN_CLIENT_ID', 'text'],
     ['FOXIT_ESIGN_CLIENT_SECRET', 'secret'],
   ] as const
-).map(
-  ([name, kind]): Setting => ({
+).map(([name, kind]): Setting => {
+  const isESign = name.startsWith('FOXIT_ESIGN')
+
+  return {
     name,
-    section: 'FOXIT — assembles the pack, and separately carries it to a human to sign',
+    section: 'FOXIT — does the reversible work on the pack, and separately carries it to a person to sign',
     what:
       name === 'FOXIT_PDF_BASE_URL'
         ? [
-            'app.developer-api.foxit.com',
+            'na1.fusion.foxit.com  —  keys from developer-api.foxit.com',
             '',
-            'Foxit issues ONE credential pair that authenticates all of their services,',
-            'so the two pairs below hold the same values. That is correct and expected —',
-            'their own guide states there is no separate signing key pair to generate.',
+            'THIS HALF IS LIVE. It joins the two documents a packet is made of, makes',
+            'the joined file smaller, and reads its text back out so that a program',
+            'other than the one that wrote the packet says what the packet says.',
             '',
-            'The separation that matters in Charter is therefore not in these values. It',
-            'is in the code: no tool the model can call is able to reach the signing',
-            'module, and a test walks every import in the project and fails the build if',
-            'that ever changes.',
+            'Everything it is asked to do is reversible and every one of them happens',
+            'BEFORE the packet is sealed. It is asked for nothing at all afterwards.',
+            '',
+            'It refuses anyway. Send it a sealed Charter packet and ask it to flatten',
+            'the file and it answers "no permission", because the seal marks the file',
+            'as certified and their reader will not modify a certified file. Neither',
+            'program was told about the other. Check it with:',
+            '',
+            '    npm run foxit:proof',
           ]
-        : [],
+        : name === 'FOXIT_ESIGN_BASE_URL'
+          ? [
+              'na1.foxitesign.foxit.com/api',
+              '',
+              'THIS HALF HAS NEVER BEEN CALLED. The client is written and tested and',
+              'the credentials below are refused: "invalid consumer credentials".',
+              'eSign issues its own key pair, from inside the eSign product, separately',
+              'from the developer portal. Put that pair below and run:',
+              '',
+              '    npm run esign:proof',
+              '',
+              'Until that prints a folder number, the honest description of this half is',
+              '"written, not proven", and this file says so rather than implying more.',
+              '',
+              'The eSign call is made by ordinary code, outside every tool list, from a',
+              'folder no tool can reach. A test walks every import in the project and',
+              'fails the build if a path from any tool to that folder ever appears.',
+              'The agent cannot start a signature; it cannot get to the call.',
+            ]
+          : isESign
+            ? [
+                'NOT the pair from the developer portal. Those work for their document',
+                'services and are refused here with "invalid consumer credentials".',
+                'Generate an eSign API key and secret inside the eSign product itself.',
+              ]
+            : [],
     kind,
     example: '',
-    readBy: null,
-    notYetBuilt: NOT_BUILT_VENDOR,
-  }),
-)
+    ...(isESign
+      ? { readBy: null, notYetBuilt: ESIGN_NOT_PROVEN }
+      : { readBy: 'src/vendors/build.ts' }),
+  }
+})
 
 const storage = (
   [

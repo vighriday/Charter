@@ -80,6 +80,34 @@ export type WhereToSign =
   | 'text tags in the document'
   /** Form fields already present in the document. */
   | 'form fields already in the document'
+  /**
+   * Exact places, given by Charter, where it drew the signature lines.
+   *
+   * The most explicit of the three, and the one this project uses. Charter draws
+   * the lines, so Charter is the only thing that knows where they are. The other
+   * two ask the service to go looking, and a search that finds nothing produces
+   * exactly the failure this file exists to prevent.
+   */
+  | 'boxes placed where Charter drew the lines'
+
+/**
+ * Where one person signs, as the signing service measures it.
+ *
+ * Repeated here rather than imported from the pack writer, because this module
+ * must not depend on how a document happens to be built. Anything that can say
+ * "this person, this page, this box" can be sent for signature.
+ */
+export interface SignatureBox {
+  readonly owner: string
+  /** Which page, counting from one. */
+  readonly page: number
+  /** From the left edge. */
+  readonly x: number
+  /** From the TOP edge, which is how every signing service measures. */
+  readonly y: number
+  readonly width: number
+  readonly height: number
+}
 
 /** Everything needed to ask people to sign, once every check has passed. */
 export interface SignatureRequest {
@@ -89,6 +117,8 @@ export interface SignatureRequest {
   readonly packFingerprint: string
   readonly signers: readonly Signer[]
   readonly whereToSign: WhereToSign
+  /** Where each person signs. Never empty when boxes are the mechanism. */
+  readonly boxes: readonly SignatureBox[]
   /**
    * Whether the service should email the signers immediately.
    *
@@ -119,6 +149,7 @@ export function prepareSignatureRequest(input: {
   readonly approval: RecordedApproval | undefined
   readonly signers: readonly Signer[]
   readonly whereToSign: WhereToSign
+  readonly boxes?: readonly SignatureBox[]
 }): SignatureRequest {
   // ---- 1. a person approved -------------------------------------------------
   if (input.approval === undefined) {
@@ -191,12 +222,53 @@ export function prepareSignatureRequest(input: {
     }
   }
 
+  // ---- 5. every person has a box, when boxes are the mechanism ---------------
+  //
+  // The quietest failure available to this project, checked hardest. A folder
+  // with no box, or with a box for one owner and not the other, produces a
+  // signing screen a person can finish without signing, and every screen after
+  // it says the run worked.
+  const boxes = input.boxes ?? []
+
+  if (input.whereToSign === 'boxes placed where Charter drew the lines') {
+    if (boxes.length === 0) {
+      throw new WillNotSend(
+        'The signature boxes were not given, so there would be nowhere to sign. ' +
+          'The service would report a completed folder containing an unsigned ' +
+          'document, which is the worst outcome this project has.',
+      )
+    }
+
+    const withoutABox = input.signers.filter(
+      (signer) => !boxes.some((box) => box.owner === signer.fullName),
+    )
+    if (withoutABox.length > 0) {
+      throw new WillNotSend(
+        `${withoutABox.map((one) => one.fullName).join(' and ')} would be asked to ` +
+          `sign a document with no signature box for them. A packet where one owner ` +
+          `signs and another cannot is not the deal the packet describes.`,
+      )
+    }
+
+    const strangers = boxes.filter(
+      (box) => !input.signers.some((signer) => signer.fullName === box.owner),
+    )
+    if (strangers.length > 0) {
+      throw new WillNotSend(
+        `There is a signature box for ${strangers.map((one) => `"${one.owner}"`).join(' and ')}, ` +
+          `who is not being asked to sign. A box belonging to nobody in the list is a ` +
+          `box the service may hand to whoever it likes.`,
+      )
+    }
+  }
+
   return {
     caseId: input.caseId,
     pack: input.pack,
     packFingerprint: input.packFingerprint,
     signers: [...input.signers].sort((a, b) => a.order - b.order),
     whereToSign: input.whereToSign,
+    boxes,
     // Never true. The moment a person is asked is a moment this project controls.
     sendImmediately: false,
   }

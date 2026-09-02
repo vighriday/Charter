@@ -33,6 +33,7 @@ import {
   prepareSignatureRequest,
   WillNotSend,
   type RecordedApproval,
+  type SignatureBox,
   type Signer,
   type WhereToSign,
 } from '../sign/request.js'
@@ -50,6 +51,8 @@ export interface SigningService {
     readonly pack: Uint8Array
     readonly signers: readonly Signer[]
     readonly whereToSign: WhereToSign
+    /** Where each person signs. Checked before it gets here, and again inside. */
+    readonly boxes: readonly SignatureBox[]
   }): Promise<{ readonly folderId: string; readonly state: string }>
 }
 
@@ -119,6 +122,8 @@ export async function sendForSignature(options: {
   readonly pack: Uint8Array
   readonly signers: readonly Signer[]
   readonly whereToSign: WhereToSign
+  /** Where the pack drew each signature line. */
+  readonly boxes?: readonly SignatureBox[]
 }): Promise<SentForSignature> {
   const { db, caseId, clock } = options
   const packFingerprint = fingerprintBytes(options.pack)
@@ -133,6 +138,7 @@ export async function sendForSignature(options: {
       approval,
       signers: options.signers,
       whereToSign: options.whereToSign,
+      ...(options.boxes === undefined ? {} : { boxes: options.boxes }),
     })
   } catch (error) {
     const why = error instanceof WillNotSend ? error.message : String(error)
@@ -155,6 +161,7 @@ export async function sendForSignature(options: {
     pack: request.pack,
     signers: request.signers,
     whereToSign: request.whereToSign,
+    boxes: request.boxes,
   })
 
   await append(
@@ -172,6 +179,7 @@ export async function sendForSignature(options: {
         // Recorded because getting this wrong produces a signing screen where a
         // person can finish without signing anything.
         whereToSign: request.whereToSign,
+        placesToSign: String(request.boxes.length),
       },
     },
     clock,
