@@ -176,12 +176,34 @@ for (const [what, text] of [
 
 /* ────────────────────────────────────────────── 5. nothing from anybody else ── */
 
-const addresses = [
-  ...[...page.matchAll(/(?:href|src)="([^"]+)"/g)].map((one) => one[1]),
+// A LINK IS NOT A LOAD, AND THE DIFFERENCE IS THE WHOLE POINT OF THIS CHECK.
+//
+// What this rule is really about: a page that fetches a font, a script or a
+// picture from somebody else hands that company the visitor's address, on every
+// visit, without the visitor being asked or even told. The browser does it
+// automatically, before anybody has decided anything.
+//
+// A plain link is the opposite. It sits there doing nothing until a person reads
+// it and chooses to follow it, and then going there is their decision. Treating
+// the two the same would mean this page could never point at the repository it is
+// asking to be judged on, which is a real loss and protects nobody.
+//
+// So the tag is captured along with the address. Anything the browser fetches on
+// its own must be ours. An <a> may point anywhere, and still has to exist if it
+// points at one of our own files.
+const fetched = [
+  // src on anything at all: script, img, iframe. Always automatic.
+  ...[...page.matchAll(/<([a-z]+)\b[^>]*?\ssrc="([^"]+)"/gi)].map((one) => one[2]),
+  // href on anything that is NOT a link: <link rel=stylesheet>, <use>, and so on.
+  ...[...page.matchAll(/<([a-z]+)\b[^>]*?\shref="([^"]+)"/gi)]
+    .filter((one) => one[1].toLowerCase() !== 'a')
+    .map((one) => one[2]),
   ...[...style.matchAll(/url\('?([^')]+)'?\)/g)].map((one) => one[1]),
 ]
 
-for (const address of [...new Set(addresses)]) {
+const linkedTo = [...page.matchAll(/<a\b[^>]*?\shref="([^"]+)"/gi)].map((one) => one[1])
+
+for (const address of [...new Set(fetched)]) {
   if (/^(https?:)?\/\//.test(address)) {
     complaints.push(
       `${PAGE} loads "${address}" from another company. The page says it sends nothing ` +
@@ -194,10 +216,23 @@ for (const address of [...new Set(addresses)]) {
     continue
   }
 
-  const from = address.startsWith('fonts/') ? 'site' : 'site'
-  const path = normalize(join(from, address)).replace(/\\/g, '/')
+  const path = normalize(join('site', address)).replace(/\\/g, '/')
   if (!existsSync(path)) {
     complaints.push(`${PAGE} points at ${address}, and there is no file at ${path}.`)
+  }
+}
+
+// Links. They may go anywhere, because a person chooses to follow one. What they
+// may not do is point at one of our own files that is not there, which is the
+// ordinary broken link and worth catching.
+for (const address of [...new Set(linkedTo)]) {
+  if (/^(https?:)?\/\//.test(address)) continue
+  if (address.startsWith('#') || address.startsWith('data:') || address.startsWith('mailto:')) {
+    continue
+  }
+  const path = normalize(join('site', address)).replace(/\\/g, '/')
+  if (!existsSync(path)) {
+    complaints.push(`${PAGE} links to ${address}, and there is no file at ${path}.`)
   }
 }
 
