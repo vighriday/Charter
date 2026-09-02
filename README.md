@@ -276,14 +276,27 @@ npm run settings:check  # every setting either does something, or says it does n
 Then check its work without taking our word for any of it:
 
 ```bash
-npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json
+npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json --key out/attestation.pub
 ```
 
-That confirms the seal permits only filling in and signing, that the file has not
-changed by one byte since it was sealed, that the record is unbroken, and that the
-attestation covers the end of it. It contacts nothing, and it reads its key from
-this repository rather than from the pack — because a checker that took its key out
-of the thing it was checking would prove nothing at all.
+**Why `--key`, and when you can drop it.** With no signing key of your own in
+`.env`, the run makes a keypair for itself and leaves the public half beside the
+files as `out/attestation.pub`. That is the key that run was attested with, so that
+is the key to check it against. The last thing `npm run agent:demo` prints is this
+exact command, already filled in for whichever case you are in. If you have set
+`ATTESTATION_PRIVATE_KEY` to the key whose public half is committed here, leave
+`--key` off and it uses `keys/attestation.pub`.
+
+**What it never does is take the key out of the pack.** The key is either one you
+name or one committed to this repository, and never one carried by the thing being
+checked, because a checker that read its key out of the file it was checking would
+prove nothing at all. That is also why leaving `--key` off after a keyless run
+gives a red NO rather than a pass: it is comparing against a different key on
+purpose, and saying so.
+
+The check confirms the seal permits only filling in and signing, that the file has
+not changed by one byte since it was sealed, that the record is unbroken, and that
+the attestation covers the end of it. It contacts nothing.
 
 It also answers one question **no**, honestly: whether anybody who is not Charter
 has said this record existed. We hold the record and the key that vouches for it,
