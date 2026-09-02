@@ -129,32 +129,47 @@ export async function ask(url: string, options: AskOptions = {}): Promise<Reply>
     }
   }
 
-  const text = await response.text().catch(() => '')
+  return readAnswer(response.status, await response.text().catch(() => ''))
+}
 
-  if (response.status === 401) {
-    return { kind: 'refused', status: 401, detail: shorten(text) }
+/**
+ * Turn a status and a body into what a caller would actually do about them.
+ *
+ * WHY THIS IS ITS OWN FUNCTION
+ *
+ * Not every request can be built by `ask`. A form has to be handed to the runtime
+ * without a content type, so that the runtime can write its own with the separator
+ * it invented for that form, and a caller sending one builds the request itself.
+ *
+ * The grouping below is the part that must not be written twice. Two copies of
+ * "what does 403 mean here" is how one of them ends up saying the credential is
+ * wrong when the credential is fine.
+ */
+export function readAnswer(status: number, text: string): Reply {
+  if (status === 401) {
+    return { kind: 'refused', status, detail: shorten(text) }
   }
-  if (response.status === 403) {
-    return { kind: 'not-allowed-here', status: 403, detail: shorten(text) }
+  if (status === 403) {
+    return { kind: 'not-allowed-here', status, detail: shorten(text) }
   }
-  if (response.status === 429) {
-    return { kind: 'out-of-allowance', status: 429, detail: shorten(text) }
+  if (status === 429) {
+    return { kind: 'out-of-allowance', status, detail: shorten(text) }
   }
-  if (response.status >= 500) {
-    return { kind: 'their-fault', status: response.status, detail: shorten(text) }
+  if (status >= 500) {
+    return { kind: 'their-fault', status, detail: shorten(text) }
   }
-  if (!response.ok) {
-    return { kind: 'refused', status: response.status, detail: shorten(text) }
+  if (status < 200 || status >= 300) {
+    return { kind: 'refused', status, detail: shorten(text) }
   }
 
-  if (text.trim() === '') return { kind: 'ok', status: response.status, body: null }
+  if (text.trim() === '') return { kind: 'ok', status, body: null }
 
   try {
-    return { kind: 'ok', status: response.status, body: JSON.parse(text) }
+    return { kind: 'ok', status, body: JSON.parse(text) }
   } catch {
     return {
       kind: 'unreadable',
-      status: response.status,
+      status,
       detail: `expected JSON and got ${shorten(text)}`,
     }
   }

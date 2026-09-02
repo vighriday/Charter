@@ -455,17 +455,45 @@ describe('searching the live web', () => {
 const reader = (net: ReturnType<typeof fakeNetwork>) =>
   nutrientIdentityReader({
     extractionKey: 'a-key',
-    documentAt: async () => ({ where: { url: 'https://example.test/doc' }, kind: 'passport' }),
+    documentAt: async () => ({
+      bytes: new TextEncoder().encode('%PDF-1.7 a specimen'),
+      kind: 'a specimen identity document',
+      specimen: true,
+    }),
     fetcher: net,
   })
 
+/**
+ * Their reply, in the shape they actually send.
+ *
+ * The values are under `output.data`, one name to one string. What is known about
+ * each of them is somewhere else entirely, under `output.metadata`, keyed by the
+ * same names. This file used to describe a shape where the two arrived together,
+ * every test passed, and the client could not read a single real reply. So this
+ * fixture is copied from an actual answer rather than written from the guide.
+ */
 const goodReading = {
-  data: {
-    full_name: { value: 'Ana Rivera', match: 'id_match', confidence: 0.97 },
-    date_of_birth: { value: '1989-04-11', match: 'id_match', confidence: 0.95 },
-    document_number: { value: 'X1234567', match: 'id_match', confidence: 0.93 },
-    expiry_date: { value: '2031-04-11', match: 'fuzzy_match', confidence: 0.94 },
+  output: {
+    data: {
+      full_name: 'Ana Rivera',
+      date_of_birth: '1989-04-11',
+      document_number: 'X1234567',
+      expiry_date: '2031-04-11',
+    },
+    metadata: {
+      full_name: { match: 'id_match', confidence: 0.97 },
+      date_of_birth: { match: 'id_match', confidence: 0.95 },
+      document_number: { match: 'id_match', confidence: 0.93 },
+      expiry_date: { match: 'fuzzy_match', confidence: 0.94 },
+    },
   },
+}
+
+/** What was sent up beside the document, read back out of the form. */
+function instructionsIn(net: ReturnType<typeof fakeNetwork>): Record<string, unknown> {
+  const body = net.seen[0]?.init.body
+  if (!(body instanceof FormData)) throw new Error('the document was not sent as a form')
+  return JSON.parse(String(body.get('instructions'))) as Record<string, unknown>
 }
 
 describe('reading the fields off a document', () => {
@@ -483,8 +511,7 @@ describe('reading the fields off a document', () => {
     const net = fakeNetwork(() => ({ status: 200, body: goodReading }))
     await reader(net).read('Ana Rivera', 'ana-passport', 'agentic')
 
-    const sent = JSON.parse(String(net.seen[0]?.init.body)) as Record<string, unknown>
-    expect(sent['mode']).toBe('agentic')
+    expect(instructionsIn(net)['mode']).toBe('agentic')
   })
 
   it('asks for exactly the fields a formation packet needs, and no more', async () => {
@@ -493,8 +520,8 @@ describe('reading the fields off a document', () => {
     const net = fakeNetwork(() => ({ status: 200, body: goodReading }))
     await reader(net).read('Ana Rivera', 'ana-passport', 'understand')
 
-    const sent = JSON.parse(String(net.seen[0]?.init.body)) as { schema: Record<string, unknown> }
-    expect(Object.keys(sent.schema).sort()).toEqual([
+    const schema = instructionsIn(net)['schema'] as { properties: Record<string, unknown> }
+    expect(Object.keys(schema.properties).sort()).toEqual([
       'date_of_birth',
       'document_number',
       'expiry_date',
@@ -517,7 +544,7 @@ describe('reading the fields off a document', () => {
     // Not a document with nothing in it. An answer that says nothing. Carrying on
     // would show "no values needed checking", which reads exactly like a clean
     // document.
-    const net = fakeNetwork(() => ({ status: 200, body: { data: {} } }))
+    const net = fakeNetwork(() => ({ status: 200, body: { output: { data: {}, metadata: {} } } }))
     await expect(reader(net).read('Ana', 'doc', 'understand')).rejects.toThrow(
       /reads exactly like a clean document/,
     )
@@ -543,15 +570,38 @@ describe('reading the fields off a document', () => {
   })
 
   it('drops a value that is not text rather than putting it in a document', () => {
-    const fields = fieldsFrom({ data: { full_name: { value: 12345, match: 'id_match' } } })
-    expect(fields).toHaveLength(0)
+    const body = { output: { data: { full_name: 12345 }, metadata: { full_name: { match: 'id_match' } } } }
+    expect(fieldsFrom(body)).toHaveLength(0)
   })
 
-  it('reads their reply whichever of the three shapes it used', () => {
-    for (const key of ['data', 'fields', 'result']) {
-      const body = { [key]: { full_name: { value: 'Ana', match: 'id_match' } } }
-      expect(fieldsFrom(body), key).toHaveLength(1)
-    }
+  it('joins each value to what was said about it, by name', () => {
+    const fields = fieldsFrom({
+      output: {
+        data: { full_name: 'Ana', date_of_birth: '1989-04-11' },
+        metadata: {
+          full_name: { match: 'id_match', confidence: 0.9 },
+          date_of_birth: { match: 'fuzzy_match', confidence: 0.5 },
+        },
+      },
+    })
+    expect(fields.map((one) => [one.name, one.label])).toEqual([
+      ['full_name', 'id_match'],
+      ['date_of_birth', 'fuzzy_match'],
+    ])
+  })
+
+  it('sends a value nobody said anything about to a person', () => {
+    // A value with no entry beside it is not evidence that the value is right.
+    // not_found is the label that puts it in front of somebody.
+    const fields = fieldsFrom({ output: { data: { full_name: 'Ana' }, metadata: {} } })
+    expect(fields[0]?.label).toBe('not_found')
+    expect(fields[0]?.confidence).toBeUndefined()
+  })
+
+  it('gives back nothing at all for the shape this client used to expect', () => {
+    // Kept as a test because it is the bug. Every fixture in this file once looked
+    // like this, every test passed, and the client could not read one real reply.
+    expect(fieldsFrom({ data: { full_name: { value: 'Ana', match: 'id_match' } } })).toHaveLength(0)
   })
 })
 
