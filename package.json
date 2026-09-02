@@ -55,5 +55,14 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^4.1.11"
-  }
+  },
+  "homepage": "https://charter-217o.onrender.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vighriday/Charter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vighriday/Charter/issues"
+  },
+  "license": "UNLICENSED"
 }

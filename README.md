@@ -2,7 +2,14 @@
 
 **From idea to legally alive.**
 
-![tests](https://img.shields.io/badge/tests-1%2C266%20passing-2f6f4e)
+## → **[charter-217o.onrender.com](https://charter-217o.onrender.com)**
+
+It is running right now. Nothing to install, no account, no key. Eight tabs
+replay one real run step by step, and the eighth lets you put in your own
+business and watch Charter work on it, stopping to ask you every time a real
+decision comes up.
+
+![tests](https://img.shields.io/badge/tests-1%2C272%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![node](https://img.shields.io/badge/Node-%E2%89%A520.11-333)
 ![dependencies](https://img.shields.io/badge/runtime%20dependencies-7-555)
@@ -167,13 +174,18 @@ without naming a command a stranger can run to prove it.
 
 ## Try it
 
-There are three ways in, and they need different things.
+There are four ways in, and they need different things.
 
 | | What it needs | What you get |
 | --- | --- | --- |
+| [the live site](https://charter-217o.onrender.com) | **nothing at all** | everything below, in a browser, with no install |
 | `npm run agent:demo` | nothing at all | one business through all eight steps, recorded |
-| `npm run serve` | nothing, or a free key | the website, including a tab where you run **your own** idea |
+| `npm run serve` | nothing, or a free key | the same website, on your own machine |
 | `npm start` | a free model key | your own idea, in a terminal |
+
+The first one is the fastest way to judge this, and it is the same code as the
+rest: the site running there is `npm run serve`, built from this repository, and
+it refuses to deploy if a single one of the tests fails.
 
 ### 1. The recorded walkthrough — no account, no key, no network
 
@@ -231,7 +243,7 @@ shows five things:
 Everything else:
 
 ```bash
-npm test          # 1,266 tests
+npm test          # 1,272 tests
 npm run typecheck
 npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
@@ -355,7 +367,8 @@ not enough.
 **The first, and the one that actually keeps time.** An outside uptime service.
 [cron-job.org](https://cron-job.org) is free and will ask every minute;
 [UptimeRobot](https://uptimerobot.com) is free and asks every five. Either way,
-point it at `https://your-address/healthz`, expect a `200`, and that is the whole
+point it at `https://charter-217o.onrender.com/healthz`, expect a `200`, and that
+is the whole
 setup. Two minutes of work.
 
 **The second, which lives in this repository.**
@@ -528,7 +541,7 @@ answer is 658, which is what this one said on 30 August.
 | The live run: bringing your own idea, and the five places it stops and waits for you | **built, 6 tests** <!-- tests/live.test.ts --> |
 | Reading typed answers without losing any of them, so the whole run can be driven from a written-out list rather than only by hand | **built, 7 tests** <!-- tests/keyboard.test.ts --> |
 | The run panel on the website: anybody runs their own idea with our keys, and the limits that let it be open to everybody rather than to nobody | **built, 17 tests**, and the shipped number was wrong until the test did the arithmetic <!-- tests/limits.test.ts --> |
-| Who may read a run, and what a web address can reach. Reading somebody's run needs the same secret answering it does, because its record carries their names and every answer they gave. Also the one address that exists to be knocked on every few minutes, so free hosting never puts the site to sleep in front of somebody | **built, 22 tests** <!-- tests/serve.test.ts --> |
+| Who may read a run, and what a web address can reach. Reading somebody's run needs the same secret answering it does, because its record carries their names and every answer they gave. Also the one address that exists to be knocked on every few minutes so free hosting never puts the site to sleep in front of somebody, and the two ways of asking for a file: HEAD used to be refused, which meant a link to this site pasted into a chat produced no preview at all | **built, 28 tests** <!-- tests/serve.test.ts --> |
 | The Formation Pack itself — a real multi-page PDF written by this project's own code, with the agreement in it, which never reprints an owner's identity details | **built, 26 tests** <!-- tests/document.test.ts --> |
 | Reading the words back out of the sealed file, so the website shows the document rather than its own copy of the document | **built, 12 tests** <!-- tests/pack-read.test.ts --> |
 | The same agreement as an editable Word file, so the owners can take it to somebody they trust before anybody signs anything | **built, 23 tests** <!-- tests/docx.test.ts --> |

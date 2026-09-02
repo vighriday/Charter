@@ -34,8 +34,53 @@
 import { describe, expect, it } from 'vitest'
 import { join, sep } from 'node:path'
 
-import { fileAsked, whereFrom, secretSent, isKnock } from '../src/serve/server.js'
+import { fileAsked, whereFrom, secretSent, isKnock, mayRead, typeFor } from '../src/serve/server.js'
 import { sameSecret, answerKind } from '../src/serve/runs.js'
+
+describe('the two ways of asking for a file', () => {
+  // Found by asking the deployed site for each of its own downloads. Every one
+  // answered 405, which claims the address does not do that. It does.
+  it('answers GET, which means send me this', () => {
+    expect(mayRead('GET')).toBe(true)
+  })
+
+  it('answers HEAD, which means tell me about it without sending it', () => {
+    // HEAD is what other programs use to look at a link without downloading it:
+    // link checkers, monitoring, and the part of a chat app that turns a pasted
+    // address into a preview card. Refused, a link to this site pasted into a
+    // chat produced nothing at all.
+    expect(mayRead('HEAD')).toBe(true)
+  })
+
+  it('still refuses everything that would change something', () => {
+    for (const method of ['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', undefined]) {
+      expect(mayRead(method), String(method)).toBe(false)
+    }
+  })
+})
+
+describe('saying what kind of thing a file is', () => {
+  it('knows a picture is a picture', () => {
+    // The screenshots of this page were being served as "a file of unknown kind",
+    // which tells a browser to download it rather than show it.
+    expect(typeFor('site/shots/01-what-it-is.png')).toBe('image/png')
+    expect(typeFor('a.JPG')).toBe('image/jpeg')
+  })
+
+  it('knows the three files a visitor is invited to check', () => {
+    expect(typeFor('record.jsonl')).toBe('text/plain; charset=utf-8')
+    expect(typeFor('pack.pdf')).toBe('application/pdf')
+    expect(typeFor('attestation.json')).toBe('application/json; charset=utf-8')
+  })
+
+  it('calls anything it does not recognise a file of some kind', () => {
+    // The safe answer for something unknown: download it, do not run it or show
+    // it. Wrong only for things we should have listed, which is why the pictures
+    // above are now listed.
+    expect(typeFor('mystery.qqq')).toBe('application/octet-stream')
+    expect(typeFor('no-extension')).toBe('application/octet-stream')
+  })
+})
 
 describe('somebody knocking to keep the site awake', () => {
   // Free hosting sleeps after about fifteen minutes with nothing to do, and

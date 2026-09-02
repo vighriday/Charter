@@ -66,6 +66,14 @@ const TYPES: Readonly<Record<string, string>> = {
   '.pdf': 'application/pdf',
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
+  // The screenshots of this page that the readme shows. Without these two lines
+  // they were served as application/octet-stream, which tells a browser "this is
+  // a file of unknown kind, download it" instead of "this is a picture, show it".
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
 }
 
 /**
@@ -146,6 +154,33 @@ function sendJson(response: ServerResponse, status: number, body: unknown): void
     'cache-control': 'no-store',
   })
   response.end(text)
+}
+
+/**
+ * What kind of thing a file is, in the words a browser understands.
+ *
+ * Anything not on the list is called "a file of some kind", which tells a browser
+ * to download it rather than show it. That is the safe answer for something we do
+ * not recognise, and the wrong answer for a picture: the screenshots of this page
+ * were being downloaded instead of shown, because nothing here said what a .png
+ * was.
+ */
+export function typeFor(file: string): string {
+  return TYPES[extname(file).toLowerCase()] ?? 'application/octet-stream'
+}
+
+/**
+ * May a request of this kind read a file?
+ *
+ * GET means "send me this". HEAD means "tell me about it without sending it", and
+ * it was refused here with a 405, which claims the address does not do that. It
+ * does. HEAD is what other programs use to look at a link without downloading it:
+ * link checkers, monitoring, and the part of a chat app that turns a pasted
+ * address into a preview card. Refusing it meant a link to this site pasted into
+ * a chat produced nothing at all.
+ */
+export function mayRead(method: string | undefined): boolean {
+  return method === 'GET' || method === 'HEAD'
 }
 
 /**
@@ -404,7 +439,18 @@ export async function start(options: ServerOptions = {}): Promise<{ readonly por
     }
 
     // ---- anything else is a file out of the site folder ----------------------
-    if (request.method !== 'GET') {
+    //
+    // HEAD is answered as well as GET, and the difference between them is the one
+    // line at the end that sends the body.
+    //
+    // HEAD means "tell me about this thing without sending it". It was answered
+    // with 405 here, which says "this address does not do that", and that is not
+    // true of any of these files. It matters because HEAD is what other programs
+    // use to look at a link without downloading it: link checkers, monitoring
+    // tools, and the part of a chat app that turns a pasted address into a little
+    // preview card. Somebody pasting this site into a chat got nothing back.
+    const onlyAsking = request.method === 'HEAD'
+    if (!mayRead(request.method)) {
       sendJson(response, 405, { error: 'that is not something this answers' })
       return
     }
@@ -420,10 +466,13 @@ export async function start(options: ServerOptions = {}): Promise<{ readonly por
       if (!about.isFile()) throw new Error('not a file')
       const body = await readFile(file)
       response.writeHead(200, {
-        'content-type': TYPES[extname(file)] ?? 'application/octet-stream',
+        'content-type': typeFor(file),
         'content-length': body.length,
       })
-      response.end(body)
+      // The length above is still the real length, because that is the point of
+      // asking: HEAD promises the same headers the body would have arrived with.
+      if (onlyAsking) response.end()
+      else response.end(body)
     } catch {
       response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' })
       response.end('There is nothing at that address.\n')
