@@ -178,20 +178,29 @@ const DOCTAVIAN_NOTES: Readonly<Record<string, readonly string[]>> = {
     "Charter's own code instead, from the same data, and the run says so.",
   ],
   DOCTAVIAN_AUTH_PROVIDER: [
-    'Which sign-in the token above came from. Recorded so that a token that stops',
-    'working can be traced back to where it was obtained.',
+    'A note to a person about where the token above came from, so a token that',
+    'stops working can be traced back. Nothing reads it: npm run doctavian:signin',
+    'always uses Microsoft, because their proxy rewrites the requested permission',
+    'before passing it to Google, into a Google web address that does not exist,',
+    'and Google refuses it.',
   ],
   DOCTAVIAN_OAUTH_CLIENT_ID: [
-    'Part of obtaining the bearer token by hand. Nothing in this project performs',
-    'that sign-in, so nothing here reads this.',
+    'Part of obtaining the bearer token. Read by npm run doctavian:signin, which',
+    'opens a browser, waits for a person to sign in, and prints the token to save',
+    'in the setting above. Nothing in a run reads this.',
   ],
   DOCTAVIAN_OAUTH_SCOPE: [
-    'Part of obtaining the bearer token by hand. Nothing in this project performs',
-    'that sign-in, so nothing here reads this.',
+    'Which permissions the sign-in asks for. It must include offline_access, or',
+    'the sign-in gives back only a token that stops working within the hour and',
+    'has to be repeated. Read by npm run doctavian:signin. Nothing in a run reads',
+    'this.',
   ],
 }
 
 const DOCTAVIAN_READ_BY = 'src/vendors/doctavian.ts'
+
+/** The one-off sign-in a person runs, which is the only thing reading these two. */
+const DOCTAVIAN_SIGNIN_READ_BY = 'src/vendors/doctavian-signin.ts'
 
 const doctavian = (
   [
@@ -203,10 +212,16 @@ const doctavian = (
     ['DOCTAVIAN_OAUTH_SCOPE', 'text'],
   ] as const
 ).map(([name, kind]): Setting => {
-  const isRead =
+  // Three are read by the client during a run. Two are read by the one-off
+  // sign-in command a person types. One is read by nobody and says so.
+  const readBy =
     name === 'DOCTAVIAN_BASE_URL' ||
     name === 'DOCTAVIAN_API_KEY' ||
     name === 'DOCTAVIAN_REFRESH_TOKEN'
+      ? DOCTAVIAN_READ_BY
+      : name === 'DOCTAVIAN_OAUTH_CLIENT_ID' || name === 'DOCTAVIAN_OAUTH_SCOPE'
+        ? DOCTAVIAN_SIGNIN_READ_BY
+        : null
 
   return {
     name,
@@ -214,7 +229,7 @@ const doctavian = (
     what: DOCTAVIAN_NOTES[name] ?? [],
     kind,
     example: '',
-    ...(isRead ? { readBy: DOCTAVIAN_READ_BY } : { readBy: null, notYetBuilt: NOT_BUILT_VENDOR }),
+    ...(readBy === null ? { readBy: null, notYetBuilt: NOT_BUILT_VENDOR } : { readBy }),
   }
 })
 

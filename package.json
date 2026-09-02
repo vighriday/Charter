@@ -35,6 +35,7 @@
     "esign:proof": "tsx src/sign/esign-proof.ts",
     "services": "node scripts/services.mjs",
     "services:check": "node scripts/services.mjs --check",
+    "doctavian:signin": "tsx src/vendors/doctavian-signin.ts",
     "picture:proof": "tsx src/vendors/picture-proof.ts",
     "services:live": "tsx src/vendors/roll-call.ts"
   },

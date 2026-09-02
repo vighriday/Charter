@@ -102,7 +102,16 @@ function pretendNetwork(
   }
 }
 
-/** The client, wired so nothing really waits. */
+/**
+ * The client, wired so nothing really waits.
+ *
+ * The clock stands still. That matters more than it looks: this client gives up
+ * when its patience runs out, and a real clock plus a patience measured in
+ * milliseconds means the suite fails whenever the machine is busy. It did, about
+ * one run in three, and a suite that fails at random is a suite people stop
+ * reading. So nothing here ever times out by accident. The one test that is ABOUT
+ * running out of patience builds its own client with a clock that moves.
+ */
 function client(fetcher: (url: string, init: RequestInit) => Promise<Response>) {
   return foxitDocuments({
     baseUrl: BASE,
@@ -111,6 +120,7 @@ function client(fetcher: (url: string, init: RequestInit) => Promise<Response>) 
     fetcher,
     betweenAsks: 0,
     taskPatience: 50,
+    now: () => 1_756_000_000_000,
   })
 }
 
@@ -198,8 +208,23 @@ describe('joining documents', () => {
       '/tasks/task-1': { taskId: 'task-1', status: 'PROCESSING' },
     })
 
+    // A clock that moves, so the patience really runs out. Every other test here
+    // uses a clock that stands still, because a clock that stands still cannot
+    // time out by accident on a busy machine. This one has to move, and it moves
+    // by a fixed amount rather than by however long the machine took.
+    let ticking = 1_756_000_000_000
+    const impatient = foxitDocuments({
+      baseUrl: BASE,
+      clientId: ID,
+      clientSecret: SECRET,
+      fetcher: net.fetcher,
+      betweenAsks: 0,
+      taskPatience: 50,
+      now: () => (ticking += 30),
+    })
+
     await expect(
-      client(net.fetcher).join([
+      impatient.join([
         { name: 'one', bytes: bytes('one') },
         { name: 'two', bytes: bytes('two') },
       ]),
