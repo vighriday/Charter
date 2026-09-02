@@ -48,25 +48,35 @@ services:
     # answer.
     healthCheckPath: /healthz
 
-    # One machine. Charter holds each run's secret in memory for as long as that
-    # run is waiting for its owner to answer, so a second machine would mean a
-    # visitor's answer arriving at the one that never asked the question.
-    numInstances: 1
-
     autoDeploy: true
 
-    # A disk the database can live on, so a finished run is still there after a
-    # deploy. Without it the database is in memory and every restart forgets
-    # everything, which is survivable for a demonstration and awful for a judge
-    # who comes back an hour later to the record they were shown.
+    # ONE MACHINE, AND NO DISK. Both are the free plan, and both are written out
+    # here rather than left as a surprise.
     #
-    # Render's free plan does not include disks. If this is deployed on the free
-    # plan, delete this block and CHARTER_DB_PATH below: the program runs in
-    # memory and says so, rather than failing.
-    disk:
-      name: charter-data
-      mountPath: /var/data
-      sizeGB: 1
+    # The free plan gives one machine and does not let you ask for more, which
+    # happens to be what Charter wants anyway: it holds each run's secret in
+    # memory for as long as that run is waiting for its owner to answer, so a
+    # second machine would mean a visitor's answer arriving at the one that never
+    # asked the question.
+    #
+    # The free plan also has no disk, so the database lives in memory and a
+    # restart forgets every run. That is survivable for a demonstration and it is
+    # a real limit: somebody who comes back an hour later to a run they were shown
+    # will not find it. The program says so rather than pretending, and the
+    # finished pack, the record and the attestation are all downloadable while the
+    # run is on the screen, which is what makes it checkable at all.
+    #
+    # To fix it properly, move to a paid plan and add these two blocks back:
+    #
+    #     disk:
+    #       name: charter-data
+    #       mountPath: /var/data
+    #       sizeGB: 1
+    #
+    #   and, in envVars below:
+    #
+    #     - key: CHARTER_DB_PATH
+    #       value: /var/data/charter
 
     envVars:
       # ---- where the program is running ---------------------------------------
@@ -79,9 +89,6 @@ services:
       # reading has to guess why the behaviour changes.
       - key: PORT
         value: 10000
-
-      - key: CHARTER_DB_PATH
-        value: /var/data/charter
 
       # ---- the two models, which every step needs ------------------------------
       #

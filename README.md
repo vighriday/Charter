@@ -323,6 +323,16 @@ Blueprint.
 4. **Open the address it gives you and add `/healthz`.** It should answer
    `{"awake":true, ...}`. That is the door the next step knocks on.
 
+The free plan gives one machine and no disk. One machine is what Charter wants
+anyway, because it holds each run's secret in memory while that run waits for its
+owner to answer, and a second machine would mean an answer arriving at the one
+that never asked the question. No disk is a real limit and worth stating plainly:
+the database lives in memory, so a restart forgets every finished run, and
+somebody who comes back an hour later will not find the run they were shown. The
+program says so rather than pretending. The pack, the record and the attestation
+are all downloadable while the run is on the screen, which is what makes it
+checkable at all. `render.yaml` says what to add back on a paid plan.
+
 Two settings in that file are the ones that keep this from costing anybody
 anything: `REGISTRAR_ENV=test` points the registrar at its free sandbox, which
 answers exactly like the real thing and registers nothing, and
