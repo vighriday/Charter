@@ -59,3 +59,15 @@ jobs:
       # nothing at all.
       - name: the settings file matches the code
         run: npm run settings:check
+
+      # The website states numbers about itself, and this file is what stops those
+      # numbers drifting away from the run they came from. It needs no network:
+      # it compares two files in this repository against each other.
+      - name: the website matches the code
+        run: npm run services:check
+
+      # Every claim the website makes has to resolve to something in the run it
+      # ships. This is the check that caught the page saying 1258 tests while the
+      # repository said 1297.
+      - name: the website says nothing it cannot back
+        run: npm run site:check
