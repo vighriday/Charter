@@ -35,7 +35,7 @@ people who trust each other completely today and might not in three years.
 **Topics:** `ai-agent` · `llm-tools` · `legal-tech` · `llc-formation` ·
 `operating-agreement` · `tamper-evident` · `append-only-log` · `hash-chain` ·
 `ed25519` · `human-in-the-loop` · `agent-safety` · `pdf-generation` · `pdf-signing` ·
-`postgresql` · `pglite` · `typescript` · `gemini` · `groq` · `no-dependencies` ·
+`postgresql` · `pglite` · `typescript` · `gemini` · `groq` · `zero-config` ·
 `ueta` · `esign-act`
 
 ---
@@ -263,7 +263,8 @@ npm run git:check # proves nothing secret is publishable, before every commit
 npm run settings:check  # every setting either does something, or says it does not
 ```
 
-`npm run agent:demo` leaves five files in `out/`:
+`npm run agent:demo` leaves six files in `out/`, and a seventh, `attestation.pub`,
+when no signing key was set:
 
 | File | What it is |
 | --- | --- |
@@ -272,6 +273,7 @@ npm run settings:check  # every setting either does something, or says it does n
 | `record.jsonl` | Every entry of the run, in order, each carrying the fingerprint of the one before it |
 | `attestation.json` | Vouches for the END of that record, which the chain cannot do on its own |
 | `report.html` | One page. Open it in a browser — what the law does if you write nothing down, everything that happened and who caused it, and every refusal |
+| `run-meta.json` | The few facts about the run itself: which case, how many entries, and the head of the record |
 
 Then check its work without taking our word for any of it:
 
@@ -282,8 +284,8 @@ npm run verify -- out/pack.pdf out/record.jsonl out/attestation.json --key out/a
 **Why `--key`, and when you can drop it.** With no signing key of your own in
 `.env`, the run makes a keypair for itself and leaves the public half beside the
 files as `out/attestation.pub`. That is the key that run was attested with, so that
-is the key to check it against. The last thing `npm run agent:demo` prints is this
-exact command, already filled in for whichever case you are in. If you have set
+is the key to check it against. `npm run agent:demo` prints this exact command,
+already filled in for whichever case you are in, near the end of its output. If you have set
 `ATTESTATION_PRIVATE_KEY` to the key whose public half is committed here, leave
 `--key` off and it uses `keys/attestation.pub`.
 

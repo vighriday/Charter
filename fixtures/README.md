@@ -1,9 +1,11 @@
 # Recorded vendor responses
 
-**What lives here right now: nothing but this file.** No outside service has been
-called yet. The recording machinery is built and tested, and the recordings
-themselves arrive when the vendor integrations do. This file says so plainly rather
-than describing a folder that does not exist yet.
+**What lives here right now: nothing but this file.** The recording machinery is
+built and tested, and no recordings have been kept. Real calls do happen: seven of
+the nine outside companies answer, and `npm run services:live` asks each of them
+and prints what came back. What has not happened is anybody saving one of those
+answers into this folder. This file says so plainly rather than describing a folder
+that does not exist yet.
 
 **What will live here.** Real responses from every outside service Charter uses,
 captured once from real calls and saved as plain JSON.
