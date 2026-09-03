@@ -118,6 +118,10 @@ services:
       # A formation pack with those words across it is not a document anybody can
       # sign. So it is not asked for here at all, because a setting nobody is
       # offered is a setting nobody fills in by accident at two in the morning.
+      # All three of these are needed together. Without the address, the code
+      # falls back to the stand-in and says so, which is easy to miss.
+      - key: FOXIT_PDF_BASE_URL
+        sync: false
       - key: FOXIT_PDF_CLIENT_ID
         sync: false
       - key: FOXIT_PDF_CLIENT_SECRET

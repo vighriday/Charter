@@ -141,10 +141,6 @@ const NOT_BUILT_VENDOR =
   'the client that would talk to this company. Every outside service is answered ' +
   'today by a stand-in holding recorded answers, with no path to the network at all.'
 
-/** What the picture service is, honestly, until somebody has run it. */
-const PICTURE_NOT_PROVEN =
-  'a client that is written, tested, and has never once been called. See above.'
-
 const NOT_BUILT_STORAGE =
   'the file store and the publishing client. The finished pack is held in memory ' +
   'and the website is published by a stand-in today.'
@@ -657,12 +653,11 @@ export const SETTINGS: readonly Setting[] = [
       'written from the older documentation authenticates against nothing, and the',
       'refusal blames the credential rather than the service.',
       '',
-      'To prove this one really works, run:',
+      'This one is live. To watch it happen, run:',
       '',
       '    npm run picture:proof',
       '',
-      'Until that prints the address of a picture, the honest word for this is',
-      '"written, not proven", and this file and the website both use that word.',
+      'It draws a picture and prints the address of the one it drew.',
       '',
       'Used only to turn the owners’ own description of their business into one',
       'picture for the website Charter publishes. No photograph of anybody is ever',
@@ -673,8 +668,7 @@ export const SETTINGS: readonly Setting[] = [
     ],
     kind: 'secret',
     example: '',
-    readBy: null,
-    notYetBuilt: PICTURE_NOT_PROVEN,
+    readBy: 'src/vendors/build.ts',
   },
 
   // ---- storage and hosting --------------------------------------------------

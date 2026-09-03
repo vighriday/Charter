@@ -8,10 +8,10 @@
 
 ## → **[charter-217o.onrender.com](https://charter-217o.onrender.com)**
 
-It is running right now. Nothing to install, no account, no key. Eight tabs
-replay one real run step by step, and the eighth lets you put in your own
-business and watch Charter work on it, stopping to ask you every time a real
-decision comes up.
+It is running right now. Nothing to install, no account, no key. Eight tabs.
+Seven of them replay one real run step by step, and one, "Run yours", lets you put
+in your own business and watch Charter work on it, stopping to ask you every time a
+real decision comes up.
 
 ![tests](https://img.shields.io/badge/tests-1%2C297%20passing-2f6f4e)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178c6)
@@ -472,10 +472,12 @@ than assuming the best.
 module did not exist, with a note saying so and a test asserting the folder really
 was empty — a note that expires by itself rather than one somebody has to remember.
 On 30 August the first file was written into that folder and **the build failed**,
-exactly as designed. It stayed failing until somebody wrote down, in the open, which
-single file is allowed to reach it: `src/case/send-for-signature.ts`, which is not
+exactly as designed. It stayed failing until somebody wrote down, in the open, what is
+allowed to reach it. Two things are: `src/case/send-for-signature.ts`, which is not
 part of the agent, runs only after a person has approved, and reads that approval
-out of the append-only record rather than being handed it.
+out of the append-only record rather than being handed it; and
+`src/vendors/roll-call.ts`, which only asks each outside company whether it is
+answering and never sends a document anywhere.
 
 Permission granted deliberately and in the open, never acquired by accident. That
 is the whole of what the rule is for, and it has now been tested by the thing
@@ -592,7 +594,7 @@ answer is 658, which is what this one said on 30 August.
 | Putting the finished website online | **not yet.** A stand-in today. The pack itself is Charter's own code and goes through no outside company |
 | The client for the document service that writes the agreement from a Word template, built to the four answers their own team gave us about where their documentation and their shipped example disagree | **built, 20 tests.** Waiting on one thing only: their demonstration environment needs a bearer token obtained through a Microsoft sign-in done by a person in a browser, and until there is one the agreement is written by Charter's own code from the same data <!-- tests/doctavian.test.ts --> |
 | The sign-in that gets that token, so a person can do it once in about thirty seconds without installing anything. `npm run doctavian:signin` opens a browser, waits for the sign-in, and prints the token to save. The one-time code it comes back with is protected by a secret that never leaves this machine | **built, 13 tests.** The sign-in itself is a person's act and no program can do it, which is why this is a command somebody types and not a stage of a run <!-- tests/doctavian-signin.test.ts --> |
-| Putting a picture and a signing request in front of a real server | **not yet.** Both clients are written and tested and neither has met its server. The settings file and the website both call that "written, not proven" rather than anything kinder |
+| Putting a signing request in front of a real server | **not yet.** The eSign client is written and tested and has never met its server. The settings file and the website both call that "written, not proven" rather than anything kinder. The picture service is a separate thing and it is live, two rows above |
 | Building a website for the new business, and putting it online | **not yet** |
 
 ---
@@ -654,12 +656,13 @@ sent back, the spending rule, the name comparison, the settings, **the Formation
 Pack itself** — a real multi-page PDF this project writes — and **the seal on it**,
 a real certificate at permission level 2.
 
-Stood in for by default: the model's replies, and the four outside services —
-search, the registrar, the identity reader, and publishing. Each stand-in holds
-answers recorded in advance with no path to the network at all, so a missing answer
-is an error rather than a quiet real call.
+Stood in for by default: the model's replies, and the six outside services —
+search, the registrar, the identity reader, the document service, the picture
+service, and publishing. Each stand-in holds answers recorded in advance with no
+path to the network at all, so a missing answer is an error rather than a quiet real
+call.
 
-**The real clients for three of those four exist and are tested.** A run uses one
+**The real clients for five of those six exist and are tested.** A run uses one
 only when `REPLAY_MODE=false` *and* that service's credential is present — both,
 never either. That rule is not caution about failure: the search service allows 250
 searches a month against eight to twelve per run, so a rehearsal that went out to

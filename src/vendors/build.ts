@@ -280,7 +280,7 @@ export function chooseServices(options: ChooseOptions): ChosenServices {
             'together, reading its text back out so somebody other than the writer ' +
             'says what it says, and making the file small enough to email. It is ' +
             'asked for nothing at all after the pack is sealed, and it refuses ' +
-            'those anyway, which is checked by npm run foxit:refusal.',
+            'those anyway, which is checked by npm run foxit:proof.',
         }
 
   // ---- assembling and publishing -------------------------------------------

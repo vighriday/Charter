@@ -54,8 +54,8 @@ async function main(): Promise<void> {
     ['answer.received', 'human', 'understand', { cash: '15000', equipment: 'a commercial oven, 9000' }],
     ['counterfactual.computed', 'system', 'understand', {
       agreed: '60/40',
-      defaultRule: '62.5/37.5',
-      note: 'the split they agreed is not the split the default rule gives them',
+      writtenDown: false,
+      note: 'a spoken deal is real in Texas, and it is only worth what they can later prove',
     }],
     ['refusal.recorded', 'system', 'understand', {
       refused: 'sign_document',

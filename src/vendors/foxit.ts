@@ -43,7 +43,7 @@
  * because the seal marks the file as certified and their reader will not modify a
  * certified file. Two independent programs refusing the same thing for the same
  * reason is worth more than either one of them promising it, so `npm run
- * foxit:refusal` performs exactly that and prints what came back.
+ * foxit:proof` performs exactly that and prints what came back.
  *
  * HOW THE SERVICE WORKS, IN ITS OWN SHAPE
  *
